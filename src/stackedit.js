@@ -2,7 +2,9 @@ import { createWriteStream } from 'fs';
 
 import Nano from 'nano';
 
-const COUCHDB_USER = 'admin'
+const COUCHDB_URL = 'https://618cf517-eb22-487f-ab2c-8366988f9b91-bluemix.cloudant.com';
+const COUCHDB_USER = 'apikey-v2-1ou4ojg2gc14j0226kljqrif72kclxwj5eu5hvxb7hgd';
+const COUCHDB_DB = 'stackedit';
 
 const nano = Nano('https://2byvg7kuok.execute-api.ap-northeast-1.amazonaws.com');
 await nano.auth(COUCHDB_USER, process.env.COUCHDB_PASSWORD);
