@@ -3,6 +3,9 @@ import { createWriteStream } from 'fs';
 import { pipeline } from 'stream/promises';
 
 import { ChangesFollower, CloudantV1 } from '@ibm-cloud/cloudant';
+import Pick from 'stream-json/filters/Pick.js';
+import StreamArray from 'stream-json/streamers/StreamArray.js';
+import parser from 'stream-json';
 
 const client = CloudantV1.newInstance({
   serviceUrl: 'https://618cf517-eb22-487f-ab2c-8366988f9b91-bluemix.cloudant.com',
@@ -10,11 +13,27 @@ const client = CloudantV1.newInstance({
 const db = 'stackedit';
 
 const FRONTMATTER_PREFIX = 'frontmatter.';
-const query = {
-  startkey: JSON.stringify(FRONTMATTER_PREFIX),
-  endkey: JSON.stringify(FRONTMATTER_PREFIX + '\ufff0'),
-};
-console.log(query);
+const allDocs = await client.postAllDocsAsStream({
+  db,
+  startKey: FRONTMATTER_PREFIX,
+  endKey: FRONTMATTER_PREFIX + '\ufff0',
+  includeDocs: true,
+})
+  .then(response => pipeline(
+    response.result,
+    parser(),
+    new Pick({ filter: 'rows' }),
+    new StreamArray(),
+    new Writable({
+      objectMode: true,
+      write(data, encoding, callback) {
+        console.log(data);
+        callback();
+      },
+    }),
+  ));
+
+console.log(allDocs);
 
 const changesFollower = new ChangesFollower(client, {
   db,
@@ -48,4 +67,4 @@ pipeline(changesFollower.start(), new ChangesWritable())
     console.log(err);
   });
 
-console.log('Following changes in db ', db);
+console.log('Following changes in db', db);
