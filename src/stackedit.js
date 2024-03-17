@@ -1,36 +1,51 @@
+import { Writable } from 'stream';
 import { createWriteStream } from 'fs';
+import { pipeline } from 'stream/promises';
 
-import Nano from 'nano';
+import { ChangesFollower, CloudantV1 } from '@ibm-cloud/cloudant';
 
-const COUCHDB_URL = 'https://618cf517-eb22-487f-ab2c-8366988f9b91-bluemix.cloudant.com';
-const COUCHDB_USER = 'apikey-v2-1ou4ojg2gc14j0226kljqrif72kclxwj5eu5hvxb7hgd';
-const COUCHDB_DB = 'stackedit';
+const client = CloudantV1.newInstance({
+  serviceUrl: 'https://618cf517-eb22-487f-ab2c-8366988f9b91-bluemix.cloudant.com',
+});
+const db = 'stackedit';
 
-const nano = Nano('https://2byvg7kuok.execute-api.ap-northeast-1.amazonaws.com');
-await nano.auth(COUCHDB_USER, process.env.COUCHDB_PASSWORD);
+const FRONTMATTER_PREFIX = 'frontmatter.';
+const query = {
+  startkey: JSON.stringify(FRONTMATTER_PREFIX),
+  endkey: JSON.stringify(FRONTMATTER_PREFIX + '\ufff0'),
+};
+console.log(query);
 
-console.log('Authenticated to couchdb as', COUCHDB_USER);
-
-const db = nano.db.use('stackedit');
-
-db.changesReader.start({
-  timeout: 29000,
+const changesFollower = new ChangesFollower(client, {
+  db,
   includeDocs: true,
-})
-  .on('change', change => {
-    console.log(change);
-    const { id, doc: { time } } = change;
-    const date = new Date(time);
-    console.log({ id, date });
+});
 
-    db.attachment.getAsStream(id, 'data')
+class ChangesWritable extends Writable {
+  constructor() {
+    super({ objectMode: true });
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  _write({ id: docId, changes, doc: { time } }, _, callback) {
+    console.log(docId, changes);
+    const date = new Date(time);
+    console.log({ docId, date });
+
+    client.getAttachment({
+      db,
+      docId,
+      attachmentName: 'data',
+    })
       .pipe(createWriteStream('content/about.md'));
-  })
-  .on('batch', b => {
-    console.log('a batch of', b.length, 'changes has arrived');
-  }).on('seq', s => {
-    console.log('sequence token', s);
-  })
-  .on('error', e => {
-    console.error('error', e);
+
+    callback();
+  }
+}
+
+pipeline(changesFollower.start(), new ChangesWritable())
+  .catch(err => {
+    console.log(err);
   });
+
+console.log('Following changes in db ', db);
