@@ -17,9 +17,10 @@
   idx = {
     # search for the extension on https://open-vsx.org/ and use "publisher.id"
     extensions = [
+      "DavidAnson.vscode-markdownlint"
       "dbaeumer.vscode-eslint"
       "jnoortheen.nix-ide"
-      "DavidAnson.vscode-markdownlint"
+      "streetsidesoftware.code-spell-checker"
       "usernamehw.errorlens"
     ];
 
