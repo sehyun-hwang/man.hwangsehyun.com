@@ -7,6 +7,7 @@
     pkgs.nodejs
     pkgs.corepack
     pkgs.fish
+    pkgs.hugo
     pkgs.nodePackages.eslint
   ];
   # Sets environment variables in the workspace
