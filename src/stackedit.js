@@ -113,17 +113,27 @@ const { missingFrontmatterDocs } = missingFrontmatterFilterWritable;
 console.log('Parsed frontmatter missing in DB', missingFrontmatterDocs.length);
 
 const attachmentsByDocId = Object.fromEntries(
-  await Promise.all(missingFrontmatterDocs.map(({ _id: docId }) => client.getAttachment({
+  await Promise.all(missingFrontmatterDocs.map(({
+    _id: docId,
+    item: { hash },
+  }) => client.getAttachment({
     db,
     docId,
     attachmentName: 'data',
   })
-    .then(async ({ result }) => [docId, await text(result)]))),
+    .then(async ({ result }) => [hash.toString(), await text(result)]))),
 );
 
-// console.log(attachmentsByDocId);
 const FRONTMATTER_PREFIX = 'frontmatter.';
-console.log(await parseFrontMatters(attachmentsByDocId, FRONTMATTER_PREFIX));
+const frontMatterBulkDocs = await parseFrontMatters(attachmentsByDocId, FRONTMATTER_PREFIX);
+console.log('Inserting bulk docs of frontmatters', frontMatterBulkDocs);
+
+await client.postBulkDocs({
+  db,
+  bulkDocs: { docs: frontMatterBulkDocs },
+})
+  .then(({ result }) => console.log('Parsed frontmatter inserted:', result.length));
+
 // throw new Error();
 
 const allDocs = await client.postAllDocsAsStream({
