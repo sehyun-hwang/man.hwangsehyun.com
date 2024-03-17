@@ -1,4 +1,6 @@
 import markdownlint from 'markdownlint';
+import matter from 'gray-matter';
+import { parse as parseToml } from 'toml';
 
 class FrontMatterParserRule {
   names = ['frontmatter-parser'];
@@ -16,7 +18,15 @@ class FrontMatterParserRule {
         return;
       }
       console.log(name, frontMatterLines);
-      frontMatters[name] = frontMatterLines.join('\n');
+
+      const { data } = matter(frontMatterLines.join('\n'), {
+        engines: {
+          toml: parseToml,
+        },
+        language: 'toml',
+      });
+
+      frontMatters[name] = data;
     }
 
     Object.assign(this, {
@@ -34,7 +44,7 @@ const options = {
     'good.string': '# good.string\n\nThis string passes all rules.\n',
     'bad.string': '#bad.string\n\n#This string fails\tsome rules.',
     frontmatter: `---
-title = foo
+title = "foo"
 ---
 
 ## Frontmatter file
@@ -45,5 +55,5 @@ title = foo
 
 markdownlint(options, (error, result) => {
   console.log(error, result);
-  console.log(frontMatterParserRule.FrontMatterParserRule);
+  console.log(frontMatterParserRule.frontMatters);
 });
