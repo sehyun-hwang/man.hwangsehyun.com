@@ -3,6 +3,7 @@ import { Writable } from 'stream';
 import { strict as assert } from 'assert';
 import { createWriteStream } from 'fs';
 import { pipeline } from 'stream/promises';
+import { text } from 'node:stream/consumers';
 
 import { ChangesFollower, CloudantV1 } from '@ibm-cloud/cloudant';
 import Pick from 'stream-json/filters/Pick.js';
@@ -10,6 +11,7 @@ import StreamArray from 'stream-json/streamers/StreamArray.js';
 import parser from 'stream-json';
 
 import { frontmatterMap } from './view-function.js';
+import { parseFrontMatters } from './markdownlint.js';
 
 const client = CloudantV1.newInstance({
   serviceUrl: 'https://618cf517-eb22-487f-ab2c-8366988f9b91-bluemix.cloudant.com',
@@ -107,10 +109,23 @@ await client.postViewAsStream({
     missingFrontmatterFilterWritable,
   ));
 
-console.log(missingFrontmatterFilterWritable.missingFrontmatterDocs);
+const { missingFrontmatterDocs } = missingFrontmatterFilterWritable;
+console.log('Parsed frontmatter missing in DB', missingFrontmatterDocs.length);
+
+const attachmentsByDocId = Object.fromEntries(
+  await Promise.all(missingFrontmatterDocs.map(({ _id: docId }) => client.getAttachment({
+    db,
+    docId,
+    attachmentName: 'data',
+  })
+    .then(async ({ result }) => [docId, await text(result)]))),
+);
+
+// console.log(attachmentsByDocId);
+const FRONTMATTER_PREFIX = 'frontmatter.';
+console.log(await parseFrontMatters(attachmentsByDocId, FRONTMATTER_PREFIX));
 // throw new Error();
 
-const FRONTMATTER_PREFIX = 'frontmatter.';
 const allDocs = await client.postAllDocsAsStream({
   db,
   startKey: FRONTMATTER_PREFIX,

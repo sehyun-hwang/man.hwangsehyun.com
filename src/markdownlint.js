@@ -13,18 +13,35 @@ class FrontMatterParserRule {
     const frontMatters = {};
 
     function frontmatterParserRuleFunction({ name, frontMatterLines }, onError) {
+      let data = null;
       if (!frontMatterLines.length) {
-        frontMatters[name] = null;
+        frontMatters[name] = data;
         return;
       }
-      console.log(name, frontMatterLines);
 
-      const { data } = matter(frontMatterLines.join('\n'), {
-        engines: {
-          toml: parseToml,
-        },
-        language: 'toml',
-      });
+      try {
+        data = matter(frontMatterLines.join('\n'), {
+          engines: {
+            toml: parseToml,
+          },
+          language: 'toml',
+        }).data;
+        console.log(name, frontMatterLines, data);
+      } catch (error) {
+        /**
+         * @link https://github.com/BinaryMuse/toml-node/blob/4bad34e1dc81586e799e269e5d2c78662b6657b2/lib/parser.js#L14
+         */
+        const { name: errorName, expected, found } = error;
+        if (errorName !== 'SyntaxError')
+          throw error;
+
+        onError({
+          lineNumber: error.line,
+          detail: error.message,
+          context: JSON.stringify({ expected, found }),
+          range: [error.offset, error.column], // @TODO
+        });
+      }
 
       frontMatters[name] = data;
     }
@@ -36,24 +53,40 @@ class FrontMatterParserRule {
   }
 }
 
-const frontMatterParserRule = new FrontMatterParserRule();
+export function parseFrontMatters(strings, prefix = '') {
+  const frontMatterParserRule = new FrontMatterParserRule();
 
-const options = {
-  // "files": ["good.md", "bad.md"],
-  strings: {
-    'good.string': '# good.string\n\nThis string passes all rules.\n',
-    'bad.string': '#bad.string\n\n#This string fails\tsome rules.',
-    frontmatter: `---
-title = "foo"
----
+  return new Promise((resolve, reject) => markdownlint({
+    strings,
+    customRules: [frontMatterParserRule],
+    config: {
+      default: false,
+    },
+  }, (error, result) => {
+    console.log(error || result.toString());
+    error ? reject(error) : resolve(frontMatterParserRule.frontMatters);
+  }))
 
-## Frontmatter file
-`,
-  },
-  customRules: [frontMatterParserRule],
-};
+    .then(frontMatters => Object.entries(frontMatters)
+      .map(([docId, frontmatter]) => ({
+        _id: prefix + docId,
+        hasFrontMatter: Boolean(frontmatter),
+        ...frontmatter,
+      })));
+}
 
-markdownlint(options, (error, result) => {
-  console.log(error, result);
-  console.log(frontMatterParserRule.frontMatters);
-});
+const STATIC_FRONTEND_PARSER_RULE = new FrontMatterParserRule();
+
+export function runMarkdownLint(markdown) {
+  const strings = typeof markdown === 'string' ? { default: markdown } : markdown;
+  return new Promise((resolve, reject) => markdownlint({
+    strings,
+    customRules: [STATIC_FRONTEND_PARSER_RULE],
+  }, (error, result) => {
+    if (error)
+      return reject(error);
+    console.log(result.toString());
+    Promise.resolve(result);
+    return undefined;
+  }));
+}

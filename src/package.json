@@ -4,6 +4,7 @@
 		"@ibm-cloud/cloudant": "^0.9.0",
 		"gray-matter": "^4.0.3",
 		"markdownlint": "^0.33.0",
-		"stream-json": "^1.8.0"
+		"stream-json": "^1.8.0",
+		"toml": "^3.0.0"
 	}
 }
