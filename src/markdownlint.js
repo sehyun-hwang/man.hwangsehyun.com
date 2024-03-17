@@ -1,13 +1,32 @@
 import markdownlint from 'markdownlint';
 
-const rule = {
-  names: ['test'],
-  tags: ['d'],
-  description: 'd',
-  function: function MD025({ frontMatterLines }, onError) {
-    frontMatterLines.length && console.log(frontMatterLines);
-  },
-};
+class FrontMatterParserRule {
+  names = ['frontmatter-parser'];
+
+  tags = ['tag'];
+
+  description = 'description';
+
+  constructor() {
+    const frontMatters = {};
+
+    function frontmatterParserRuleFunction({ name, frontMatterLines }, onError) {
+      if (!frontMatterLines.length) {
+        frontMatters[name] = null;
+        return;
+      }
+      console.log(name, frontMatterLines);
+      frontMatters[name] = frontMatterLines.join('\n');
+    }
+
+    Object.assign(this, {
+      frontMatters,
+      function: frontmatterParserRuleFunction,
+    });
+  }
+}
+
+const frontMatterParserRule = new FrontMatterParserRule();
 
 const options = {
   // "files": ["good.md", "bad.md"],
@@ -21,9 +40,10 @@ title = foo
 ## Frontmatter file
 `,
   },
-  customRules: [rule],
+  customRules: [frontMatterParserRule],
 };
 
 markdownlint(options, (error, result) => {
   console.log(error, result);
+  console.log(frontMatterParserRule.FrontMatterParserRule);
 });
