@@ -1,5 +1,8 @@
+import { join } from 'path';
+
 import { JSDOM } from 'jsdom';
 
+const HUGO_CONTENT_DIR = 'content';
 // @TODO Change to https://developer.mozilla.org/en-US/docs/Web/HTML/Element/details
 const TYPE2HTML_TAGS = {
   folder: 'ul',
@@ -22,6 +25,14 @@ export function sortNodes(unsorted) {
   return sortedMap.values();
 }
 
+function* generateParentNode(element) {
+  let current = element;
+  do {
+    yield current;
+    // eslint-disable-next-line no-cond-assign
+  } while (current = current.parentNode);
+}
+
 export default class StackEditDomModel {
   constructor(nodes) {
     const dom = new JSDOM();
@@ -29,10 +40,12 @@ export default class StackEditDomModel {
     Object.assign(this, { dom, document, nodes });
 
     // eslint-disable-next-line no-restricted-syntax
-    for (const node of sortNodes(this.nodes)) {
-      console.log(node);
+    for (const node of sortNodes(this.nodes))
       this.appendNode(node);
-    }
+  }
+
+  get html() {
+    return this.document.documentElement.outerHTML;
   }
 
   appendNode(dbItem) {
@@ -40,6 +53,7 @@ export default class StackEditDomModel {
     const { document } = this;
     const element = document.createElement(TYPE2HTML_TAGS[dbItem.type]);
     element.id = dbItem.id;
+    element.dataset.name = dbItem.name;
     element.textContent = dbItem.name;
 
     const parent = dbItem.parentId
@@ -49,7 +63,22 @@ export default class StackEditDomModel {
     return element;
   }
 
-  get innerHTML() {
-    return this.document.documentElement.innerHTML;
+  assignDocId(idPairs) {
+    idPairs.forEach(([docId, itemId]) => {
+      this.document.getElementById(itemId).dataset.docid = docId;
+    });
+  }
+
+  getPathFromId(itemId) {
+    console.log('Querying', itemId);
+    const element = this.document.getElementById(itemId);
+    const names = Array.from(generateParentNode(element)).map(parent => parent?.dataset?.name || '');
+    names.reverse();
+    const path = join(HUGO_CONTENT_DIR, ...names);
+    if (path.endsWith('.generated.md'))
+      return path;
+    if (path.endsWith('.md'))
+      return path.replace('.md', '.generated.md');
+    return path + '.generated.md';
   }
 }

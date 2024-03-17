@@ -2,8 +2,10 @@
 import { Writable } from 'stream';
 import { strict as assert } from 'assert';
 import { createWriteStream } from 'fs';
+import { dirname } from 'path';
+import { mkdir } from 'fs/promises';
 import { pipeline } from 'stream/promises';
-import { text } from 'node:stream/consumers';
+import { text } from 'stream/consumers';
 
 import { ChangesFollower, CloudantV1 } from '@ibm-cloud/cloudant';
 import Pick from 'stream-json/filters/Pick.js';
@@ -139,7 +141,7 @@ if (missingFrontmatterDocs.length) {
 }
 
 // Tree start
-const { result } = await client.postFind({
+const { result: treeResult } = await client.postFind({
   db,
   selector: {
     item: {
@@ -149,15 +151,18 @@ const { result } = await client.postFind({
     },
   },
 });
-console.log('Cloudant index warning:', result.warning);
-const domModel = new StackEditDomModel(result.docs.map(({ item }) => item));
-console.log(domModel.innerHTML);
+console.log('Cloudant index warning:', treeResult.warning);
+const domModel = new StackEditDomModel(treeResult.docs.map(({ item }) => item));
+console.log(domModel.html);
 
-// throw new Error();
+domModel.assignDocId(treeResult.docs.filter(({ item: { type } }) => type === 'file')
+  .map(({ _id, item: { id } }) => [_id, id]));
+console.log(domModel.html);
+console.log(domModel.getPathFromId('ZIg3BhlkY0gYHgDH'));
 // Tree end
 
 // Content start
-const allDocs = await client.postAllDocsAsStream({
+false && await client.postAllDocsAsStream({
   db,
   startKey: FRONTMATTER_PREFIX,
   endKey: FRONTMATTER_PREFIX + '\ufff0',
@@ -176,7 +181,7 @@ const allDocs = await client.postAllDocsAsStream({
       },
     }),
   ));
-console.log(allDocs);
+// @TODO delete stale frontmatters
 // Content end
 
 const changesFollower = new ChangesFollower(client, {
@@ -190,17 +195,21 @@ class ChangesWritable extends Writable {
   }
 
   // eslint-disable-next-line class-methods-use-this
-  _write({ id: docId, changes, doc: { time } }, _, callback) {
-    console.log(docId, changes);
+  async _write({ id: docId, changes, doc: { time, item: { id } } }, _, callback) {
     const date = new Date(time);
-    console.log({ docId, date });
+    console.log({ docId, id }, date, changes);
 
-    client.getAttachment({
+    const path = domModel.getPathFromId(id.replace('/content', ''));
+    const folder = dirname(path);
+    console.log({ path, folder });
+    await mkdir(folder, { recursive: true });
+
+    const { result } = await client.getAttachment({
       db,
       docId,
       attachmentName: 'data',
-    })
-      .pipe(createWriteStream('content/about.md'));
+    });
+    result.pipe(createWriteStream(path));
 
     callback();
   }
