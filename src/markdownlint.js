@@ -70,7 +70,7 @@ export function parseFrontMatters(strings, prefix = '') {
     .then(frontMatters => Object.entries(frontMatters)
       .map(([docId, frontmatter]) => ({
         _id: prefix + docId,
-        hasFrontMatter: Boolean(frontmatter),
+        has: Boolean(frontmatter),
         ...frontmatter,
       })));
 }
