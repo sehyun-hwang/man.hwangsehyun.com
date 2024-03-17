@@ -1,3 +1,4 @@
+/* eslint-disable max-classes-per-file */
 import { Writable } from 'stream';
 import { strict as assert } from 'assert';
 import { createWriteStream } from 'fs';
@@ -15,6 +16,7 @@ const client = CloudantV1.newInstance({
 });
 const db = 'stackedit';
 const ddoc = 'hugo';
+const VIEW_NAME = 'frontmatter';
 
 const {
   result: {
@@ -31,13 +33,82 @@ try {
     _id: '_design/' + ddoc,
     language: 'javascript',
     views: {
-      frontmatter: { map: frontmatterMap },
+      [VIEW_NAME]: { map: frontmatterMap },
     },
   });
 } catch (error) {
   console.log(frontmatterMap);
   throw error;
 }
+
+class MissingFrontmatterFilterWritable extends Writable {
+  prev = null;
+
+  constructor() {
+    super({ objectMode: true });
+    this.missingFrontmatterDocs = [];
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  _write(data, encoding, callback) {
+    // console.log(data);
+    const { prev } = this;
+    this.prev = data;
+
+    data.value.doc || this.missingFrontmatterDocs.push(prev.value.doc);
+    return callback();
+  }
+}
+
+/*
+{
+  key: 0,
+  value: {
+    id: '8fd6776b79dde459ab2ba635c9b75eab',
+    key: [ '8fd6776b79dde459ab2ba635c9b75eab', 0 ],
+    value: {
+      id: 'ZIg3BhlkY0gYHgDH/content',
+      type: 'content',
+      hash: -367382062
+    },
+    doc: {
+      _id: '8fd6776b79dde459ab2ba635c9b75eab',
+      _rev: '6-190b09dd7912cfc1b0237c9b4c29ed79',
+      item: [Object],
+      time: 1710607697528,
+      sub: 'go:112316266778963098909',
+      _attachments: [Object]
+    }
+  }
+}
+{
+  key: 1,
+  value: {
+    id: '8fd6776b79dde459ab2ba635c9b75eab',
+    key: [ '8fd6776b79dde459ab2ba635c9b75eab', 1 ],
+    value: { _id: 'frontmatter.-367382062' },
+    doc: null
+  }
+}
+*/
+const missingFrontmatterFilterWritable = new MissingFrontmatterFilterWritable();
+
+await client.postViewAsStream({
+  db,
+  ddoc,
+  view: VIEW_NAME,
+  includeDocs: true,
+})
+  .then(response => pipeline(
+    response.result,
+    parser(),
+    new Pick({ filter: 'rows' }),
+    new StreamArray(),
+    missingFrontmatterFilterWritable,
+  ));
+
+console.log(missingFrontmatterFilterWritable.missingFrontmatterDocs);
+// throw new Error();
 
 const FRONTMATTER_PREFIX = 'frontmatter.';
 const allDocs = await client.postAllDocsAsStream({
