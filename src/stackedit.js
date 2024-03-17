@@ -10,6 +10,7 @@ import Pick from 'stream-json/filters/Pick.js';
 import StreamArray from 'stream-json/streamers/StreamArray.js';
 import parser from 'stream-json';
 
+import StackEditDomModel from './jsdom.js';
 import { frontmatterMap } from './view-function.js';
 import { parseFrontMatters } from './markdownlint.js';
 
@@ -112,30 +113,50 @@ await client.postViewAsStream({
 const { missingFrontmatterDocs } = missingFrontmatterFilterWritable;
 console.log('Parsed frontmatter missing in DB', missingFrontmatterDocs.length);
 
-const attachmentsByDocId = Object.fromEntries(
-  await Promise.all(missingFrontmatterDocs.map(({
-    _id: docId,
-    item: { hash },
-  }) => client.getAttachment({
-    db,
-    docId,
-    attachmentName: 'data',
-  })
-    .then(async ({ result }) => [hash.toString(), await text(result)]))),
-);
-
 const FRONTMATTER_PREFIX = 'frontmatter.';
-const frontMatterBulkDocs = await parseFrontMatters(attachmentsByDocId, FRONTMATTER_PREFIX);
-console.log('Inserting bulk docs of frontmatters', frontMatterBulkDocs);
 
-await client.postBulkDocs({
+if (missingFrontmatterDocs.length) {
+  const attachmentsByDocId = Object.fromEntries(
+    await Promise.all(missingFrontmatterDocs.map(({
+      _id: docId,
+      item: { hash },
+    }) => client.getAttachment({
+      db,
+      docId,
+      attachmentName: 'data',
+    })
+      .then(async ({ result }) => [hash.toString(), await text(result)]))),
+  );
+
+  const frontMatterBulkDocs = await parseFrontMatters(attachmentsByDocId, FRONTMATTER_PREFIX);
+  console.log('Inserting bulk docs of frontmatters', frontMatterBulkDocs);
+
+  await client.postBulkDocs({
+    db,
+    bulkDocs: { docs: frontMatterBulkDocs },
+  })
+    .then(({ result }) => console.log('Parsed frontmatter inserted:', result.length));
+}
+
+// Tree start
+const { result } = await client.postFind({
   db,
-  bulkDocs: { docs: frontMatterBulkDocs },
-})
-  .then(({ result }) => console.log('Parsed frontmatter inserted:', result.length));
+  selector: {
+    item: {
+      type: {
+        $in: ['folder', 'file'],
+      },
+    },
+  },
+});
+console.log('Cloudant index warning:', result.warning);
+const domModel = new StackEditDomModel(result.docs.map(({ item }) => item));
+console.log(domModel.innerHTML);
 
 // throw new Error();
+// Tree end
 
+// Content start
 const allDocs = await client.postAllDocsAsStream({
   db,
   startKey: FRONTMATTER_PREFIX,
@@ -155,8 +176,8 @@ const allDocs = await client.postAllDocsAsStream({
       },
     }),
   ));
-
 console.log(allDocs);
+// Content end
 
 const changesFollower = new ChangesFollower(client, {
   db,
