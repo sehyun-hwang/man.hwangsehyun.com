@@ -3,7 +3,7 @@
 /* eslint-disable no-underscore-dangle */
 
 const frontmatterMapFunction = function (doc) {
-  if (doc.item.type === -'content') {
+  if (doc.item.type === 'content') {
     emit([doc._id, 0], doc.item);
     emit([doc._id, 1], {
       _id: 'frontmatter.' + doc.item.hash,
