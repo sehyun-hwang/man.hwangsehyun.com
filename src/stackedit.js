@@ -1,4 +1,5 @@
 import { Writable } from 'stream';
+import { strict as assert } from 'assert';
 import { createWriteStream } from 'fs';
 import { pipeline } from 'stream/promises';
 
@@ -7,10 +8,36 @@ import Pick from 'stream-json/filters/Pick.js';
 import StreamArray from 'stream-json/streamers/StreamArray.js';
 import parser from 'stream-json';
 
+import { frontmatterMap } from './view-function.js';
+
 const client = CloudantV1.newInstance({
   serviceUrl: 'https://618cf517-eb22-487f-ab2c-8366988f9b91-bluemix.cloudant.com',
 });
 const db = 'stackedit';
+const ddoc = 'hugo';
+
+const {
+  result: {
+    _rev,
+    ...designDocument
+  },
+} = await client.getDesignDocument({
+  db,
+  ddoc,
+});
+
+try {
+  assert.deepEqual(designDocument, {
+    _id: '_design/' + ddoc,
+    language: 'javascript',
+    views: {
+      frontmatter: { map: frontmatterMap },
+    },
+  });
+} catch (error) {
+  console.log(frontmatterMap);
+  throw error;
+}
 
 const FRONTMATTER_PREFIX = 'frontmatter.';
 const allDocs = await client.postAllDocsAsStream({
