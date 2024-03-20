@@ -12,9 +12,12 @@ import Pick from 'stream-json/filters/Pick.js';
 import StreamArray from 'stream-json/streamers/StreamArray.js';
 import parser from 'stream-json';
 
-import StackEditDomModel from './jsdom.js';
+import StackEditDomData from './dom-data.js';
+import StackEditDomModel from './dom-model.js';
 import { frontmatterMap } from './view-function.js';
 import { parseFrontMatters } from './markdownlint.js';
+
+const FRONTMATTER_PREFIX = 'frontmatter.';
 
 const client = CloudantV1.newInstance({
   serviceUrl: 'https://618cf517-eb22-487f-ab2c-8366988f9b91-bluemix.cloudant.com',
@@ -23,27 +26,29 @@ const db = 'stackedit';
 const ddoc = 'hugo';
 const VIEW_NAME = 'frontmatter';
 
-const {
-  result: {
-    _rev,
-    ...designDocument
-  },
-} = await client.getDesignDocument({
-  db,
-  ddoc,
-});
-
-try {
-  assert.deepEqual(designDocument, {
-    _id: '_design/' + ddoc,
-    language: 'javascript',
-    views: {
-      [VIEW_NAME]: { map: frontmatterMap },
+async function assertDesignDocument() {
+  const {
+    result: {
+      _rev,
+      ...designDocument
     },
+  } = await client.getDesignDocument({
+    db,
+    ddoc,
   });
-} catch (error) {
-  console.log(frontmatterMap);
-  throw error;
+
+  try {
+    assert.deepEqual(designDocument, {
+      _id: '_design/' + ddoc,
+      language: 'javascript',
+      views: {
+        [VIEW_NAME]: { map: frontmatterMap },
+      },
+    });
+  } catch (error) {
+    console.log(frontmatterMap);
+    throw error;
+  }
 }
 
 class MissingFrontmatterFilterWritable extends Writable {
@@ -96,52 +101,54 @@ class MissingFrontmatterFilterWritable extends Writable {
   }
 }
 */
-const missingFrontmatterFilterWritable = new MissingFrontmatterFilterWritable();
 
-await client.postViewAsStream({
-  db,
-  ddoc,
-  view: VIEW_NAME,
-  includeDocs: true,
-})
-  .then(response => pipeline(
-    response.result,
-    parser(),
-    new Pick({ filter: 'rows' }),
-    new StreamArray(),
-    missingFrontmatterFilterWritable,
-  ));
+async function queryDocsMissingFrontMatter() {
+  const missingFrontmatterFilterWritable = new MissingFrontmatterFilterWritable();
 
-const { missingFrontmatterDocs } = missingFrontmatterFilterWritable;
-console.log('Parsed frontmatter missing in DB', missingFrontmatterDocs.length);
-
-const FRONTMATTER_PREFIX = 'frontmatter.';
-
-if (missingFrontmatterDocs.length) {
-  const attachmentsByDocId = Object.fromEntries(
-    await Promise.all(missingFrontmatterDocs.map(({
-      _id: docId,
-      item: { hash },
-    }) => client.getAttachment({
-      db,
-      docId,
-      attachmentName: 'data',
-    })
-      .then(async ({ result }) => [hash.toString(), await text(result)]))),
-  );
-
-  const frontMatterBulkDocs = await parseFrontMatters(attachmentsByDocId, FRONTMATTER_PREFIX);
-  console.log('Inserting bulk docs of frontmatters', frontMatterBulkDocs);
-
-  await client.postBulkDocs({
+  await client.postViewAsStream({
     db,
-    bulkDocs: { docs: frontMatterBulkDocs },
+    ddoc,
+    view: VIEW_NAME,
+    includeDocs: true,
   })
-    .then(({ result }) => console.log('Parsed frontmatter inserted:', result.length));
+    .then(response => pipeline(
+      response.result,
+      parser(),
+      new Pick({ filter: 'rows' }),
+      new StreamArray(),
+      missingFrontmatterFilterWritable,
+    ));
+
+  const { missingFrontmatterDocs } = missingFrontmatterFilterWritable;
+  console.log('Parsed frontmatter missing in DB', missingFrontmatterDocs.length);
+  return missingFrontmatterDocs;
 }
 
-// Tree start
-const { result: treeResult } = await client.postFind({
+const insertFrontMatterDocs = frontMatterDocs => Promise.all(frontMatterDocs.map(({
+  _id: docId,
+  item: { hash },
+}) => client.getAttachment({
+  db,
+  docId,
+  attachmentName: 'data',
+})
+
+  .then(async ({ result }) => [hash.toString(), await text(result)])))
+
+  .then(async attachmentsEntires => {
+    const attachmentsByDocId = Object.fromEntries(attachmentsEntires);
+
+    const frontMatterBulkDocs = await parseFrontMatters(attachmentsByDocId, FRONTMATTER_PREFIX);
+    console.log('Inserting bulk docs of frontmatters', frontMatterBulkDocs);
+
+    const { result } = await client.postBulkDocs({
+      db,
+      bulkDocs: { docs: frontMatterBulkDocs },
+    });
+    console.log('Parsed frontmatter inserted:', result.length);
+  });
+
+const fetchDomData = () => client.postFind({
   db,
   selector: {
     item: {
@@ -150,19 +157,64 @@ const { result: treeResult } = await client.postFind({
       },
     },
   },
+}).then(({ result: { warning, docs } }) => {
+  console.log('Cloudant index warning:', warning);
+  return new StackEditDomData(docs);
 });
-console.log('Cloudant index warning:', treeResult.warning);
-const domModel = new StackEditDomModel(treeResult.docs.map(({ item }) => item));
-console.log(domModel.html);
 
-domModel.assignDocId(treeResult.docs.filter(({ item: { type } }) => type === 'file')
-  .map(({ _id, item: { id } }) => [_id, id]));
+class ChangesWritable extends Writable {
+  constructor(client, domModel) {
+    Object.assign(this, { client, domModel });
+    super({ objectMode: true });
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  async _write({ id: docId, changes, doc: { time, item: { id } } }, _encoding, callback) {
+    const date = new Date(time);
+    console.log({ docId, id }, date, changes);
+
+    const path = this.domModel.getPathFromId(id.replace('/content', ''));
+    const folder = dirname(path);
+    console.log({ path, folder });
+    await mkdir(folder, { recursive: true });
+
+    const { result } = await this.client.getAttachment({
+      db,
+      docId,
+      attachmentName: 'data',
+    });
+    result.pipe(createWriteStream(path));
+
+    callback();
+  }
+}
+
+function followChanges() {
+  const changesFollower = new ChangesFollower(client, {
+    db,
+    includeDocs: true,
+  });
+
+  pipeline(changesFollower.start(), new ChangesWritable(client, domModel))
+    .catch(err => {
+      console.log(err);
+    });
+
+  console.log('Following changes in db', db);
+}
+
+await assertDesignDocument();
+const missingFrontmatterDocs = await queryDocsMissingFrontMatter();
+missingFrontmatterDocs.length && insertFrontMatterDocs(missingFrontmatterDocs);
+
+const domData = await fetchDomData();
+const domModel = new StackEditDomModel(domData.sortNodes());
 console.log(domModel.html);
-console.log(domModel.getPathFromId('ZIg3BhlkY0gYHgDH'));
-// Tree end
+domData.assignDocId(domModel.assignDocId.bind(domModel));
+console.log(domModel.html);
 
 // Content start
-false && await client.postAllDocsAsStream({
+await client.postAllDocsAsStream({
   db,
   startKey: FRONTMATTER_PREFIX,
   endKey: FRONTMATTER_PREFIX + '\ufff0',
@@ -175,49 +227,14 @@ false && await client.postAllDocsAsStream({
     new StreamArray(),
     new Writable({
       objectMode: true,
-      write(data, encoding, callback) {
+      write(data, _encoding, callback) {
         console.log(data);
         callback();
       },
     }),
   ));
+console.log(domModel.html);
 // @TODO delete stale frontmatters
 // Content end
 
-const changesFollower = new ChangesFollower(client, {
-  db,
-  includeDocs: true,
-});
-
-class ChangesWritable extends Writable {
-  constructor() {
-    super({ objectMode: true });
-  }
-
-  // eslint-disable-next-line class-methods-use-this
-  async _write({ id: docId, changes, doc: { time, item: { id } } }, _, callback) {
-    const date = new Date(time);
-    console.log({ docId, id }, date, changes);
-
-    const path = domModel.getPathFromId(id.replace('/content', ''));
-    const folder = dirname(path);
-    console.log({ path, folder });
-    await mkdir(folder, { recursive: true });
-
-    const { result } = await client.getAttachment({
-      db,
-      docId,
-      attachmentName: 'data',
-    });
-    result.pipe(createWriteStream(path));
-
-    callback();
-  }
-}
-
-pipeline(changesFollower.start(), new ChangesWritable())
-  .catch(err => {
-    console.log(err);
-  });
-
-console.log('Following changes in db', db);
+false && followChanges();

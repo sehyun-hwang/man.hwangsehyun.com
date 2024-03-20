@@ -9,22 +9,6 @@ const TYPE2HTML_TAGS = {
   file: 'li',
 };
 
-export function sortNodes(unsorted) {
-  const sortedMap = new Map(
-    unsorted.filter(({ parentId }) => !parentId).map(node => [node.id, node]),
-  );
-
-  do {
-    unsorted.forEach(node => {
-      if (sortedMap.has(node.id))
-        return;
-      sortedMap.has(node.parentId) && sortedMap.set(node.id, node);
-    });
-  } while (sortedMap.size !== unsorted.length);
-
-  return sortedMap.values();
-}
-
 function* generateParentNode(element) {
   let current = element;
   do {
@@ -34,13 +18,13 @@ function* generateParentNode(element) {
 }
 
 export default class StackEditDomModel {
-  constructor(nodes) {
+  constructor(sortedDocs) {
     const dom = new JSDOM();
     const { document } = dom.window;
-    Object.assign(this, { dom, document, nodes });
+    Object.assign(this, { dom, document, docs: sortedDocs });
 
     // eslint-disable-next-line no-restricted-syntax
-    for (const node of sortNodes(this.nodes))
+    for (const node of sortedDocs.values())
       this.appendNode(node);
   }
 
@@ -63,10 +47,8 @@ export default class StackEditDomModel {
     return element;
   }
 
-  assignDocId(idPairs) {
-    idPairs.forEach(([docId, itemId]) => {
-      this.document.getElementById(itemId).dataset.docid = docId;
-    });
+  assignDocId(docId, itemId) {
+    this.document.getElementById(itemId).dataset.docid = docId;
   }
 
   getPathFromId(itemId) {
