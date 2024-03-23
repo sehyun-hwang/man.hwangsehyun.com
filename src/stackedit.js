@@ -1,9 +1,6 @@
 /* eslint-disable max-classes-per-file */
-import { Writable } from 'stream';
+import { Transform, Writable } from 'stream';
 import { strict as assert } from 'assert';
-import { createWriteStream } from 'fs';
-import { dirname } from 'path';
-import { mkdir } from 'fs/promises';
 import { pipeline } from 'stream/promises';
 import { text } from 'stream/consumers';
 
@@ -12,8 +9,10 @@ import Pick from 'stream-json/filters/Pick.js';
 import StreamArray from 'stream-json/streamers/StreamArray.js';
 import parser from 'stream-json';
 
+import FileSynchronizer from './file-sync.js';
 import StackEditDomData from './dom-data.js';
 import StackEditDomModel from './dom-model.js';
+import StackEditPath from './path.js';
 import { frontmatterMap } from './view-function.js';
 import { parseFrontMatters } from './markdownlint.js';
 
@@ -51,21 +50,38 @@ async function assertDesignDocument() {
   }
 }
 
-class MissingFrontmatterFilterWritable extends Writable {
+class DatabaseWritable extends Writable {
   prev = null;
 
   constructor() {
     super({ objectMode: true });
     this.missingFrontmatterDocs = [];
+    this.idByNumberHash = new Map();
+    this.attachmentHashByDocId = new Map();
   }
 
   // eslint-disable-next-line class-methods-use-this
   _write(data, encoding, callback) {
-    // console.log(data);
     const { prev } = this;
     this.prev = data;
+    // console.log(data);
 
-    data.value.doc || this.missingFrontmatterDocs.push(prev.value.doc);
+    const { doc, value } = data.value;
+    if (!doc) {
+      this.missingFrontmatterDocs.push(prev.value.doc);
+      return callback();
+    }
+
+    if (value?.type !== 'content')
+      return callback();
+
+    const id = value.id.replace('/content', '');
+    this.idByNumberHash.set(value.hash, id);
+    this.attachmentHashByDocId.set(
+      id,
+      // eslint-disable-next-line no-underscore-dangle
+      doc._attachments.data.digest.replace('md5-', ''),
+    );
     return callback();
   }
 }
@@ -102,8 +118,8 @@ class MissingFrontmatterFilterWritable extends Writable {
 }
 */
 
-async function queryDocsMissingFrontMatter() {
-  const missingFrontmatterFilterWritable = new MissingFrontmatterFilterWritable();
+async function buildDatabase() {
+  const databaseWritable = new DatabaseWritable();
 
   await client.postViewAsStream({
     db,
@@ -116,30 +132,33 @@ async function queryDocsMissingFrontMatter() {
       parser(),
       new Pick({ filter: 'rows' }),
       new StreamArray(),
-      missingFrontmatterFilterWritable,
+      databaseWritable,
     ));
 
-  const { missingFrontmatterDocs } = missingFrontmatterFilterWritable;
-  console.log('Parsed frontmatter missing in DB', missingFrontmatterDocs.length);
-  return missingFrontmatterDocs;
+  console.log('Parsed frontmatter missing in DB:', databaseWritable.missingFrontmatterDocs.length);
+  console.log('Total contents:', databaseWritable.attachmentHashByDocId.size);
+  return databaseWritable;
 }
 
-const insertFrontMatterDocs = frontMatterDocs => Promise.all(frontMatterDocs.map(({
-  _id: docId,
-  item: { hash },
-}) => client.getAttachment({
-  db,
-  docId,
-  attachmentName: 'data',
-})
-
-  .then(async ({ result }) => [hash.toString(), await text(result)])))
+const insertFrontMatterDocs = frontMatterDocs => Promise.all(
+  frontMatterDocs.map(({
+    _id: docId,
+    item: { hash },
+  }) => client.getAttachment({
+    db,
+    docId,
+    attachmentName: 'data',
+  })
+    .then(async ({ result }) => [hash.toString(), await text(result)])),
+)
 
   .then(async attachmentsEntires => {
     const attachmentsByDocId = Object.fromEntries(attachmentsEntires);
-
     const frontMatterBulkDocs = await parseFrontMatters(attachmentsByDocId, FRONTMATTER_PREFIX);
-    console.log('Inserting bulk docs of frontmatters', frontMatterBulkDocs);
+    frontMatterDocs.forEach(({ _id }, i) => {
+      frontMatterBulkDocs[i].contentId = _id;
+    });
+    console.log('Inserting bulk docs of frontmatter', frontMatterBulkDocs);
 
     const { result } = await client.postBulkDocs({
       db,
@@ -163,9 +182,14 @@ const fetchDomData = () => client.postFind({
 });
 
 class ChangesWritable extends Writable {
+  /**
+   * @type {CloudantV1}
+   */
+  client;
+
   constructor(client, domModel) {
-    Object.assign(this, { client, domModel });
     super({ objectMode: true });
+    Object.assign(this, { client, domModel });
   }
 
   // eslint-disable-next-line class-methods-use-this
@@ -173,18 +197,15 @@ class ChangesWritable extends Writable {
     const date = new Date(time);
     console.log({ docId, id }, date, changes);
 
-    const path = this.domModel.getPathFromId(id.replace('/content', ''));
-    const folder = dirname(path);
-    console.log({ path, folder });
-    await mkdir(folder, { recursive: true });
-
-    const { result } = await this.client.getAttachment({
+    const names = this.domModel.getNamesFromId(id.replace('/content', ''));
+    const { headers: { etag }, result } = await this.client.getAttachment({
       db,
       docId,
       attachmentName: 'data',
     });
-    result.pipe(createWriteStream(path));
 
+    const path = new StackEditPath({ names, etag });
+    result.pipe(path.createMarkdownWritable());
     callback();
   }
 }
@@ -204,37 +225,80 @@ function followChanges() {
 }
 
 await assertDesignDocument();
-const missingFrontmatterDocs = await queryDocsMissingFrontMatter();
-missingFrontmatterDocs.length && insertFrontMatterDocs(missingFrontmatterDocs);
+const database = await buildDatabase();
+database.missingFrontmatterDocs.length && insertFrontMatterDocs(database.missingFrontmatterDocs);
 
 const domData = await fetchDomData();
 const domModel = new StackEditDomModel(domData.sortNodes());
 console.log(domModel.html);
 domData.assignDocId(domModel.assignDocId.bind(domModel));
 console.log(domModel.html);
+domModel.assignHashes(database.attachmentHashByDocId);
+console.log(domModel.html);
 
 // Content start
+const deleteStaleFrontmatterDocsParam = [];
+const transform = new Transform({
+  objectMode: true,
+  transform({ value }, _encoding, callback) {
+    const numberHash = Number(value.id.replace(FRONTMATTER_PREFIX, ''));
+    if (database.idByNumberHash.has(numberHash))
+      callback(null, value);
+    else {
+      const { _id, _rev } = value.doc;
+      deleteStaleFrontmatterDocsParam.push({
+        _id, _rev, _deleted: true,
+      });
+      callback();
+    }
+  },
+});
+
 await client.postAllDocsAsStream({
   db,
   startKey: FRONTMATTER_PREFIX,
   endKey: FRONTMATTER_PREFIX + '\ufff0',
   includeDocs: true,
 })
-  .then(response => pipeline(
-    response.result,
+  .then(({ result }) => pipeline(
+    result,
     parser(),
     new Pick({ filter: 'rows' }),
     new StreamArray(),
-    new Writable({
-      objectMode: true,
-      write(data, _encoding, callback) {
-        console.log(data);
-        callback();
-      },
-    }),
+    transform,
   ));
-console.log(domModel.html);
-// @TODO delete stale frontmatters
+
+const correctMarkdownPaths = await transform.toArray()
+  .then(frontmatterDocs => frontmatterDocs.map(({ id: docId, doc: { contentId } }) => {
+    const id = database.idByNumberHash.get(Number(docId.replace(FRONTMATTER_PREFIX, '')));
+    const names = domModel.getNamesFromId(id);
+    const { hash: etag } = domModel.getDatasetFromId(id);
+    return new StackEditPath({ contentId, names, etag });
+  }));
+
+const synchronizer = new FileSynchronizer(correctMarkdownPaths);
+await synchronizer.globLocalPaths();
+
+const gathered = await Promise.all(Array.from(synchronizer.sync()).flatMap(path => [
+  client.getAttachment({
+    db,
+    docId: path.contentId,
+    attachmentName: 'data',
+  }),
+  path.createMarkdownWritable(),
+]));
+
+await Promise.all((function* pipe() {
+  for (let i = 0; i < gathered.length; i += 2)
+    yield pipeline(gathered[i].result, gathered[i + 1]);
+})());
+
+deleteStaleFrontmatterDocsParam.length && console.log(await client.postBulkDocs({
+  db,
+  bulkDocs: {
+    docs: deleteStaleFrontmatterDocsParam,
+  },
+}));
 // Content end
 
 false && followChanges();

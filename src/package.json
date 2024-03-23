@@ -2,13 +2,16 @@
 	"type": "module",
 	"dependencies": {
 		"@ibm-cloud/cloudant": "^0.9.0",
+		"glob": "^10.3.10",
 		"gray-matter": "^4.0.3",
 		"jsdom": "^24.0.0",
 		"markdownlint": "^0.33.0",
+		"set.prototype.difference": "^1.1.4",
 		"stream-json": "^1.8.0",
 		"toml": "^3.0.0"
 	},
 	"devDependencies": {
-		"@types/jsdom": "^21.1.6"
+		"@types/jsdom": "^21.1.6",
+		"@types/stream-json": "^1.7.7"
 	}
 }
