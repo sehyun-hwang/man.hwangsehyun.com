@@ -20,8 +20,8 @@ export default class StackEditDomData {
     return sortedMap;
   }
 
-  assignDocId(iDcallback) {
+  assignDocId(idCallback) {
     this.docs.filter(({ item: { type } }) => type === 'file')
-      .forEach(({ _id, item: { id } }) => iDcallback(_id, id));
+      .forEach(({ _id, item: { id } }) => idCallback(_id, id));
   }
 }

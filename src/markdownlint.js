@@ -90,3 +90,8 @@ export function runMarkdownLint(markdown) {
     return undefined;
   }));
 }
+
+// console.log(await parseFrontMatters([`+++
+// foo = "bar"
+// +++
+// `]));
