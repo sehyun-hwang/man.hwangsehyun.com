@@ -53,7 +53,7 @@ class FrontMatterParserRule {
   }
 }
 
-export function parseFrontMatters(strings, prefix = '') {
+export function parseFrontMatters(strings) {
   const frontMatterParserRule = new FrontMatterParserRule();
 
   return new Promise((resolve, reject) => markdownlint({
@@ -68,8 +68,8 @@ export function parseFrontMatters(strings, prefix = '') {
   }))
 
     .then(frontMatters => Object.entries(frontMatters)
-      .map(([docId, frontmatter]) => ({
-        _id: prefix + docId,
+      .map(([contentId, frontmatter]) => ({
+        contentId,
         has: Boolean(frontmatter),
         ...frontmatter,
       })));

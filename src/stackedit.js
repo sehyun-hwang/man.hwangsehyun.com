@@ -149,17 +149,22 @@ const insertFrontMatterDocs = frontMatterDocs => Promise.all(
     docId,
     attachmentName: 'data',
   })
-    .then(async ({ result }) => [hash.toString(), await text(result)])),
+    .then(async ({ result }) => [docId, await text(result), hash])),
 )
 
   .then(async attachmentsEntires => {
     const attachmentsByDocId = Object.fromEntries(attachmentsEntires);
-    const frontMatterBulkDocs = await parseFrontMatters(attachmentsByDocId, FRONTMATTER_PREFIX);
-    frontMatterDocs.forEach(({ _id }, i) => {
-      frontMatterBulkDocs[i].contentId = _id;
-    });
-    console.log('Inserting bulk docs of frontmatter', frontMatterBulkDocs);
+    const frontMatterBulkDocs = await parseFrontMatters(attachmentsByDocId);
+    const hashByDocId = new Map();
+    // eslint-disable-next-line no-unused-vars
+    attachmentsEntires.forEach(([docId, _, hash]) => hashByDocId.set(docId, hash));
 
+    frontMatterBulkDocs.forEach(doc => {
+      // eslint-disable-next-line no-underscore-dangle, no-param-reassign
+      doc._id = FRONTMATTER_PREFIX + hashByDocId.get(doc.contentId);
+    });
+
+    console.log('Inserting bulk docs of frontmatter', frontMatterBulkDocs);
     const { result } = await client.postBulkDocs({
       db,
       bulkDocs: { docs: frontMatterBulkDocs },
@@ -281,7 +286,7 @@ await synchronizer.calculate();
 
 const downloadCandidatePaths = Array.from(synchronizer.generateDownloadCandidates());
 if (downloadCandidatePaths.length) {
-  console.log('Downloading', downloadCandidatePaths.length);
+  console.log('Downloading', downloadCandidatePaths);
   const gathered = await Promise.all(downloadCandidatePaths.flatMap(path => [
     client.getAttachment({
       db,
@@ -308,5 +313,3 @@ if (deleteStaleFrontmatterDocsParam.length) {
 }
 
 false && followChanges();
-
-/* from SDo34UhtVnPhzHnvsoPEpw== create cff37a2fb24d591a86b2883f010839b1, not 483a37e1486d5673e1cc79efb283c4a7  */
