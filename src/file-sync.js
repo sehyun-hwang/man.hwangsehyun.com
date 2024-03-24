@@ -1,3 +1,5 @@
+import { spawn } from 'child_process';
+
 import { glob } from 'glob';
 import setDifference from 'set.prototype.difference';
 
@@ -19,24 +21,51 @@ export default class FileSynchronizer {
     this.correctPaths = stackEditPaths;
   }
 
-  async globLocalPaths() {
-    this.localPaths = await glob(HUGO_CONTENT_DIR + '/**/*.generated.md');
-    return this.localPaths;
-  }
-
-  * sync() {
-    const pathMap = new Map(this.correctPaths.map(path => [path.markdownPath, path]));
+  async calculate() {
+    const localPaths = await glob(HUGO_CONTENT_DIR + '/**/*.generated.md');
     const correct = new Set(this.correctPaths.map(({ markdownPath }) => markdownPath));
-    const local = new Set(this.localPaths);
+    const local = new Set(localPaths);
 
     const deleteCandidates = setDifference(local, correct);
     const downloadCandidates = setDifference(correct, local);
-    const results = { deleteCandidates, downloadCandidates };
+    const results = { localPaths, deleteCandidates, downloadCandidates };
     console.log(results);
     Object.assign(this, results);
+  }
 
+  async calculateInvalidChecksums() {
+    const { deleteCandidates } = this;
+    const childProcess = spawn('md5sum', ['-c'], {
+      stdio: ['pipe', 'pipe', 'inherit'],
+    });
+    childProcess.stdout.on('data', line => console.log(line.toString()));
+    this.localPaths.forEach(path => {
+      const matches = path.match(/.([^.]{32}).generated.md$/);
+      if (!matches) {
+        console.log('Invalid file name, deleting', path);
+        deleteCandidates.add(path);
+        return;
+      }
+      const checksumLine = matches[1] + ' ' + path + '\n';
+      console.log(checksumLine);
+      childProcess.stdin.write(checksumLine);
+    });
+    childProcess.stdin.end();
+
+    await new Promise((resolve, reject) => childProcess
+      .on('exit', code => {
+        code ? reject(code) : resolve();
+      }));
+  }
+
+  async processInvalidChecksums() {
+    this.calculateInvalidChecksums();
+  }
+
+  * generateDownloadCandidates() {
+    const pathMap = new Map(this.correctPaths.map(path => [path.markdownPath, path]));
     // eslint-disable-next-line no-restricted-syntax
-    for (const path of downloadCandidates)
+    for (const path of this.downloadCandidates)
       yield pathMap.get(path);
   }
 }

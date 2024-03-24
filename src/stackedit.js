@@ -236,7 +236,6 @@ console.log(domModel.html);
 domModel.assignHashes(database.attachmentHashByDocId);
 console.log(domModel.html);
 
-// Content start
 const deleteStaleFrontmatterDocsParam = [];
 const transform = new Transform({
   objectMode: true,
@@ -277,28 +276,37 @@ const correctMarkdownPaths = await transform.toArray()
   }));
 
 const synchronizer = new FileSynchronizer(correctMarkdownPaths);
-await synchronizer.globLocalPaths();
+await synchronizer.calculate();
+// await synchronizer.processInvalidChecksums();
 
-const gathered = await Promise.all(Array.from(synchronizer.sync()).flatMap(path => [
-  client.getAttachment({
+const downloadCandidatePaths = Array.from(synchronizer.generateDownloadCandidates());
+if (downloadCandidatePaths.length) {
+  console.log('Downloading', downloadCandidatePaths.length);
+  const gathered = await Promise.all(downloadCandidatePaths.flatMap(path => [
+    client.getAttachment({
+      db,
+      docId: path.contentId,
+      attachmentName: 'data',
+    }),
+    path.createMarkdownWritable(),
+  ]));
+
+  await Promise.all((function* pipe() {
+    for (let i = 0; i < gathered.length; i += 2)
+      yield pipeline(gathered[i].result, gathered[i + 1]);
+  })());
+}
+
+if (deleteStaleFrontmatterDocsParam.length) {
+  console.log('Deleting', deleteStaleFrontmatterDocsParam.length);
+  await client.postBulkDocs({
     db,
-    docId: path.contentId,
-    attachmentName: 'data',
-  }),
-  path.createMarkdownWritable(),
-]));
-
-await Promise.all((function* pipe() {
-  for (let i = 0; i < gathered.length; i += 2)
-    yield pipeline(gathered[i].result, gathered[i + 1]);
-})());
-
-deleteStaleFrontmatterDocsParam.length && console.log(await client.postBulkDocs({
-  db,
-  bulkDocs: {
-    docs: deleteStaleFrontmatterDocsParam,
-  },
-}));
-// Content end
+    bulkDocs: {
+      docs: deleteStaleFrontmatterDocsParam,
+    },
+  });
+}
 
 false && followChanges();
+
+/* from SDo34UhtVnPhzHnvsoPEpw== create cff37a2fb24d591a86b2883f010839b1, not 483a37e1486d5673e1cc79efb283c4a7  */
