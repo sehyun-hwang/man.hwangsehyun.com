@@ -13,6 +13,7 @@
   # Sets environment variables in the workspace
   env = {
     CLOUDANT_APIKEY = "WaBX9uzUPM0lvHiw_uV3fRUX8pMrpughMgR3E2DaTjFr";
+    ESLINT_USE_FLAT_CONFIG = "true";
   };
 
   idx = {
