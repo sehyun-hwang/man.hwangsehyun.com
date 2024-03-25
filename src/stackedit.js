@@ -75,14 +75,15 @@ class DatabaseWritable extends Writable {
     if (value?.type !== 'content')
       return callback();
 
-    const id = value.id.replace('/content', '');
-    this.idByNumberHash.set(value.hash, id);
-    this.attachmentHashByDocId.set(
-      id,
-      // eslint-disable-next-line no-underscore-dangle
-      doc._attachments.data.digest.replace('md5-', ''),
-    );
+    // eslint-disable-next-line no-underscore-dangle
+    this.updateContent(value, doc._attachments.data.digest.replace('md5-', ''));
     return callback();
+  }
+
+  updateContent(item, etag) {
+    const id = item.id.replace('/content', '');
+    this.idByNumberHash.set(item.hash, id);
+    this.attachmentHashByDocId.set(id, etag);
   }
 }
 
@@ -170,6 +171,7 @@ const insertFrontMatterDocs = frontMatterDocs => Promise.all(
       bulkDocs: { docs: frontMatterBulkDocs },
     });
     console.log('Parsed frontmatter inserted:', result.length);
+    return result.length;
   });
 
 const fetchDomData = () => client.postFind({
@@ -186,108 +188,54 @@ const fetchDomData = () => client.postFind({
   return new StackEditDomData(docs);
 });
 
-class ChangesWritable extends Writable {
-  /**
-   * @type {CloudantV1}
-   */
-  client;
-
-  constructor(client, domModel) {
-    super({ objectMode: true });
-    Object.assign(this, { client, domModel });
-  }
-
-  // eslint-disable-next-line class-methods-use-this
-  async _write({ id: docId, changes, doc: { time, item: { id } } }, _encoding, callback) {
-    const date = new Date(time);
-    console.log({ docId, id }, date, changes);
-
-    const names = this.domModel.getNamesFromId(id.replace('/content', ''));
-    const { headers: { etag }, result } = await this.client.getAttachment({
-      db,
-      docId,
-      attachmentName: 'data',
-    });
-
-    const path = new StackEditPath({ names, etag });
-    result.pipe(path.createMarkdownWritable());
-    callback();
-  }
-}
-
-function followChanges() {
-  const changesFollower = new ChangesFollower(client, {
-    db,
-    includeDocs: true,
+async function processFrontMatters(idByNumberHash) {
+  const deleteStaleFrontmatterDocsParam = [];
+  const transform = new Transform({
+    objectMode: true,
+    transform({ value }, _encoding, callback) {
+      const numberHash = Number(value.id.replace(FRONTMATTER_PREFIX, ''));
+      if (idByNumberHash.has(numberHash))
+        callback(null, value);
+      else {
+        const { _id, _rev } = value.doc;
+        deleteStaleFrontmatterDocsParam.push({
+          _id, _rev, _deleted: true,
+        });
+        callback();
+      }
+    },
   });
 
-  pipeline(changesFollower.start(), new ChangesWritable(client, domModel))
-    .catch(err => {
-      console.log(err);
-    });
+  await client.postAllDocsAsStream({
+    db,
+    startKey: FRONTMATTER_PREFIX,
+    endKey: FRONTMATTER_PREFIX + '\ufff0',
+    includeDocs: true,
+  })
+    .then(({ result }) => pipeline(
+      result,
+      parser(),
+      new Pick({ filter: 'rows' }),
+      new StreamArray(),
+      transform,
+    ));
 
-  console.log('Following changes in db', db);
+  const frontmatterDocsPromise = transform.toArray();
+  await new Promise(resolve => transform.on('end', resolve));
+  if (deleteStaleFrontmatterDocsParam.length) {
+    console.log('Deleting stale frontmatters', deleteStaleFrontmatterDocsParam.length);
+    await client.postBulkDocs({
+      db,
+      bulkDocs: {
+        docs: deleteStaleFrontmatterDocsParam,
+      },
+    });
+  }
+  return frontmatterDocsPromise;
 }
 
-await assertDesignDocument();
-const database = await buildDatabase();
-database.missingFrontmatterDocs.length && insertFrontMatterDocs(database.missingFrontmatterDocs);
-
-const domData = await fetchDomData();
-const domModel = new StackEditDomModel(domData.sortNodes());
-console.log(domModel.html);
-domData.assignDocId(domModel.assignDocId.bind(domModel));
-console.log(domModel.html);
-domModel.assignHashes(database.attachmentHashByDocId);
-console.log(domModel.html);
-
-const deleteStaleFrontmatterDocsParam = [];
-const transform = new Transform({
-  objectMode: true,
-  transform({ value }, _encoding, callback) {
-    const numberHash = Number(value.id.replace(FRONTMATTER_PREFIX, ''));
-    if (database.idByNumberHash.has(numberHash))
-      callback(null, value);
-    else {
-      const { _id, _rev } = value.doc;
-      deleteStaleFrontmatterDocsParam.push({
-        _id, _rev, _deleted: true,
-      });
-      callback();
-    }
-  },
-});
-
-await client.postAllDocsAsStream({
-  db,
-  startKey: FRONTMATTER_PREFIX,
-  endKey: FRONTMATTER_PREFIX + '\ufff0',
-  includeDocs: true,
-})
-  .then(({ result }) => pipeline(
-    result,
-    parser(),
-    new Pick({ filter: 'rows' }),
-    new StreamArray(),
-    transform,
-  ));
-
-const correctMarkdownPaths = await transform.toArray()
-  .then(frontmatterDocs => frontmatterDocs.map(({ id: docId, doc: { contentId } }) => {
-    const id = database.idByNumberHash.get(Number(docId.replace(FRONTMATTER_PREFIX, '')));
-    const names = domModel.getNamesFromId(id);
-    const { hash: etag } = domModel.getDatasetFromId(id);
-    return new StackEditPath({ contentId, names, etag });
-  }));
-
-const synchronizer = new FileSynchronizer(correctMarkdownPaths);
-await synchronizer.processInvalidChecksums();
-await synchronizer.calculate();
-
-const downloadCandidatePaths = Array.from(synchronizer.generateDownloadCandidates());
-if (downloadCandidatePaths.length) {
-  console.log('Downloading', downloadCandidatePaths);
-  const gathered = await Promise.all(downloadCandidatePaths.flatMap(path => [
+async function downloadMarkdownsBatch(stackEditPaths) {
+  const gathered = await Promise.all(stackEditPaths.flatMap(path => [
     client.getAttachment({
       db,
       docId: path.contentId,
@@ -302,14 +250,113 @@ if (downloadCandidatePaths.length) {
   })());
 }
 
-if (deleteStaleFrontmatterDocsParam.length) {
-  console.log('Deleting', deleteStaleFrontmatterDocsParam.length);
-  await client.postBulkDocs({
+class ChangesWritable extends Writable {
+  /**
+   * @type {StackEditDomModel}
+   */
+  domModel;
+
+  /**
+ * @type {Object[]}
+ */
+  frontmatterDocs;
+
+  constructor(arg) {
+    super({ objectMode: true });
+    Object.assign(this, arg);
+  }
+
+  async processNode() {
+    // this.frontmatterDocs; @TODO pop old one and insert new one, and feed to run
+    Object.assign(this, await run());
+  }
+
+  async processContent(docId, item) {
+    const names = this.domModel.getNamesFromId(item.id.replace('/content', ''));
+    const { headers: { etag }, result } = await client.getAttachment({
+      db,
+      docId,
+      attachmentName: 'data',
+    });
+    database.updateContent(item, etag);
+    console.log(database);
+
+    const path = new StackEditPath({ names, etag });
+    console.log('To be deleted', await path.globMarkdown()); // @TODO and prune
+    result.pipe(await path.createMarkdownWritable());
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  async _write({ id: docId, changes, doc: { time, item } }, _encoding, callback) {
+    const { id, type } = item;
+    console.log(new Date(time), type, 'CHANGED', { docId, id, changes });
+    if (type !== 'content') {
+      await this.processNode(item);
+      callback();
+      return;
+    }
+
+    await this.processContent(docId, item);
+    callback();
+  }
+}
+/**
+ * @param {ChangesWritable} changesWritable
+ */
+function followChanges(changesWritable) {
+  const changesFollower = new ChangesFollower(client, {
     db,
-    bulkDocs: {
-      docs: deleteStaleFrontmatterDocsParam,
-    },
+    includeDocs: true,
   });
+
+  const endPromise = pipeline(changesFollower.start(), changesWritable);
+  console.log('Following changes in db', db);
+  return endPromise;
 }
 
-false && followChanges();
+await assertDesignDocument();
+const database = await buildDatabase();
+
+async function run(frontMatterDocsArg) {
+  database.missingFrontmatterDocs.length
+    && insertFrontMatterDocs(database.missingFrontmatterDocs)
+      .then(() => {
+        database.missingFrontmatterDocs = [];
+      });
+
+  const domData = await fetchDomData();
+  const domModel = new StackEditDomModel(domData.sortNodes());
+  console.log(domModel.html);
+  domData.assignDocId(domModel.assignDocId.bind(domModel));
+  console.log(domModel.html);
+  domModel.assignHashes(database.attachmentHashByDocId);
+  console.log(domModel.html);
+
+  const frontmatterDocs = await (frontMatterDocsArg
+    || processFrontMatters(database.idByNumberHash));
+  const stackEditPaths = frontmatterDocs.map(({ id: docId, doc: { contentId } }) => {
+    const id = database.idByNumberHash.get(Number(docId.replace(FRONTMATTER_PREFIX, '')));
+    const names = domModel.getNamesFromId(id);
+    const { hash: etag } = domModel.getDatasetFromId(id);
+    return new StackEditPath({ contentId, names, etag });
+  });
+
+  const synchronizer = new FileSynchronizer(stackEditPaths);
+  await synchronizer.processInvalidChecksums();
+  await synchronizer.calculate();
+  await synchronizer.prune();
+
+  if (!frontMatterDocsArg) {
+    const downloadCandidatePaths = Array.from(synchronizer.generateDownloadCandidates());
+    downloadCandidatePaths.length
+      && await downloadMarkdownsBatch(downloadCandidatePaths);
+  }
+
+  return {
+    domModel,
+    frontmatterDocs,
+  };
+}
+
+const changesWritableParams = await run();
+await followChanges(new ChangesWritable(changesWritableParams));
