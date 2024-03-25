@@ -105,6 +105,13 @@ export default class FileSynchronizer {
     return results;
   }
 
+  /**
+   * @todo Implement
+   */
+  async prune() {
+
+  }
+
   * generateDownloadCandidates() {
     const pathMap = new Map(this.requiredPaths.map(path => [path.markdownPath, path]));
     // eslint-disable-next-line no-restricted-syntax

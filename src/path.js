@@ -29,11 +29,14 @@ export default class StackEditPath {
     return replaced === dbPath ? dbPath + postfix : replaced;
   }
 
+  /**
+   * @todo Add pruning, and rename
+   */
   globMarkdown() {
     const { markdownPath, digest } = this;
     const dirname = path.dirname(markdownPath);
-    const basename = path.basename(markdownPath, '.generated.md');
-    return glob(`${dirname}/${basename}.${digest}.generated.md`);
+    const basename = path.basename(markdownPath, `.${digest}.generated.md`);
+    return glob(`${dirname}/${basename}.*.generated.md`);
   }
 
   async createMarkdownWritable() {
