@@ -281,8 +281,8 @@ const correctMarkdownPaths = await transform.toArray()
   }));
 
 const synchronizer = new FileSynchronizer(correctMarkdownPaths);
+await synchronizer.processInvalidChecksums();
 await synchronizer.calculate();
-// await synchronizer.processInvalidChecksums();
 
 const downloadCandidatePaths = Array.from(synchronizer.generateDownloadCandidates());
 if (downloadCandidatePaths.length) {
