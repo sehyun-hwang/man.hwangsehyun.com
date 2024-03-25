@@ -26,18 +26,14 @@
     ];
 
     previews = {
-      enable = false;
-      # previews = [
-      #   {
-      #     command = ["npm" "run" "start" "--" "--port" "$PORT"];
-      #     manager = "web";
-      #     id = "web";
-      #   }
-      #   {
-      #     manager = "ios";
-      #     id = "ios";
-      #   }
-      # ];
+      enable = true;
+      previews = [
+        {
+          command = ["hugo" "server"];
+          manager = "web";
+          id = "hugo";
+        }
+      ];
     };
 
     workspace = {
