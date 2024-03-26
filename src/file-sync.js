@@ -97,7 +97,8 @@ export default class FileSynchronizer {
 
     const deleteCandidates = setDifference(local, required);
     const downloadCandidates = setDifference(required, local);
-    invalidPaths.forEach(path => downloadCandidates.add(path));
+    invalidPaths.forEach(path => (required.has(path)
+      ? downloadCandidates.add(path) : deleteCandidates.add(path)));
 
     const results = { deleteCandidates, downloadCandidates };
     console.log(results);
