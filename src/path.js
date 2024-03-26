@@ -1,3 +1,5 @@
+// @ts-check
+
 import { createWriteStream } from 'fs';
 import { mkdir } from 'fs/promises';
 import path from 'path';
@@ -7,7 +9,20 @@ import { glob } from 'glob';
 export const HUGO_CONTENT_DIR = 'content';
 
 export default class StackEditPath {
+  /**
+   * @type string[]
+   */
   names;
+
+  /**
+   * @type string
+   */
+  _etag;
+
+  /**
+   * @type string
+   */
+  contentId;
 
   set etag(etag) {
     this._etag = etag;
@@ -18,6 +33,13 @@ export default class StackEditPath {
     return this._etag;
   }
 
+  /**
+   * @param {{
+   *   names: string[],
+   *   etag: string,
+   *   contentId?: string,
+   * }} arg
+   */
   constructor(arg) {
     Object.assign(this, arg);
   }

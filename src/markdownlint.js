@@ -53,6 +53,13 @@ class FrontMatterParserRule {
   }
 }
 
+/**
+ * @param {Object.<string, string>} strings
+ * @returns {Promise<{
+ *  contentId: string,
+ *  [key: string]: string,
+ * }[]>}
+ */
 export function parseFrontMatters(strings) {
   const frontMatterParserRule = new FrontMatterParserRule();
 
