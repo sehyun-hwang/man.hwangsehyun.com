@@ -1,7 +1,11 @@
 {
     "compilerOptions": {
-        "target": "es2017",
         "module": "NodeNext",
-        "strict": true
-    }
+        "skipLibCheck": true,
+        "strict": true,
+        "target": "es2017"
+    },
+    "include": [
+        "*.js"
+    ]
 }
