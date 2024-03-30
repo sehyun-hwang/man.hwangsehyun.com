@@ -1,5 +1,6 @@
 import { execFile, spawn } from 'child_process';
 import { createInterface } from 'readline';
+import { unlink } from 'fs/promises';
 
 import { glob } from 'glob';
 import setDifference from 'set.prototype.difference';
@@ -16,10 +17,11 @@ const gzipFiles = paths => new Promise((resolve, reject) => {
     error ? reject(error) : resolve(childProcess.exitCode);
   });
 })
-  .then(code => (code ? Promise.reject(new Error('gzip exited with code', code))
+  .then(code => (code ? Promise.reject(new Error(`gzip exited with code: ${code}`))
     : paths.map(path => path + '.gz')));
 
 async function calculateInvalidChecksums(gzips) {
+  /** @type {string[]} */
   const invalidPaths = [];
 
   const childProcess = spawn('md5sum', ['-c'], {
@@ -51,6 +53,7 @@ async function calculateInvalidChecksums(gzips) {
   });
   childProcess.stdin.end();
 
+  /**  */
   await new Promise(resolve => childProcess
     .on('exit', code => {
       console.log('md5sum exit code', code);
@@ -62,24 +65,23 @@ async function calculateInvalidChecksums(gzips) {
 }
 
 export default class FileSynchronizer {
-  /**
-   * @type {StackEditPath[]}
-   */
+  /** @type {StackEditPath[]} */
   requiredPaths;
 
-  /**
-   * @type {Promise<String[]>}
-   */
+  /** @type {Promise<String[]>} */
   localMarkdownsPromise;
 
-  /**
-   * @type {String[]}
-   */
-  invalidPaths;
+  /** @type {String[]} */
+  invalidPaths = [];
+
+  /** @type {Set<string>} */
+  deleteCandidates = new Set();
+
+  /** @type {Set<string>} */
+  downloadCandidates = new Set();
 
   constructor(stackEditPaths) {
     this.requiredPaths = stackEditPaths;
-    this.invalidPaths = [];
     this.localMarkdownsPromise = glob(HUGO_CONTENT_DIR + '/**/*.generated.md');
   }
 
@@ -106,11 +108,8 @@ export default class FileSynchronizer {
     return results;
   }
 
-  /**
-   * @todo Implement
-   */
-  async prune() {
-
+  prune() {
+    return Promise.all(Array.from(this.deleteCandidates, unlink));
   }
 
   * generateDownloadCandidates() {

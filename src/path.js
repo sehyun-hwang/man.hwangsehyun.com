@@ -1,7 +1,7 @@
 // @ts-check
 
 import { createWriteStream } from 'fs';
-import { mkdir } from 'fs/promises';
+import { mkdir, unlink } from 'fs/promises';
 import path from 'path';
 
 import { glob } from 'glob';
@@ -51,14 +51,20 @@ export default class StackEditPath {
     return replaced === dbPath ? dbPath + postfix : replaced;
   }
 
-  /**
-   * @todo Add pruning, and rename
-   */
   globMarkdown() {
     const { markdownPath, digest } = this;
     const dirname = path.dirname(markdownPath);
     const basename = path.basename(markdownPath, `.${digest}.generated.md`);
     return glob(`${dirname}/${basename}.*.generated.md`);
+  }
+
+  prune() {
+    return this.globMarkdown()
+      .then(async paths => {
+        console.log('Pruning', paths);
+        await Promise.all(paths.map(unlink));
+        return paths.length;
+      });
   }
 
   async createMarkdownWritable() {

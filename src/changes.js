@@ -83,7 +83,7 @@ export default class ChangesWritable extends Foo {
     });
 
     const path = new StackEditPath({ names, etag });
-    console.log('To be deleted', await path.globMarkdown()); // @TODO and prune
+    await path.prune();
     result.pipe(await path.createMarkdownWritable());
   }
 
