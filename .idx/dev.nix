@@ -4,7 +4,7 @@
   channel = "stable-23.11"; # "stable-23.11" or "unstable"
   # Use https://search.nixos.org/packages to  find packages
   packages = [
-    pkgs.nodejs
+    pkgs.nodejs_20
     pkgs.corepack
     pkgs.fish
     pkgs.hugo
@@ -30,9 +30,9 @@
       enable = true;
       previews = [
         {
-          command = ["hugo" "server"];
+          command = ["sh" "base-web-host.sh" "hugo" "server" "-p" "$PORT" "--appendPort=false"];
           manager = "web";
-          id = "hugo";
+          id = "web";
         }
       ];
     };
