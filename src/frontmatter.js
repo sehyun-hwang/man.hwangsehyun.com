@@ -1,3 +1,5 @@
+// @ts-check
+
 import { Transform } from 'stream';
 import { text } from 'stream/consumers';
 
@@ -9,7 +11,7 @@ import { parseFrontMatters } from './markdownlint.js';
  * @param {string} db
  * @param {{
  *   _id: string,
- *   item: StackEditItem,
+ *   item: import('./types.js').StackEditItem,
  * }[]} contentDocs
  */
 
@@ -59,13 +61,25 @@ class FrontMatterTransformStream extends Transform {
    */
   deleteStaleFrontmatterDocsParam = [];
 
+  /**
+   * @param {Map<number, string>} idByNumberHash
+   */
   constructor(idByNumberHash) {
     super({ objectMode: true });
     this.idByNumberHash = idByNumberHash;
   }
 
   /**
-   * @param {{value: StackEditDocument}} param0
+   * @callback frontmatterCallback
+   * @param {any} error
+   * @param {import('./types.js').StackEditDocument} frontmatter
+   * @returns {void}
+   */
+
+  /**
+   * @param {{value: import('./types.js').StackEditDocument}} param0
+   * @param {string} _encoding;
+   * @param {frontmatterCallback & (() => void)} callback
    */
   _transform({ value }, _encoding, callback) {
     const numberHash = Number(value.id.replace(FRONTMATTER_PREFIX, ''));
@@ -83,7 +97,7 @@ class FrontMatterTransformStream extends Transform {
 
   async getDeleteStaleFrontmatterDocsParam() {
     await new Promise(resolve => this.on('end', resolve));
-    return this.getDeleteStaleFrontmatterDocsParam;
+    return this.deleteStaleFrontmatterDocsParam;
   }
 }
 
@@ -99,7 +113,7 @@ export async function processFrontMatters(cloudant, idByNumberHash) {
   const deleteStaleFrontmatterDocsParam = await transform.getDeleteStaleFrontmatterDocsParam();
   if (deleteStaleFrontmatterDocsParam.length) {
     console.log('Deleting stale frontmatters', deleteStaleFrontmatterDocsParam.length);
-    const { db } = cloudant.constants.db;
+    const { db } = cloudant.constants;
     await cloudant.client.postBulkDocs({
       db,
       bulkDocs: {

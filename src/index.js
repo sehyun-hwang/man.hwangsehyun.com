@@ -15,8 +15,6 @@ const staticCloudant = new Cloudant4Hugo({
 
 /**
  * @typedef {import('@ibm-cloud/cloudant').CloudantV1} CloudantV1
- * @typedef {import('@ibm-cloud/cloudant').CloudantV1.Document} Document
- * @typedef {import('@ibm-cloud/cloudant').CloudantV1.Attachment} Attachment
  */
 
 /**
@@ -60,8 +58,11 @@ async function run(cloudant, database, frontMatterDocsArg = null) {
   });
 
   const synchronizer = new FileSynchronizer(stackEditPaths);
+  console.log(1);
   await synchronizer.processInvalidChecksums();
+  console.log(2);
   await synchronizer.calculate();
+  console.log(3);
   await synchronizer.prune();
 
   if (!frontMatterDocsArg) {

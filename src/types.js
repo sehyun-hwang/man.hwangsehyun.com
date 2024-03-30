@@ -1,3 +1,10 @@
+// @ts-check
+
+/**
+ *  @typedef { import('@ibm-cloud/cloudant').CloudantV1.Document } Document
+ *  @typedef {import('@ibm-cloud/cloudant').CloudantV1.Attachment} Attachment
+*/
+
 /**
  * @typedef {{
  *   id: string,

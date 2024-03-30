@@ -87,6 +87,8 @@ export default class FileSynchronizer {
 
   async processInvalidChecksums() {
     const localMarkdowns = await this.localMarkdownsPromise;
+    if (!localMarkdowns.length)
+      return;
     const gzips = await gzipFiles(localMarkdowns);
     this.invalidPaths = (await calculateInvalidChecksums(gzips)).map(path => path.replace(/.gz$/, ''));
   }
@@ -109,6 +111,7 @@ export default class FileSynchronizer {
   }
 
   prune() {
+    console.log('Pruning', this.deleteCandidates);
     return Promise.all(Array.from(this.deleteCandidates, unlink));
   }
 
