@@ -12,6 +12,7 @@
 	},
 	"devDependencies": {
 		"@types/jsdom": "^21.1.6",
-		"@types/stream-json": "^1.7.7"
+		"@types/stream-json": "^1.7.7",
+		"ibm-cloud-sdk-core": "^4.2.5"
 	}
 }
