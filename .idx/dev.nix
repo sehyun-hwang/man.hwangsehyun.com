@@ -33,6 +33,9 @@
           command = ["sh" "base-web-host.sh" "hugo" "server" "-p" "$PORT" "--liveReloadPort" "443" "--appendPort=false"];
           manager = "web";
           id = "web";
+          env = {
+            HUGO_PARAMS_MICROCMS = "4nPhw5spjauuCnl9KmDiZmsVTXfm36M9DFUy";
+          };
         }
       ];
     };
