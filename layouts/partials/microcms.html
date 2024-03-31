@@ -15,7 +15,11 @@
     <tbody>
         {{ range $data.contents }}
         <tr>
-            <td>{{ .emoji }} {{ .name }}</td>
+            <td>
+                <a href="{{ .id }}">
+                    {{ .emoji }} {{ .name }}
+                </a>
+            </td>
             <td>{{ .description }}</td>
             <td>
                 <ul>
