@@ -30,7 +30,7 @@
       enable = true;
       previews = [
         {
-          command = ["sh" "base-web-host.sh" "hugo" "server" "-p" "$PORT" "--appendPort=false"];
+          command = ["sh" "base-web-host.sh" "hugo" "server" "-p" "$PORT" "--liveReloadPort" "443" "--appendPort=false"];
           manager = "web";
           id = "web";
         }
