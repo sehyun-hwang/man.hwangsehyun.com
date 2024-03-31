@@ -73,9 +73,15 @@ export default class StackEditDomModel {
     this.selectId(itemId).dataset.docid = docId;
   }
 
-  assignHashes(attachmentHashByDocId) {
-    attachmentHashByDocId.forEach((hash, docId) => {
-      this.selectId(docId).dataset.hash = hash;
+  assignData(bidirectionalMap, etagFromId) {
+    bidirectionalMap.forEach((value, key) => {
+      if (typeof key === 'string')
+        this.selectId(key).dataset.hash = value;
+    });
+
+    etagFromId.forEach((etag, id) => {
+      console.log(id);
+      this.selectId(id).dataset.etag = etag;
     });
   }
 
@@ -90,8 +96,10 @@ export default class StackEditDomModel {
     const contentIds = Object.keys(doc._attachments);
     const { length } = contentIds.filter(contentId => {
       const elements = this.selectByHash(doc.hash);
-      if (!elements)
+      if (!elements) {
         return false;
+      }
+
       elements.forEach(element => {
         element.dataset.contentid = contentId;
         const p = this.document.createElement(TYPE2HTML_TAGS.content);

@@ -73,7 +73,7 @@ export default class Cloudant4Hugo {
       ));
 
     console.log('Parsed frontmatter missing in DB:', databaseWritable.missingFrontmatterDocs.length);
-    console.log('Total contents:', databaseWritable.attachmentHashByDocId.size);
+    console.log('Total contents:', databaseWritable.etagFromId.size);
     return databaseWritable;
   }
 

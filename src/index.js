@@ -41,24 +41,23 @@ async function run(cloudant, database, frontMatterDocsArg = null) {
   console.log(domModel.html);
   domData.assignDocId(domModel.assignDocId.bind(domModel));
   console.log(domModel.html);
-  domModel.assignHashes(database.attachmentHashByDocId);
+  domModel.assignData(database.bidirectionalMap, database.etagFromId);
   console.log(domModel.html);
 
   const frontmatterDocs = frontMatterDocsArg
-    || await processFrontMatters(cloudant, database.idByNumberHash);
-  console.log(frontmatterDocs[0]);
+    || await processFrontMatters(cloudant, database.bidirectionalMap);
+  // console.log(database);
+
   frontmatterDocs.forEach(docs => {
     domModel.appendFrontmatter(docs);
   });
   console.log(domModel.html);
 
-
   const stackEditPaths = domData.files.map(({ item: { id } }) => {
     const names = domModel.getNamesFromId(id);
-    const { hash: etag, contentid: contentId } = domModel.getDatasetFromId(id);
-    return new StackEditPath({ contentId, names, etag });
+    const { etag, contentid: contentId } = domModel.getDatasetFromId(id);
+    return new StackEditPath({ names, contentId, etag });
   });
-  console.log(stackEditPaths);
 
   const synchronizer = new FileSynchronizer(stackEditPaths);
   await synchronizer.processInvalidChecksums();

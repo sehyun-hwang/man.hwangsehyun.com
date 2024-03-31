@@ -36,7 +36,6 @@ export const insertFrontMatterDocs = (client, db, contentDocs) => Promise.all(
     const frontMatterBulkDocs = await parseFrontMatters(Object.fromEntries(attachmentsEntires));
     const frontmatterAttachmentsByHash = groupBy(attachmentsEntires, ([hash]) => hash);
     frontMatterBulkDocs.forEach(doc => {
-      // eslint-disable-next-line no-underscore-dangle, no-param-reassign
       doc._attachments = Object.assign(...frontmatterAttachmentsByHash[doc.hash].map(({ docId }) => ({
         [docId]: {
           data: '',
@@ -112,10 +111,10 @@ class FrontMatterTransformStream extends Transform {
 
 /**
  * @param {import('./cloudant.js').default} cloudant
- * @param {Map<number, string>} idByNumberHash
+ * @param {Map<number, string>} idByHash
  */
-export async function processFrontMatters(cloudant, idByNumberHash) {
-  const transform = new FrontMatterTransformStream(idByNumberHash);
+export async function processFrontMatters(cloudant, idByHash) {
+  const transform = new FrontMatterTransformStream(idByHash);
   await cloudant.streamFrontMatters(transform);
   const frontmatterDocsPromise = transform.toArray();
 

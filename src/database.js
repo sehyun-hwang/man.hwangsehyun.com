@@ -23,15 +23,16 @@ export default class DatabaseWritable extends Writable {
   prev = null;
 
   /** @type {StackEditDocument[]} */
-  missingFrontmatterDocs;
+  missingFrontmatterDocs = [];
 
-  itemByHash = new Map();
+  /** @type {Map<string, string>} */
+  etagFromId = new Map();
+
+  /** @type {Map<number | string, string | number>} */
+  bidirectionalMap = new Map();
 
   constructor() {
     super({ objectMode: true });
-    this.missingFrontmatterDocs = [];
-    this.idByNumberHash = new Map();
-    this.attachmentHashByDocId = new Map();
   }
 
   /**
@@ -57,7 +58,6 @@ export default class DatabaseWritable extends Writable {
     }
 
     // type === 'content'
-    // eslint-disable-next-line no-underscore-dangle
     const etag = doc._attachments.data?.digest?.replace('md5-', '');
     if (!etag)
       throw TypeError('No etag value');
@@ -71,8 +71,8 @@ export default class DatabaseWritable extends Writable {
    */
   updateContent(item, etag) {
     const id = item.id.replace('/content', '');
-    this.idByNumberHash.set(item.hash, id);
-    this.attachmentHashByDocId.set(id, item.hash);
-    this.itemByHash.set(id, item);
+    this.etagFromId.set(id, etag);
+    this.bidirectionalMap.set(item.hash, id);
+    this.bidirectionalMap.set(id, item.hash);
   }
 }

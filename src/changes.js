@@ -72,17 +72,14 @@ export default class ChangesWritable extends Foo {
 
     const { database } = this;
     database.updateContent(item, etag);
-    console.log('database sizes', database.idByNumberHash.size, database.attachmentHashByDocId.size);
+    console.log('database sizes', database.bidirectionalMap.size, database.etagFromId.size);
 
     const markdown = await text(result);
-    const [frontmatter] = await parseFrontMatters({ [docId]: markdown });
+    const [document] = await parseFrontMatters({ [docId]: markdown });
     // @TODO conflict when same content
     await client.postDocument({
       db,
-      document: {
-        _id: FRONTMATTER_PREFIX + item.hash,
-        ...frontmatter,
-      },
+      document,
     });
 
     const path = new StackEditPath({ names, etag });
