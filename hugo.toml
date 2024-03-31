@@ -1,8 +1,8 @@
-author = "Steve Francia"
-copyright = "Copyright © 2008–2019, Steve Francia and the lee.so; all rights reserved."
+author = "Sehyun Hwang"
+copyright = "Copyright © 2024, Sehyun Hwang; all rights reserved."
 paginate = 3
-languageCode = "en"
-DefaultContentLanguage = "en"
+languageCode = "kr"
+DefaultContentLanguage = "kr"
 enableInlineShortcodes = true
 # prevent build failures when using Hugo's Instagram shortcode due to deprecated Instagram API.
 # See https://github.com/gohugoio/hugo/issues/7228#issuecomment-714490456
@@ -10,18 +10,20 @@ ignoreErrors = ["error-remote-getjson"]
 
 # ------------------------------
 theme = "paper"
-title = "Paper"
+title = "man.hwangsehyun.com"
 
 [params]
   color = 'linen'
 
-  twitter = 'nanxiaobei'
-  github = 'nanxiaobei'
-  instagram = 'nan.xiaobei'
+  # twitter = 'nanxiaobei'
+  github = 'sehyun-hwang'
+  instagram = 'hwanghyun3'
 
-  avatar = 'nanxiaobei@gmail.com'
-  name = 'Lee'
-  bio = 'Discover fresh context'
+  avatar = 'hwanghyun3@gmail.com'
+  name = 'Sehyun Hwang'
+  bio = 'A tech blog busy in building'
+
+  MICROCMS = "dummy"
 # ------------------------------
 
 # needed to  render raw HTML (e.g. <sub>, <sup>, <kbd>, <mark>)
@@ -40,9 +42,9 @@ title = "Paper"
     url = "/about/"
     weight = 10
   [[menu.main]]
-    identifier = "contact"
-    name = "Contact"
-    url = "/contact/"
+    identifier = "project"
+    name = "Project"
+    url = "/project/"
     weight = 10
 
 [taxonomies]
