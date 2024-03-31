@@ -47,7 +47,7 @@ export default class StackEditDomModel {
   }
 
   appendNode(dbItem) {
-    console.log('Appending', dbItem);
+    console.log('Appending', JSON.stringify(dbItem));
     const { document } = this;
     const tag = TYPE2HTML_TAGS[dbItem.type];
     const element = document.createElement(tag);
@@ -80,7 +80,6 @@ export default class StackEditDomModel {
     });
 
     etagFromId.forEach((etag, id) => {
-      console.log(id);
       this.selectId(id).dataset.etag = etag;
     });
   }
@@ -101,6 +100,8 @@ export default class StackEditDomModel {
       }
 
       elements.forEach(element => {
+        if (element.dataset.contentid)
+          return;
         element.dataset.contentid = contentId;
         const p = this.document.createElement(TYPE2HTML_TAGS.content);
         p.textContent = JSON.stringify(doc);
@@ -128,6 +129,9 @@ export default class StackEditDomModel {
   }
 
   getDatasetFromId(itemId) {
-    return this.selectId(itemId).dataset;
+    const { dataset } = this.selectId(itemId);
+    if ('etag' in dataset && 'contentid' in dataset)
+      return dataset;
+    throw new DomIdError(`Missing dataset on DOM: ${itemId}`);
   }
 }

@@ -7,10 +7,10 @@ import { text } from 'stream/consumers';
 import { DomIdError } from './dom-model.js';
 import { FRONTMATTER_PREFIX } from './cloudant.js';
 import StackEditPath from './path.js';
+import { appendFrontMatterAttachments } from './frontmatter.js';
 import { parseFrontMatters } from './markdownlint.js';
 
 /**
- * @typedef {import('./dom-model.js').default} StackEditDomModel
  * @typedef {import('./types.js').StackEditItem} StackEditItem
  * @typedef {import('./types.js').StackEditDocument} StackEditDocument
  */
@@ -33,7 +33,7 @@ export class StackEditDomModelParams {
   /** @type {import('./dom-model.js').default} */
   domModel;
 
-  /** @type {Object[]} */
+  /** @type {import('./markdownlint.js').FrontMatterDoc[]} */
   frontmatterDocs;
 }
 
@@ -50,8 +50,7 @@ export default class ChangesWritable extends Foo {
     Object.assign(this, params);
   }
 
-  async processNode() {
-    // this.frontmatterDocs; @TODO pop old one and insert new one, and feed to run
+  async processNode(doc) {
     Object.assign(this, await this.run(this.database));
   }
 
@@ -61,7 +60,6 @@ export default class ChangesWritable extends Foo {
    */
   async processContent(docId, item) {
     const { client, db } = this;
-    const names = this.domModel.getNamesFromId(item.id.replace('/content', ''));
     const { headers: { etag }, result } = await client.getAttachment({
       db,
       docId,
@@ -75,14 +73,26 @@ export default class ChangesWritable extends Foo {
     console.log('database sizes', database.bidirectionalMap.size, database.etagFromId.size);
 
     const markdown = await text(result);
-    const [document] = await parseFrontMatters({ [docId]: markdown });
-    // @TODO conflict when same content
-    await client.postDocument({
-      db,
-      document,
-    });
+    const [document] = await parseFrontMatters({ [item.hash]: markdown });
+    document._attachments = {
+      [docId]: {
+        data: '',
+      },
+    };
 
-    const path = new StackEditPath({ names, etag });
+    try {
+      await client.postDocument({
+        db,
+        document,
+      });
+    } catch (error) {
+      if (error.statusText !== 'Conflict')
+        throw error;
+      await appendFrontMatterAttachments(client, db, [document]);
+    }
+
+    const names = this.domModel.getNamesFromId(item.id.replace('/content', ''));
+    const path = new StackEditPath({ names, etag, contentId: docId });
     await path.prune();
     await path.createMarkdownWritable()
       .then(writable => writable.end(markdown));
@@ -110,11 +120,13 @@ export default class ChangesWritable extends Foo {
             throw error;
         }
         break;
+
       case 'folder':
       case 'file':
         await this.processNode(doc.item);
         this.queue && await this.queue();
         break;
+
       default:
         docId.startsWith(FRONTMATTER_PREFIX)
           || console.log('Unknown type', type);

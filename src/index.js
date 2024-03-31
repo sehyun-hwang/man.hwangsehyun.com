@@ -1,8 +1,10 @@
 // @ts-check
 
-import Cloudant4Hugo, { FRONTMATTER_PREFIX } from './cloudant.js';
+import { writeFile } from 'fs/promises';
+
 import { insertFrontMatterDocs, processFrontMatters } from './frontmatter.js';
 import ChangesWritable from './changes.js';
+import Cloudant4Hugo from './cloudant.js';
 import DatabaseWritable from './database.js';
 import FileSynchronizer from './file-sync.js';
 import StackEditDomData from './dom-data.js';
@@ -36,6 +38,7 @@ async function run(cloudant, database, frontMatterDocsArg = null) {
       });
   // throw new Error();
 
+  await new Promise(resolve => setTimeout(resolve, 3000));
   const domData = new StackEditDomData(await cloudant.fetchDomData());
   const domModel = new StackEditDomModel(domData.sortNodes());
   console.log(domModel.html);
@@ -51,7 +54,7 @@ async function run(cloudant, database, frontMatterDocsArg = null) {
   frontmatterDocs.forEach(docs => {
     domModel.appendFrontmatter(docs);
   });
-  console.log(domModel.html);
+  await writeFile('tree.html', domModel.html);
 
   const stackEditPaths = domData.files.map(({ item: { id } }) => {
     const names = domModel.getNamesFromId(id);

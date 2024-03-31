@@ -9,6 +9,33 @@ import { FRONTMATTER_PREFIX } from './cloudant.js';
 import { parseFrontMatters } from './markdownlint.js';
 
 /**
+ *
+ * @param {import('@ibm-cloud/cloudant').CloudantV1} client
+ * @param {string} db
+ * @param {import('./markdownlint.js').FrontMatterDoc[]} frontMatterDocs
+ * @returns {Promise<number>}
+ */
+export async function appendFrontMatterAttachments(client, db, frontMatterDocs) {
+  const { result: { rows } } = await client.postAllDocs({
+    db,
+    keys: frontMatterDocs.map(({ _id }) => _id),
+  });
+  console.log('conflictedFrontMatterDocs', frontMatterDocs, rows);
+
+  console.log(await Promise.all(frontMatterDocs.map(({ _id: docId, _attachments }, i) => client
+    .putAttachment({
+      db,
+      docId,
+      rev: rows[i].value.rev,
+      attachmentName: Object.keys(_attachments)[0],
+      attachment: Buffer.alloc(0),
+      contentType: 'application/octet-stream',
+    }))));
+
+  return frontMatterDocs.length;
+}
+
+/**
  * @param {import('@ibm-cloud/cloudant').CloudantV1} client
  * @param {string} db
  * @param {{
@@ -16,16 +43,16 @@ import { parseFrontMatters } from './markdownlint.js';
  *   item: import('./types.js').StackEditItem,
  * }[]} contentDocs
  */
-
 export const insertFrontMatterDocs = (client, db, contentDocs) => Promise.all(
   contentDocs.map(({
     _id: docId,
     item: { hash },
-  }) => client.getAttachment({
-    db,
-    docId,
-    attachmentName: 'data',
-  })
+  }, i) => new Promise(resolve => setTimeout(resolve, i * 50))
+    .then(() => client.getAttachment({
+      db,
+      docId,
+      attachmentName: 'data',
+    }))
     .then(async ({ result }) => {
       const entry = [hash, await text(result)];
       entry.docId = docId;
@@ -48,12 +75,18 @@ export const insertFrontMatterDocs = (client, db, contentDocs) => Promise.all(
       db,
       bulkDocs: { docs: frontMatterBulkDocs },
     });
-    console.log(result);
     if (result.every(({ ok }) => ok))
       return result.length;
 
-    const errorSummary = new Set(result.map(({ error, reason }) => error + '-' + reason));
-    throw new Error('One or more frontmatter docs insertion failed: ' + Array.from(errorSummary).join(', '));
+    if (result.every(({ error }) => error !== 'conflict')) {
+      const errorSummary = new Set(result.map(({ error, reason }) => error + ' - ' + reason));
+      throw new Error('One or more frontmatter docs insertion failed: ' + Array.from(errorSummary).join(', '));
+    }
+
+    const conflictedIds = new Set(result.map(({ id }) => id));
+    const conflictedFrontMatterDocs = frontMatterBulkDocs
+      .filter(({ _id }) => conflictedIds.has(_id));
+    return appendFrontMatterAttachments(client, db, conflictedFrontMatterDocs);
   });
 
 class FrontMatterTransformStream extends Transform {
@@ -114,6 +147,7 @@ class FrontMatterTransformStream extends Transform {
  * @param {Map<number, string>} idByHash
  */
 export async function processFrontMatters(cloudant, idByHash) {
+  console.log('processFrontMatters');
   const transform = new FrontMatterTransformStream(idByHash);
   await cloudant.streamFrontMatters(transform);
   const frontmatterDocsPromise = transform.toArray();

@@ -9,6 +9,7 @@ import setDifference from 'set.prototype.difference';
 import StackEditPath, { HUGO_CONTENT_DIR } from './path.js';
 
 const gzipFiles = paths => new Promise((resolve, reject) => {
+  console.log('gzip', paths.length);
   const childProcess = execFile('gzip', [
     '-fkn8',
     ...paths,
@@ -53,7 +54,6 @@ async function calculateInvalidChecksums(gzips) {
   });
   childProcess.stdin.end();
 
-  /**  */
   await new Promise(resolve => childProcess
     .on('exit', code => {
       console.log('md5sum exit code', code);
@@ -104,7 +104,7 @@ export default class FileSynchronizer {
     invalidPaths.forEach(path => (required.has(path)
       ? downloadCandidates.add(path) : deleteCandidates.add(path)));
 
-    const results = { deleteCandidates, downloadCandidates };
+    const results = { invalidPaths, deleteCandidates, downloadCandidates };
     console.log(results);
     Object.assign(this, results);
     return results;

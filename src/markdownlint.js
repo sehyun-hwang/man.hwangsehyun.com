@@ -13,10 +13,16 @@ class FrontMatterParserRule {
 
   description = 'description';
 
-  constructor() {
-    const frontMatters = {};
+  /** @type {import('markdownlint').RuleFunction} */
+  function;
 
-    function frontmatterParserRuleFunction({ name, frontMatterLines }, onError) {
+  /** @type {{[key: string]: any}} */
+  frontMatters = {};
+
+  constructor() {
+    const { frontMatters } = this;
+
+    this.function = function frontmatterParserRuleFunction({ name, frontMatterLines }, onError) {
       let data = null;
       if (!frontMatterLines.length) {
         frontMatters[name] = data;
@@ -48,18 +54,12 @@ class FrontMatterParserRule {
       }
 
       frontMatters[name] = data;
-    }
-
-    Object.assign(this, {
-      frontMatters,
-      function: frontmatterParserRuleFunction,
-    });
+    };
   }
 }
 
 /**
- * @param {Object.<string, string>} strings
- * @returns {Promise<{
+ * @typedef {{
  *  _id: string,
  *  hash: number,
  *  has: boolean,
@@ -68,8 +68,13 @@ class FrontMatterParserRule {
  *      data: '',
  *    },
  *  },
- *  [key: string]: string,
- * }[]>}
+ *  [key: string]: any,
+ * }} FrontMatterDoc
+ */
+
+/**
+ * @param {Object.<string, string>} strings
+ * @returns {Promise<FrontMatterDoc[]>}
  */
 export function parseFrontMatters(strings) {
   const frontMatterParserRule = new FrontMatterParserRule();
