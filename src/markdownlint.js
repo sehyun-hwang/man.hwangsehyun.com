@@ -31,10 +31,11 @@ class FrontMatterParserRule {
 
       try {
         data = matter(frontMatterLines.join('\n'), {
+          language: 'toml',
+          delims: '+++',
           engines: {
             toml: parseToml,
           },
-          language: 'toml',
         }).data;
         console.log(name, frontMatterLines, data);
       } catch (error) {
@@ -86,7 +87,7 @@ export function parseFrontMatters(strings) {
       default: false,
     },
   }, (error, result) => {
-    console.log(error || result.toString());
+    console.log(error || result);
     error ? reject(error) : resolve(frontMatterParserRule.frontMatters);
   }))
 
@@ -101,6 +102,9 @@ export function parseFrontMatters(strings) {
 
 const STATIC_FRONTEND_PARSER_RULE = new FrontMatterParserRule();
 
+/**
+ * @param {string | {[key: string]: string}} markdown
+ */
 export function runMarkdownLint(markdown) {
   const strings = typeof markdown === 'string' ? { default: markdown } : markdown;
   return new Promise((resolve, reject) => markdownlint({
@@ -109,13 +113,15 @@ export function runMarkdownLint(markdown) {
   }, (error, result) => {
     if (error)
       return reject(error);
-    console.log(result.toString());
+    console.log(result?.toString());
     Promise.resolve(result);
     return undefined;
   }));
 }
 
-// console.log(await parseFrontMatters([`+++
-// foo = "bar"
-// +++
-// `]));
+false && console.log(await parseFrontMatters({
+  default: `+++
+foo = "bar"
++++
+sdfasd`,
+}));
