@@ -1,3 +1,5 @@
+// @ts-check
+
 export default class StackEditDomData {
   constructor(docs) {
     this.docs = docs;

@@ -38,7 +38,6 @@ async function run(cloudant, database, frontMatterDocsArg = null) {
       });
   // throw new Error();
 
-  await new Promise(resolve => setTimeout(resolve, 3000));
   const domData = new StackEditDomData(await cloudant.fetchDomData());
   const domModel = new StackEditDomModel(domData.sortNodes());
   console.log(domModel.html);

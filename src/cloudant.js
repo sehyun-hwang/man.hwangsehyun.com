@@ -85,6 +85,9 @@ export default class Cloudant4Hugo {
           type: {
             $in: ['folder', 'file'],
           },
+          parentId: {
+            $ne: 'trash',
+          },
         },
       },
     })

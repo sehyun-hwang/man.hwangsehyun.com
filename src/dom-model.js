@@ -75,12 +75,23 @@ export default class StackEditDomModel {
 
   assignData(bidirectionalMap, etagFromId) {
     bidirectionalMap.forEach((value, key) => {
-      if (typeof key === 'string')
-        this.selectId(key).dataset.hash = value;
+      if (typeof key !== 'string')
+        return;
+      const element = this.selectId(key);
+      if (!element) {
+        console.log('In trash', value);
+        return;
+      }
+      element.dataset.hash = value;
     });
 
     etagFromId.forEach((etag, id) => {
-      this.selectId(id).dataset.etag = etag;
+      const element = this.selectId(id);
+      if (!element) {
+        console.log('In trash', id);
+        return;
+      }
+      element.dataset.etag = etag;
     });
   }
 
