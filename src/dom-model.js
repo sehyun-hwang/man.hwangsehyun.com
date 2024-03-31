@@ -1,12 +1,16 @@
+/* eslint-disable max-classes-per-file */
 import { JSDOM } from 'jsdom';
 
 const ID_PREFIX = 'stackedit-';
 
 // @TODO Change to https://developer.mozilla.org/en-US/docs/Web/HTML/Element/details
 const TYPE2HTML_TAGS = {
-  folder: 'ul',
+  folder: 'details',
   file: 'li',
+  content: 'p',
 };
+
+export class DomIdError extends Error { }
 
 function* generateParentNode(element) {
   let current = element;
@@ -17,6 +21,12 @@ function* generateParentNode(element) {
 }
 
 export default class StackEditDomModel {
+  /** @type */
+  dom;
+
+  /**  @type {Document} */
+  document;
+
   constructor(sortedDocs) {
     const dom = new JSDOM();
     const { document } = dom.window;
@@ -39,10 +49,18 @@ export default class StackEditDomModel {
   appendNode(dbItem) {
     console.log('Appending', dbItem);
     const { document } = this;
-    const element = document.createElement(TYPE2HTML_TAGS[dbItem.type]);
+    const tag = TYPE2HTML_TAGS[dbItem.type];
+    const element = document.createElement(tag);
+    if (tag === 'details')
+      element.open = true;
     element.id = ID_PREFIX + dbItem.id;
     element.dataset.name = dbItem.name;
-    element.textContent = dbItem.name;
+
+    {
+      const child = document.createElement(dbItem.type === 'folder' ? 'summary' : 'h3');
+      child.textContent = dbItem.name;
+      element.appendChild(child);
+    }
 
     const parent = dbItem.parentId
       ? this.selectId(dbItem.parentId)
@@ -61,9 +79,37 @@ export default class StackEditDomModel {
     });
   }
 
+  /**
+   * @param {number} hash
+   */
+  selectByHash(hash) {
+    return this.document.querySelectorAll(`[data-hash="${hash}"]`);
+  }
+
+  appendFrontmatter(doc) {
+    const contentIds = Object.keys(doc._attachments);
+    const { length } = contentIds.filter(contentId => {
+      const elements = this.selectByHash(doc.hash);
+      if (!elements)
+        return false;
+      elements.forEach(element => {
+        element.dataset.contentid = contentId;
+        const p = this.document.createElement(TYPE2HTML_TAGS.content);
+        p.textContent = JSON.stringify(doc);
+        element.appendChild(p);
+      });
+
+      return true;
+    });
+    if (!length)
+      throw new Error(`Stale frontmatter ${contentIds}`);
+  }
+
   getNamesFromSelector(selector) {
     console.log('Querying', selector);
     const element = this.document.querySelector(selector);
+    if (!element)
+      throw new DomIdError(`Missing StackEdit item id on DOM: ${selector}`);
     const names = Array.from(generateParentNode(element)).map(parent => parent?.dataset?.name || '');
     names.reverse();
     return names;
@@ -75,9 +121,5 @@ export default class StackEditDomModel {
 
   getDatasetFromId(itemId) {
     return this.selectId(itemId).dataset;
-  }
-
-  getNamesFromDocId(docId) {
-    return this.getNamesFromSelector(`[data-docid='${docId}']`);
   }
 }

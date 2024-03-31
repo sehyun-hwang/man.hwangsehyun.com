@@ -140,7 +140,6 @@ export default class Cloudant4Hugo {
       db,
       includeDocs: true,
     });
-
     const endPromise = pipeline(changesFollower.start(), writable);
     console.log('Following changes in db', db);
     return endPromise;

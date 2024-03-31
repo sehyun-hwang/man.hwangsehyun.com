@@ -3,6 +3,8 @@
 import { Transform } from 'stream';
 import { text } from 'stream/consumers';
 
+import groupBy from 'object.groupby';
+
 import { FRONTMATTER_PREFIX } from './cloudant.js';
 import { parseFrontMatters } from './markdownlint.js';
 
@@ -24,19 +26,22 @@ export const insertFrontMatterDocs = (client, db, contentDocs) => Promise.all(
     docId,
     attachmentName: 'data',
   })
-    .then(async ({ result }) => [docId, await text(result), hash])),
+    .then(async ({ result }) => {
+      const entry = [hash, await text(result)];
+      entry.docId = docId;
+      return entry;
+    })),
 )
-
   .then(async attachmentsEntires => {
-    const attachmentsByDocId = Object.fromEntries(attachmentsEntires);
-    const frontMatterBulkDocs = await parseFrontMatters(attachmentsByDocId);
-    const hashByDocId = new Map();
-    // eslint-disable-next-line no-unused-vars
-    attachmentsEntires.forEach(([docId, _, hash]) => hashByDocId.set(docId, hash));
-
+    const frontMatterBulkDocs = await parseFrontMatters(Object.fromEntries(attachmentsEntires));
+    const frontmatterAttachmentsByHash = groupBy(attachmentsEntires, ([hash]) => hash);
     frontMatterBulkDocs.forEach(doc => {
       // eslint-disable-next-line no-underscore-dangle, no-param-reassign
-      doc._id = FRONTMATTER_PREFIX + hashByDocId.get(doc.contentId);
+      doc._attachments = Object.assign(...frontmatterAttachmentsByHash[doc.hash].map(({ docId }) => ({
+        [docId]: {
+          data: '',
+        },
+      })));
     });
 
     console.log('Inserting bulk docs of frontmatter', frontMatterBulkDocs);
@@ -44,8 +49,12 @@ export const insertFrontMatterDocs = (client, db, contentDocs) => Promise.all(
       db,
       bulkDocs: { docs: frontMatterBulkDocs },
     });
-    console.log('Parsed frontmatter inserted:', result.length);
-    return result.length;
+    console.log(result);
+    if (result.every(({ ok }) => ok))
+      return result.length;
+
+    const errorSummary = new Set(result.map(({ error, reason }) => error + '-' + reason));
+    throw new Error('One or more frontmatter docs insertion failed: ' + Array.from(errorSummary).join(', '));
   });
 
 class FrontMatterTransformStream extends Transform {
@@ -81,13 +90,13 @@ class FrontMatterTransformStream extends Transform {
    * @param {string} _encoding;
    * @param {frontmatterCallback & (() => void)} callback
    */
-  _transform({ value }, _encoding, callback) {
-    const numberHash = Number(value.id.replace(FRONTMATTER_PREFIX, ''));
+  _transform({ value: { id, doc } }, _encoding, callback) {
+    const numberHash = Number(id.replace(FRONTMATTER_PREFIX, ''));
     if (this.idByNumberHash.has(numberHash))
-      callback(null, value);
-    else {
-      const { _id, _rev } = value.doc;
+      callback(null, doc);
 
+    else {
+      const { _id, _rev } = doc;
       this.deleteStaleFrontmatterDocsParam.push({
         _id, _rev, _deleted: true,
       });

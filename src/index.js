@@ -14,10 +14,6 @@ const staticCloudant = new Cloudant4Hugo({
 });
 
 /**
- * @typedef {import('@ibm-cloud/cloudant').CloudantV1} CloudantV1
- */
-
-/**
  * @param {Cloudant4Hugo} cloudant
  * @param {DatabaseWritable} database
  * @param {{
@@ -28,15 +24,17 @@ const staticCloudant = new Cloudant4Hugo({
  */
 async function run(cloudant, database, frontMatterDocsArg = null) {
   database.missingFrontmatterDocs.length
-    && insertFrontMatterDocs(
+    && await insertFrontMatterDocs(
       cloudant.client,
       cloudant.constants.db,
       database.missingFrontmatterDocs,
     )
-      .then(() => {
+      .then(length => {
+        console.log('Parsed frontmatter inserted', length);
         // eslint-disable-next-line no-param-reassign
         database.missingFrontmatterDocs = [];
       });
+  // throw new Error();
 
   const domData = new StackEditDomData(await cloudant.fetchDomData());
   const domModel = new StackEditDomModel(domData.sortNodes());
@@ -48,21 +46,23 @@ async function run(cloudant, database, frontMatterDocsArg = null) {
 
   const frontmatterDocs = frontMatterDocsArg
     || await processFrontMatters(cloudant, database.idByNumberHash);
-  const stackEditPaths = frontmatterDocs.map(({ id: docId, doc: { contentId } }) => {
-    const id = database.idByNumberHash.get(Number(
-      docId.replace(FRONTMATTER_PREFIX, ''),
-    ));
+  console.log(frontmatterDocs[0]);
+  frontmatterDocs.forEach(docs => {
+    domModel.appendFrontmatter(docs);
+  });
+  console.log(domModel.html);
+
+
+  const stackEditPaths = domData.files.map(({ item: { id } }) => {
     const names = domModel.getNamesFromId(id);
-    const { hash: etag } = domModel.getDatasetFromId(id);
+    const { hash: etag, contentid: contentId } = domModel.getDatasetFromId(id);
     return new StackEditPath({ contentId, names, etag });
   });
+  console.log(stackEditPaths);
 
   const synchronizer = new FileSynchronizer(stackEditPaths);
-  console.log(1);
   await synchronizer.processInvalidChecksums();
-  console.log(2);
   await synchronizer.calculate();
-  console.log(3);
   await synchronizer.prune();
 
   if (!frontMatterDocsArg) {

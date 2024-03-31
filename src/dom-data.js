@@ -3,6 +3,10 @@ export default class StackEditDomData {
     this.docs = docs;
   }
 
+  get files() {
+    return this.docs.filter(({ item: { type } }) => type === 'file');
+  }
+
   sortNodes() {
     const unsorted = this.docs.map(({ item }) => item);
     const sortedMap = new Map(

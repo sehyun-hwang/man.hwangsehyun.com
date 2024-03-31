@@ -9,7 +9,7 @@
  * @typedef {{
  *   id: string,
  *   type: 'folder' | 'file' | 'content',
- *   hash: number | null,
+ *   hash: number,
  * }} StackEditItem
  */
 

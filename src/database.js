@@ -1,19 +1,31 @@
+// @ts-check
 import { Writable } from 'stream';
+
+/**
+ * @typedef {import('./types.js').StackEditDocument} StackEditDocument
+ * @typedef {import('./types.js').StackEditItem} StackEditItem
+ */
 
 export default class DatabaseWritable extends Writable {
   /**
-   * @type {{
+   * @typedef {{
+   *   key: number,
    *   value: {
+   *     id: string,
+   *     key: [string, 0 | 1],
+   *     value: StackEditItem,
    *     doc: StackEditDocument | null,
-   *   }
-   * } | null}
+   *   },
+   * }} ChangeData
    */
+
+  /** @type {ChangeData | null} */
   prev = null;
 
-  /**
-   * @type {StackEditDocument[]}
-   */
+  /** @type {StackEditDocument[]} */
   missingFrontmatterDocs;
+
+  itemByHash = new Map();
 
   constructor() {
     super({ objectMode: true });
@@ -22,17 +34,13 @@ export default class DatabaseWritable extends Writable {
     this.attachmentHashByDocId = new Map();
   }
 
+  /**
+   * @callback StreamCallback
+   */
+
   // eslint-disable-next-line class-methods-use-this
   /**
-   * @param {{
-   *   key: number,
-   *   value: {
-   *     id: string,
-   *     key: [string, 0 | 1],
-   *     value: StackEditItem,
-   *     doc: StackEditDocument | null,
-   *   },
-   * }} data
+   * @param {ChangeData} data
    * @param {string} encoding
    * @param {StreamCallback} callback
    */
@@ -42,16 +50,13 @@ export default class DatabaseWritable extends Writable {
     // console.log(data);
 
     const { doc, value } = data.value;
-    if (!doc) {
-      if (!prev?.value?.doc)
-        throw new TypeError('No prev?.value?.doc');
-      this.missingFrontmatterDocs.push(prev?.value?.doc);
+    if (value?.type !== 'content') {
+      ((prev?.value?.id || '') in (doc?._attachments || {}))
+        || this.missingFrontmatterDocs.push(prev.value.doc);
       return callback();
     }
 
-    if (value?.type !== 'content')
-      return callback();
-
+    // type === 'content'
     // eslint-disable-next-line no-underscore-dangle
     const etag = doc._attachments.data?.digest?.replace('md5-', '');
     if (!etag)
@@ -67,6 +72,7 @@ export default class DatabaseWritable extends Writable {
   updateContent(item, etag) {
     const id = item.id.replace('/content', '');
     this.idByNumberHash.set(item.hash, id);
-    this.attachmentHashByDocId.set(id, etag);
+    this.attachmentHashByDocId.set(id, item.hash);
+    this.itemByHash.set(id, item);
   }
 }

@@ -20,6 +20,9 @@ dependencies:
   markdownlint:
     specifier: ^0.33.0
     version: 0.33.0
+  object.groupby:
+    specifier: ^1.0.3
+    version: 1.0.3
   set.prototype.difference:
     specifier: ^1.1.4
     version: 1.1.4
@@ -1353,6 +1356,15 @@ packages:
       call-bind: 1.0.7
       define-properties: 1.2.1
       es-object-atoms: 1.0.0
+    dev: false
+
+  /object.groupby@1.0.3:
+    resolution: {integrity: sha512-+Lhy3TQTuzXI5hevh8sBGqbmurHbbIjAi0Z4S63nthVLmLxfbj4T54a4CfZrXIrt9iP4mVAPYMo/v99taj3wjQ==}
+    engines: {node: '>= 0.4'}
+    dependencies:
+      call-bind: 1.0.7
+      define-properties: 1.2.1
+      es-abstract: 1.23.2
     dev: false
 
   /parse5@7.1.2:

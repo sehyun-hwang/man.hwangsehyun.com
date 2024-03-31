@@ -4,6 +4,7 @@
 import { Writable } from 'stream';
 import { text } from 'stream/consumers';
 
+import { DomIdError } from './dom-model.js';
 import { FRONTMATTER_PREFIX } from './cloudant.js';
 import StackEditPath from './path.js';
 import { parseFrontMatters } from './markdownlint.js';
@@ -73,7 +74,9 @@ export default class ChangesWritable extends Foo {
     database.updateContent(item, etag);
     console.log('database sizes', database.idByNumberHash.size, database.attachmentHashByDocId.size);
 
-    const [frontmatter] = await parseFrontMatters({ [docId]: await text(result) });
+    const markdown = await text(result);
+    const [frontmatter] = await parseFrontMatters({ [docId]: markdown });
+    // @TODO conflict when same content
     await client.postDocument({
       db,
       document: {
@@ -84,7 +87,8 @@ export default class ChangesWritable extends Foo {
 
     const path = new StackEditPath({ names, etag });
     await path.prune();
-    result.pipe(await path.createMarkdownWritable());
+    await path.createMarkdownWritable()
+      .then(writable => writable.end(markdown));
   }
 
   /**
@@ -100,11 +104,19 @@ export default class ChangesWritable extends Foo {
 
     switch (type) {
       case 'content':
-        await this.processContent(docId, doc.item);
+        try {
+          await this.processContent(docId, doc.item);
+        } catch (error) {
+          if (error instanceof DomIdError)
+            this.queue = () => this.processContent(docId, doc.item);
+          else
+            throw error;
+        }
         break;
       case 'folder':
       case 'file':
         await this.processNode(doc.item);
+        this.queue && await this.queue();
         break;
       default:
         docId.startsWith(FRONTMATTER_PREFIX)

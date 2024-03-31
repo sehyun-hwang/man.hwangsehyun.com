@@ -1,6 +1,10 @@
+// @ts-check
+
 import markdownlint from 'markdownlint';
 import matter from 'gray-matter';
 import { parse as parseToml } from 'toml';
+
+import { FRONTMATTER_PREFIX } from './cloudant.js';
 
 class FrontMatterParserRule {
   names = ['frontmatter-parser'];
@@ -56,7 +60,14 @@ class FrontMatterParserRule {
 /**
  * @param {Object.<string, string>} strings
  * @returns {Promise<{
- *  contentId: string,
+ *  _id: string,
+ *  hash: number,
+ *  has: boolean,
+ *  _attachments: {
+ *    [key: string]: {
+ *      data: '',
+ *    },
+ *  },
  *  [key: string]: string,
  * }[]>}
  */
@@ -75,8 +86,9 @@ export function parseFrontMatters(strings) {
   }))
 
     .then(frontMatters => Object.entries(frontMatters)
-      .map(([contentId, frontmatter]) => ({
-        contentId,
+      .map(([hash, frontmatter]) => ({
+        _id: FRONTMATTER_PREFIX + hash,
+        hash: Number(hash),
         has: Boolean(frontmatter),
         ...frontmatter,
       })));

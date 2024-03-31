@@ -6,6 +6,7 @@
 		"gray-matter": "^4.0.3",
 		"jsdom": "^24.0.0",
 		"markdownlint": "^0.33.0",
+		"object.groupby": "^1.0.3",
 		"set.prototype.difference": "^1.1.4",
 		"stream-json": "^1.8.0",
 		"toml": "^3.0.0"
