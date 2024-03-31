@@ -1,6 +1,5 @@
 /* global emit */
 /* eslint-disable func-names */
-/* eslint-disable no-underscore-dangle */
 
 const frontmatterMapFunction = function (doc) {
   if (doc.item.type === 'content') {
