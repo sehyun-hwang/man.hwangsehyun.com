@@ -149,8 +149,8 @@ class FrontMatterTransformStream extends Transform {
 export async function processFrontMatters(cloudant, idByHash) {
   console.log('processFrontMatters');
   const transform = new FrontMatterTransformStream(idByHash);
-  await cloudant.streamFrontMatters(transform);
   const frontmatterDocsPromise = transform.toArray();
+  await cloudant.streamFrontMatters(transform);
 
   const deleteStaleFrontmatterDocsParam = await transform.getDeleteStaleFrontmatterDocsParam();
   if (deleteStaleFrontmatterDocsParam.length) {
