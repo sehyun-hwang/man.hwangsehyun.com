@@ -1,0 +1,8 @@
+h3 {
+  display: inline;
+}
+
+details li,
+p {
+  padding: 0 3rem;
+}

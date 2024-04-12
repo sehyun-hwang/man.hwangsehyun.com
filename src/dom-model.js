@@ -1,3 +1,5 @@
+// @ts-check
+
 /* eslint-disable max-classes-per-file */
 import { JSDOM } from 'jsdom';
 
@@ -10,10 +12,13 @@ const TYPE2HTML_TAGS = {
   content: 'p',
 };
 
-export class DomIdError extends Error { }
+export class DomIdError extends Error {}
 
+/**
+ * @param element {HTMLElement}
+ */
 function* generateParentNode(element) {
-  let current = element;
+  let current = (element);
   do {
     yield current;
     // eslint-disable-next-line no-cond-assign
@@ -21,7 +26,7 @@ function* generateParentNode(element) {
 }
 
 export default class StackEditDomModel {
-  /** @type */
+  /** @type {JSDOM} */
   dom;
 
   /**  @type {Document} */
@@ -31,6 +36,11 @@ export default class StackEditDomModel {
     const dom = new JSDOM();
     const { document } = dom.window;
     Object.assign(this, { dom, document, docs: sortedDocs });
+
+    const style = document.createElement('link');
+    style.rel = 'stylesheet';
+    style.href = 'tree.css';
+    document.head.appendChild(style);
 
     // eslint-disable-next-line no-restricted-syntax
     for (const node of sortedDocs.values())
@@ -42,17 +52,28 @@ export default class StackEditDomModel {
     return this.document.documentElement.outerHTML;
   }
 
+  /**
+   * @param id {string}
+   */
   selectId(id) {
-    return this.document.getElementById(ID_PREFIX + id);
+    const element = this.document.getElementById(ID_PREFIX + id);
+    if (element)
+      return element;
+    throw new DomIdError(`Missing StackEdit item id on DOM: ${id}`);
   }
 
+  /**
+   * @param dbItem {import('./types.js').StackEditItem}
+   */
   appendNode(dbItem) {
     console.log('Appending', JSON.stringify(dbItem));
     const { document } = this;
     const tag = TYPE2HTML_TAGS[dbItem.type];
     const element = document.createElement(tag);
-    if (tag === 'details')
-      element.open = true;
+    if (tag === 'details') {
+      const detailsElement = /** @type {HTMLDetailsElement} */ (element);
+      detailsElement.open = true;
+    }
     element.id = ID_PREFIX + dbItem.id;
     element.dataset.name = dbItem.name;
 
@@ -77,21 +98,24 @@ export default class StackEditDomModel {
     bidirectionalMap.forEach((value, key) => {
       if (typeof key !== 'string')
         return;
-      const element = this.selectId(key);
-      if (!element) {
-        console.log('In trash', value);
-        return;
+      try {
+        const element = this.selectId(key);
+        element.dataset.hash = value;
+      } catch (error) {
+        if (!(error instanceof DomIdError))
+          throw error;
       }
-      element.dataset.hash = value;
     });
 
     etagFromId.forEach((etag, id) => {
-      const element = this.selectId(id);
-      if (!element) {
-        console.log('In trash', id);
-        return;
+      try {
+        const element = this.selectId(id);
+        element.dataset.etag = etag;
+      } catch (error) {
+        if (!(error instanceof DomIdError))
+          throw error;
       }
-      element.dataset.etag = etag;
+
     });
   }
 
@@ -125,18 +149,12 @@ export default class StackEditDomModel {
       throw new Error(`Stale frontmatter ${contentIds}`);
   }
 
-  getNamesFromSelector(selector) {
-    console.log('Querying', selector);
-    const element = this.document.querySelector(selector);
-    if (!element)
-      throw new DomIdError(`Missing StackEdit item id on DOM: ${selector}`);
+  getNamesFromId(itemId) {
+    console.log('Querying', itemId);
+    const element = this.selectId(itemId);
     const names = Array.from(generateParentNode(element)).map(parent => parent?.dataset?.name || '');
     names.reverse();
     return names;
-  }
-
-  getNamesFromId(itemId) {
-    return this.getNamesFromSelector('#' + ID_PREFIX + itemId);
   }
 
   getDatasetFromId(itemId) {
