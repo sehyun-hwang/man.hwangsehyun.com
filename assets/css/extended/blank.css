@@ -1,0 +1,15 @@
+html {
+    scroll-behavior: smooth;
+}
+
+.truncated {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    overflow: hidden;
+}
+
+#project-table {
+    display: block;
+    overflow-x: auto;
+}

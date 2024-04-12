@@ -1,37 +1,40 @@
 {{ $opts := dict "X-MICROCMS-API-KEY" site.Params.MICROCMS }}
 {{ $data := getJSON "https://q7h9nx3ddk.microcms.io/api/v1/projects" $opts }}
 
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Description</th>
-            <th>Technologies</th>
-            <th>Started At</th>
-            <th>Ended At</th>
-            <th>Belonging</th>
-        </tr>
-    </thead>
-    <tbody>
-        {{ range $data.contents }}
-        <tr>
-            <td>
-                <a href="{{ .id }}">
-                    {{ .emoji }} {{ .name }}
-                </a>
-            </td>
-            <td>{{ .description }}</td>
-            <td>
-                <ul>
-                    {{ range .techs }}
-                    <li>{{ .name }}</li>
-                    {{ end }}
-                </ul>
-            </td>
-            <td>{{ .startedAt }}</td>
-            <td>{{ .endedAt }}</td>
-            <td>{{ range .belonging }}{{ . }} {{ end }}</td>
-        </tr>
-        {{ end }}
-    </tbody>
+<table id="project-table">
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Description</th>
+      <th>Technologies</th>
+      <th>Period</th>
+      <th>Belonging</th>
+    </tr>
+  </thead>
+  <tbody>
+    <!-- {{ range $data.contents }} -->
+    <tr>
+      <td>
+        <a href="{{ .id }}">
+          {{ .emoji }} {{ .name }}
+        </a>
+      </td>
+      <td class="truncated">{{ .description }}</td>
+      <td>
+        <ul>
+          {{ range .techs }}
+          <li>{{ .name }}</li>
+          {{ end }}
+        </ul>
+      </td>
+      <td>
+        <ul>
+          <li>{{ .startedAt }}</li>
+          <li>{{ .endedAt }}</li>
+        </ul>
+      </td>
+      <td>{{ range .belonging }}{{ . }} {{ end }}</td>
+    </tr>
+    <!-- {{ end }} -->
+  </tbody>
 </table>
