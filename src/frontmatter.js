@@ -47,7 +47,7 @@ export const insertFrontMatterDocs = (client, db, contentDocs) => Promise.all(
   contentDocs.map(({
     _id: docId,
     item: { hash },
-  }, i) => new Promise(resolve => setTimeout(resolve, i * 50))
+  }, i) => new Promise(resolve => setTimeout(resolve, i * 60))
     .then(() => client.getAttachment({
       db,
       docId,
