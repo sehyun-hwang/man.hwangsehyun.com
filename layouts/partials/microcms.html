@@ -1,3 +1,22 @@
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridjs/dist/theme/mermaid.min.css" />
+
+<style>
+.main {
+  max-width: unset;
+}
+</style>
+
+<noscript>
+  <style>
+  #project-table {
+    display: block;
+  }
+  </style>
+</noscript>
+
+{{ $built := resources.Get "js/grid.js" | js.Build }}
+<script src="{{ $built.RelPermalink }}" defer></script>
+
 {{ $opts := dict "X-MICROCMS-API-KEY" site.Params.MICROCMS }}
 {{ $data := getJSON "https://q7h9nx3ddk.microcms.io/api/v1/projects" $opts }}
 
@@ -9,14 +28,16 @@
       <th>Technologies</th>
       <th>Period</th>
       <th>Belonging</th>
+      <th>Importance</th>
     </tr>
   </thead>
   <tbody>
     <!-- {{ range $data.contents }} -->
-    <tr>
+    <tr class="importance-{{ .importance }}">
       <td>
-        <a href="{{ .id }}">
-          {{ .emoji }} {{ .name }}
+        <a href="/project/{{ .id }}">
+          {{ .emoji }}
+          <span class="name">{{ .name }}</span>
         </a>
       </td>
       <td class="truncated">{{ .description }}</td>
@@ -28,12 +49,17 @@
         </ul>
       </td>
       <td>
-        <ul>
+        <ul class="period">
           <li>{{ .startedAt }}</li>
           <li>{{ .endedAt }}</li>
         </ul>
       </td>
-      <td>{{ range .belonging }}{{ . }} {{ end }}</td>
+      <td>
+        {{ range .belonging }}
+        <a href="/carrier/{{ html . }}">{{ . }}</a>
+        {{ end }}
+      </td>
+      <td class="number">{{ .importance }}</td>
     </tr>
     <!-- {{ end }} -->
   </tbody>
