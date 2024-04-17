@@ -16,9 +16,11 @@ minify:
   disableXML: true
   # minifyOutput: true
 
+defaultContentLanguage: kr
+
 languages:
-  en:
-    languageName: "English"
+  kr:
+    languageName: 한국어
     weight: 1
     taxonomies:
       category: categories
@@ -35,6 +37,37 @@ languages:
         - name: 🔍
           url: search/
           weight: 10
+    # params:
+    #   cover:
+    #     hidden: true
+
+  kp:
+    languageName: 문화어
+    weight: 10
+    taxonomies:
+      category: categories
+      tag: tags
+      series: series
+    menu:
+      main:
+        - name: 설명서
+          url: man
+          weight: 10
+        - name: 과제
+          url: project/
+          weight: 10
+        - name: 🔍
+          url: search/
+          weight: 10
+
+module:
+  mounts:
+  - source: content
+    target: content
+    lang: kr
+  - source: content
+    target: content
+    lang: kp
 
 outputs:
   home:
@@ -63,15 +96,7 @@ params:
   # comments: false
   images: ["images/papermod-cover.png"]
 
-  homeInfoParams:
-    Title: "Sehyun's Home"
-    Content: |
-      👋 Welcome to <https://man.hwangsehyun.com>
-      > *더 넓은 세상으로*
-
-      나의 사상을 알려거든 [`/man`으로 이동하라](/man)
-
-      [GitHub repository of this site](https://github.com/sehyun-hwang/man.hwangsehyun.com)
+  homeInfoParams: true
 
 
   socialIcons:

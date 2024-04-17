@@ -1,4 +1,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridjs/dist/theme/mermaid.min.css" />
+{{ $style := resources.Get "scss/grid.scss" | resources.ToCSS | resources.Fingerprint }}
+<link rel="stylesheet" href="{{ $style.Permalink }}" integrity="{{ $style.Data.Integrity }}">
+
 
 <style>
 .main {
@@ -8,7 +11,7 @@
 
 <noscript>
   <style>
-  #project-table {
+  .project-table {
     display: block;
   }
   </style>
@@ -20,7 +23,7 @@
 {{ $opts := dict "X-MICROCMS-API-KEY" site.Params.MICROCMS }}
 {{ $data := getJSON "https://q7h9nx3ddk.microcms.io/api/v1/projects" $opts }}
 
-<table id="project-table">
+<table class="project-table">
   <thead>
     <tr>
       <th>Name</th>
@@ -35,6 +38,7 @@
     <!-- {{ range $data.contents }} -->
     <tr class="importance-{{ .importance }}">
       <td>
+        <span class="importance-{{ .importance }}"></span>
         <a href="/project/{{ .id }}">
           {{ .emoji }}
           <span class="name">{{ .name }}</span>

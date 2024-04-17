@@ -1,0 +1,17 @@
+@font-face {
+  font-family: 'WKFixd';
+  src: url('/font/WKFixd.ttf');
+}
+
+@font-face {
+  font-family: 'WKCalligraphy';
+  src: url('/font/WKCalligraphy.ttf');
+}
+
+body {
+  font-family: 'WKFixd', 'Georgia', serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'WKCalligraphy', 'Georgia', serif;
+}
