@@ -20,12 +20,10 @@ const columns = [
     name: "Name",
     sort: {
       compare: ({ __e: aa }, { __e: bb }) => {
-        console.log(aa, bb);
         const [{ textContent: a }, { textContent: b }] = [
           aa.querySelector(".name"),
           bb.querySelector(".name")
         ];
-        console.log(a, a);
         if (a > b) {
           return 1;
         } else if (b > a) {
@@ -34,6 +32,15 @@ const columns = [
           return 0;
         }
       }
+    },
+    attributes(cell) {
+      console.log(cell);
+      if (!cell?.__e) return {};
+      return {
+        class: cell
+          ? "gridjs-td " + cell.__e.firstElementChild.classList.value
+          : "gridjs-th"
+      };
     }
   },
   {
@@ -52,11 +59,12 @@ const columns = [
     formatter: (data) => {
       const [start, end] = data.split("_").map((date) => new Date(date));
       const duration = (end - start) / 1000 / 3600 / 24 / 30;
-      return html(`<ul>
-        <li>From ${start.toLocaleDateString()}</li>
+      return html(
+        `<li>From ${start.toLocaleDateString()}</li>
         <li>Until ${end.toLocaleDateString()}</li>
-        <li>For ${duration.toFixed(1)} Months</li>
-      </ul>`);
+        <li>For ${duration.toFixed(1)} Months</li>`,
+        "ul"
+      );
     }
   },
   {
@@ -78,7 +86,10 @@ async function renderGridjsData(data) {
   const grid = new Grid({
     resizable: true,
     columns,
-    data
+    data,
+    className: {
+      table: "project-table"
+    }
   });
 
   const readyPromise = new Promise((resolve, reject) => {
@@ -92,7 +103,7 @@ async function renderGridjsData(data) {
   return readyPromise;
 }
 
-const appendGridjs = (golangTable = document.querySelector("#project-table")) =>
+const appendGridjs = (golangTable = document.querySelector(".project-table")) =>
   renderGridjsData(buildData(golangTable))
     .then((gridjsTable) => golangTable.replaceWith(gridjsTable))
     .catch((error) => {
