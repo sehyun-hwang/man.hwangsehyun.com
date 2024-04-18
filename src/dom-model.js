@@ -115,7 +115,6 @@ export default class StackEditDomModel {
         if (!(error instanceof DomIdError))
           throw error;
       }
-
     });
   }
 

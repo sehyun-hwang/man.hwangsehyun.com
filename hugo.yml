@@ -96,7 +96,9 @@ params:
   # comments: false
   images: ["images/papermod-cover.png"]
 
-  homeInfoParams: true
+  homeInfoParams:
+    Title:
+    Content:
 
 
   socialIcons:

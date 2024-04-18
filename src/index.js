@@ -62,6 +62,7 @@ async function run(cloudant, database, frontMatterDocsArg = null) {
   });
 
   const synchronizer = new FileSynchronizer(stackEditPaths);
+  await synchronizer.writeHugoConfig();
   await synchronizer.processInvalidChecksums();
   await synchronizer.calculate();
   await synchronizer.prune();
@@ -89,5 +90,5 @@ async function run(cloudant, database, frontMatterDocsArg = null) {
 
   const changesWritableParams = await run(cloudant, database);
   changesWritableParams.run = run.bind(undefined, cloudant);
-  await cloudant.followChanges(new ChangesWritable(changesWritableParams));
+  process.env.CI || await cloudant.followChanges(new ChangesWritable(changesWritableParams));
 }

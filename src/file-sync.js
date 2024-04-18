@@ -1,12 +1,16 @@
 import { execFile, spawn } from 'child_process';
 import { createInterface } from 'readline';
-import { unlink } from 'fs/promises';
+import { readFile, unlink, writeFile } from 'fs/promises';
 
 import { glob } from 'glob';
 import setDifference from 'set.prototype.difference';
+import YAML from 'yaml';
 
 // eslint-disable-next-line no-unused-vars
 import StackEditPath, { HUGO_CONTENT_DIR } from './path.js';
+
+const HUGO_CONFIG_PATH = 'hugo.yml';
+const HUGO_CONFIG_GENERATED_PATH = 'hugo.generated.json';
 
 const gzipFiles = paths => new Promise((resolve, reject) => {
   console.log('gzip', paths.length);
@@ -64,6 +68,22 @@ async function calculateInvalidChecksums(gzips) {
   return invalidPaths;
 }
 
+const addHugoMount = sources => readFile(HUGO_CONFIG_PATH, 'utf-8')
+  .then(YAML.parse)
+  .then(({ module }) => {
+    const hugoConfig = {
+      module: {
+        mounts: sources.map(source => ({
+          source,
+          target: source.replace('/index', '').replace(/\w{32}.generated.md/, 'md'),
+        }))
+          .concat(module.mounts),
+      },
+    };
+    console.log(HUGO_CONFIG_GENERATED_PATH, hugoConfig);
+    return writeFile(HUGO_CONFIG_GENERATED_PATH, JSON.stringify(hugoConfig));
+  });
+
 export default class FileSynchronizer {
   /** @type {StackEditPath[]} */
   requiredPaths;
@@ -120,5 +140,17 @@ export default class FileSynchronizer {
     // eslint-disable-next-line no-restricted-syntax
     for (const path of this.downloadCandidates)
       yield pathMap.get(path);
+  }
+
+  writeHugoConfig() {
+    const sources = this.requiredPaths.filter(({ names }) => {
+      const parent = names.indexOf('_index');
+      if (parent < 0)
+        return false;
+      return names[parent + 1].startsWith('index.');
+    })
+      .map(({ markdownPath }) => markdownPath);
+    console.log(HUGO_CONFIG_PATH, 'module.mounts.source list', sources);
+    return addHugoMount(sources);
   }
 }
