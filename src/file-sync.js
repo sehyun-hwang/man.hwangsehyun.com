@@ -84,6 +84,14 @@ const addHugoMount = sources => readFile(HUGO_CONFIG_PATH, 'utf-8')
     return writeFile(HUGO_CONFIG_GENERATED_PATH, JSON.stringify(hugoConfig));
   });
 
+export const replaceHugoMount = (pattern, replacement) => readFile(HUGO_CONFIG_GENERATED_PATH, 'utf-8')
+  .then(original => {
+    const replaced = original.replace(pattern, replacement);
+    if (replaced === original)
+      return;
+    return writeFile(HUGO_CONFIG_GENERATED_PATH, replaced);
+  });
+
 export default class FileSynchronizer {
   /** @type {StackEditPath[]} */
   requiredPaths;
