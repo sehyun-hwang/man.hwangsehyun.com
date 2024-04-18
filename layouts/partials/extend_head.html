@@ -1,4 +1,7 @@
 {{ if eq .Site.Language.Lang "kp" }}
-{{ $stylesheet := resources.Get "css/kp.css" | resources.Minify | resources.Fingerprint }}
-<link crossorigin="anonymous" href="{{ $stylesheet.RelPermalink }}" integrity="{{ $stylesheet.Data.Integrity }}" rel="preload stylesheet" as="style">
+  {{ with resources.Get "css/kp.template.css" }}
+    {{ with resources.ExecuteAsTemplate "css/kp.css" $ . }}
+      <link crossorigin="anonymous" href="{{ .RelPermalink }}" integrity="{{ .Data.Integrity }}" rel="preload stylesheet" as="style">
+    {{ end }}
+  {{ end }}
 {{ end }}
