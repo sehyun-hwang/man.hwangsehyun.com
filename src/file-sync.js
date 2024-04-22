@@ -152,13 +152,15 @@ export default class FileSynchronizer {
 
   writeHugoConfig() {
     const sources = this.requiredPaths.filter(({ names }) => {
-      const parent = names.indexOf('_index');
-      if (parent < 0)
+      const fileName = names.at(-1);
+      if (fileName === '_index')
+        return true;
+      if (names.at(-2) !== '_index')
         return false;
-      return names[parent + 1].startsWith('index.');
+      return fileName.startsWith('index.');
     })
       .map(({ markdownPath }) => markdownPath);
-    console.log(HUGO_CONFIG_PATH, 'module.mounts.source list', sources);
+    console.log(HUGO_CONFIG_GENERATED_PATH, 'module.mounts.source list', sources);
     return addHugoMount(sources);
   }
 }
