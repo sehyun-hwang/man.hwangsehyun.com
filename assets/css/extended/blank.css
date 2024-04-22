@@ -12,6 +12,12 @@ html {
   justify-content: space-between;
 }
 
+@media only screen and (max-width: 640px) {
+  .home-info {
+    flex-direction: column;
+  }
+}
+
 .home-info blockquote:before {
   content: "\201C";
   font-size: 3em;
@@ -37,6 +43,7 @@ html {
 }
 
 .home-info .entry-footer img {
+  margin: auto;
   border-radius: 25px;
 }
 
