@@ -56,3 +56,7 @@ html {
 }
 
 /* home end */
+
+.post-content pre code {
+  --code-block-bg: transparent !important;
+}

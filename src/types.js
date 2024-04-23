@@ -8,6 +8,8 @@
 /**
  * @typedef {{
  *   id: string,
+ *   parentId: string | null,
+ *   name: string,
  *   type: 'folder' | 'file' | 'content',
  *   hash: number,
  * }} StackEditItem

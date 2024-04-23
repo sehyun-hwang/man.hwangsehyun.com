@@ -5,3 +5,7 @@
     {{ end }}
   {{ end }}
 {{ end }}
+
+{{ with resources.Get "js/index.js" | js.Build }}
+<script defer src="{{ .Permalink }}"></script>
+{{ end }}

@@ -11,7 +11,6 @@
   max-width: calc(var(--main-width) + var(--gap)* 2);
   margin: auto;
 }
-
 </style>
 
 <noscript>
@@ -22,8 +21,9 @@
   </style>
 </noscript>
 
-{{ $built := resources.Get "js/grid.js" | js.Build }}
-<script src="{{ $built.RelPermalink }}" defer></script>
+{{ with resources.Get "js/grid.js" | js.Build }}
+<script src="{{ .Permalink }}" defer></script>
+{{ end }}
 
 {{ $opts := dict "X-MICROCMS-API-KEY" site.Params.MICROCMS }}
 {{ $data := getJSON "https://q7h9nx3ddk.microcms.io/api/v1/projects" $opts }}
