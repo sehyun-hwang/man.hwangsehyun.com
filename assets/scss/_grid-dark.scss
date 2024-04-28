@@ -1,0 +1,126 @@
+/* https://github.com/grid-js/gridjs/issues/115#issuecomment-1151543389 */
+/* https://www.diffchecker.com/6YQw7yuo/ */
+
+.gridjs-container {
+  color: #fff;
+}
+
+.gridjs-footer {
+  border-top: 1px solid #1a1814;
+  background-color: #000;
+  box-shadow:
+    0 1px 3px 0 rgba(255, 255, 255, 0.1),
+    0 1px 2px 0 rgba(255, 255, 255, 0.26);
+  border-color: #1a1814;
+}
+
+input.gridjs-input {
+  /*outline: none;*/
+  background-color: #000;
+  border: 1px solid #2d2923;
+}
+
+input.gridjs-input:focus {
+  box-shadow: 0 0 0 3px rgba(106, 66, 12, 0.5);
+  border-color: #643d08;
+}
+
+.gridjs-pagination {
+  color: #c2bfbb;
+}
+
+.gridjs-pagination .gridjs-pages button {
+  border: 1px solid #2d2923;
+  background-color: #000;
+}
+.gridjs-pagination .gridjs-pages button:focus {
+  box-shadow: 0 0 0 2px rgba(106, 66, 12, 0.5);
+}
+.gridjs-pagination .gridjs-pages button:hover {
+  background-color: #080808;
+  color: #c3bda8;
+}
+.gridjs-pagination .gridjs-pages button:disabled,
+.gridjs-pagination .gridjs-pages button[disabled],
+.gridjs-pagination .gridjs-pages button:hover:disabled {
+  background-color: #000;
+  color: #948d7f;
+}
+.gridjs-pagination .gridjs-pages button.gridjs-spread {
+  background-color: #000;
+}
+.gridjs-pagination .gridjs-pages button.gridjs-currentPage {
+  background-color: #080808;
+}
+.gridjs-pagination .gridjs-pages button:last-child {
+  border-right: 1px solid #2d2923;
+}
+
+button.gridjs-sort-neutral,
+button.gridjs-sort-asc,
+button.gridjs-sort-desc{
+  filter: invert(100%);
+}
+
+
+.gridjs-tbody {
+  background-color: #000;
+}
+
+td.gridjs-td {
+  border: 1px solid #1a1814;
+  background-color: #000;
+}
+
+
+th.gridjs-th {
+  color: #6b7280;
+  background-color: #060504;
+  border: 1px solid #1a1814;
+}
+
+th.gridjs-th-sort:hover {
+  background-color: #1a1814;
+}
+th.gridjs-th-sort:focus {
+  background-color: #1a1814;
+}
+th.gridjs-th-fixed {
+  box-shadow: 0 1px 0 0 #1a1814;
+}
+@supports (-moz-appearance: none) {
+  th.gridjs-th-fixed {
+    box-shadow: 0 0 0 1px #1a1814;
+  }
+}
+
+.gridjs-tr-selected td {
+  background-color: #140a00;
+}
+
+
+.gridjs-wrapper {
+  box-shadow:
+    0 1px 3px 0 rgba(255, 255, 255, 0.1),
+    0 1px 2px 0 rgba(255, 255, 255, 0.26);
+  border-color: #1a1814;
+}
+
+
+.gridjs-loading-bar {
+  background-color: #000;
+}
+.gridjs-loading-bar::after {
+  background-image: linear-gradient(
+    90deg,
+    rgba(51, 51, 51, 0) 0,
+    rgba(51, 51, 51, 0.2) 20%,
+    rgba(51, 51, 51, 0.5) 60%,
+    rgba(51, 51, 51, 0)
+  );
+}
+
+
+.gridjs-resizable:hover {
+  background-color: #643d08;
+}

@@ -1,0 +1,11 @@
+{{ if eq .Site.Language.Lang "kp" }}
+  {{ with resources.Get "css/kp.template.css" }}
+    {{ with resources.ExecuteAsTemplate "css/kp.css" $ . }}
+      <link crossorigin="anonymous" href="{{ .RelPermalink }}" integrity="{{ .Data.Integrity }}" rel="preload stylesheet" as="style">
+    {{ end }}
+  {{ end }}
+{{ end }}
+
+{{ with resources.Get "js/index.js" | js.Build }}
+<script defer src="{{ .Permalink }}"></script>
+{{ end }}

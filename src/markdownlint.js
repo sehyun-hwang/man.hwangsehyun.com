@@ -30,13 +30,13 @@ class FrontMatterParserRule {
       }
 
       try {
-        data = matter(frontMatterLines.join('\n'), {
+        data = matter(frontMatterLines.join('\n'), frontMatterLines[0] === '+++' ? {
           language: 'toml',
           delims: '+++',
           engines: {
             toml: parseToml,
           },
-        }).data;
+        } : {}).data;
         console.log(name, frontMatterLines, data);
       } catch (error) {
         /**

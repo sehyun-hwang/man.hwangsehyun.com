@@ -1,0 +1,15 @@
+<article class="first-entry home-info">
+    <div class="entry-content">
+        <header class="entry-header">
+            <h1>{{ .Site.Title }}</h1>
+        </header>
+        {{ .Content }}
+    </div>
+    <footer class="entry-footer">
+        {{- $profileImage := resources.Get "image/profile.jpg" }}
+        <img src="{{ $profileImage.Permalink }}" height="300" />
+        {{ partial "social_icons.html" (dict "align" "center") }}
+    </footer>
+</article>
+
+<hr/>

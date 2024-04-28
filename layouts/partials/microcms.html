@@ -1,37 +1,75 @@
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridjs/dist/theme/mermaid.min.css" />
+{{ $style := resources.Get "scss/grid.scss" | resources.ToCSS | resources.Fingerprint }}
+<link rel="stylesheet" href="{{ $style.Permalink }}" integrity="{{ $style.Data.Integrity }}">
+
+<style>
+.main {
+  max-width: unset;
+}
+
+.post-content {
+  max-width: calc(var(--main-width) + var(--gap)* 2);
+  margin: auto;
+}
+</style>
+
+<noscript>
+  <style>
+  .project-table {
+    display: block;
+  }
+  </style>
+</noscript>
+
+{{ with resources.Get "js/grid.js" | js.Build }}
+<script src="{{ .Permalink }}" defer></script>
+{{ end }}
+
 {{ $opts := dict "X-MICROCMS-API-KEY" site.Params.MICROCMS }}
 {{ $data := getJSON "https://q7h9nx3ddk.microcms.io/api/v1/projects" $opts }}
 
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Description</th>
-            <th>Technologies</th>
-            <th>Started At</th>
-            <th>Ended At</th>
-            <th>Belonging</th>
-        </tr>
-    </thead>
-    <tbody>
-        {{ range $data.contents }}
-        <tr>
-            <td>
-                <a href="{{ .id }}">
-                    {{ .emoji }} {{ .name }}
-                </a>
-            </td>
-            <td>{{ .description }}</td>
-            <td>
-                <ul>
-                    {{ range .techs }}
-                    <li>{{ .name }}</li>
-                    {{ end }}
-                </ul>
-            </td>
-            <td>{{ .startedAt }}</td>
-            <td>{{ .endedAt }}</td>
-            <td>{{ range .belonging }}{{ . }} {{ end }}</td>
-        </tr>
+<table class="project-table">
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Description</th>
+      <th>Technologies</th>
+      <th>Period</th>
+      <th>Belonging</th>
+      <th>Importance</th>
+    </tr>
+  </thead>
+  <tbody>
+    <!-- {{ range $data.contents }} -->
+    <tr class="importance-{{ .importance }}">
+      <td>
+        <span class="importance-{{ .importance }}"></span>
+        <a href="/project/{{ .id }}">
+          {{ .emoji }}
+          <span class="name">{{ .name }}</span>
+        </a>
+      </td>
+      <td class="truncated">{{ .description }}</td>
+      <td>
+        <ul>
+          {{ range .techs }}
+          <li>{{ .name }}</li>
+          {{ end }}
+        </ul>
+      </td>
+      <td>
+        <ul class="period">
+          <li>{{ .startedAt }}</li>
+          <li>{{ .endedAt }}</li>
+        </ul>
+      </td>
+      <td>
+        {{ range .belonging }}
+        <a href="/carrier/{{ html . }}">{{ . }}</a>
         {{ end }}
-    </tbody>
+      </td>
+      <td class="number">{{ .importance }}</td>
+    </tr>
+    <!-- {{ end }} -->
+  </tbody>
 </table>

@@ -9,17 +9,18 @@
 		"object.groupby": "^1.0.3",
 		"set.prototype.difference": "^1.1.4",
 		"stream-json": "^1.8.0",
-		"toml": "^3.0.0"
+		"toml": "^3.0.0",
+		"yaml": "^2.4.1"
 	},
 	"devDependencies": {
 		"@types/jsdom": "^21.1.6",
 		"@types/stream-json": "^1.7.7",
 		"globals": "^15.0.0",
-		"ibm-cloud-sdk-core": "^4.2.5",
+		"ibm-cloud-sdk-core": "^4.3.0",
 		"typescript": "^5.4.3"
 	},
 	"scripts": {
 		"tsc": "tsc --noEmit --allowJs -p jsconfig.json",
-		"lint": "nextlab-eslint"
+		"lint": "nextlab-eslint ."
 	}
 }

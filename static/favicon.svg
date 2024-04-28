@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
+  <style>
+    path { 
+      stroke: #FDFDFD;
+    }
+
+    .background  {
+      fill: #262626;
+    }
+    
+    @media (prefers-color-scheme: dark) {
+      path {
+        stroke: #262626;
+      }
+
+      .background {
+        fill: #FDFDFD;
+      }
+    }
+  </style>
+  <defs>
+    <linearGradient id="myGradient" gradientTransform="rotate(90)">
+      <stop offset="0%" stop-color="#D0E5EC"/>
+      <stop offset="100%" stop-color="#767574"/>
+    </linearGradient>
+  </defs>
+  <rect x="9" y="9" width="82" height="82" rx="20" fill="url('#myGradient')"/>
+  <rect x="12" y="12" width="76" height="76" rx="17" class="background"/>
+  <path fill-opacity="0" stroke-width="2" d="M 25 25 L 33 29 L 33 31 L 25 35"/>
+  <path stroke-width="2" d="M 37.775 39.611 L 48.77 39.619"/>
+</svg>

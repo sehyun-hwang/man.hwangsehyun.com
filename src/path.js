@@ -63,7 +63,7 @@ export default class StackEditPath {
       .then(async paths => {
         console.log('Pruning', paths);
         await Promise.all(paths.map(unlink));
-        return paths.length;
+        return paths;
       });
   }
 

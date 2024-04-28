@@ -9,7 +9,7 @@ import DatabaseWritable from './database.js';
 import FileSynchronizer from './file-sync.js';
 import StackEditDomData from './dom-data.js';
 import StackEditDomModel from './dom-model.js';
-import StackEditPath from './path.js';
+import StackEditPath, { HUGO_CONTENT_DIR } from './path.js';
 
 const staticCloudant = new Cloudant4Hugo({
   serviceUrl: 'https://618cf517-eb22-487f-ab2c-8366988f9b91-bluemix.cloudant.com',
@@ -53,7 +53,7 @@ async function run(cloudant, database, frontMatterDocsArg = null) {
   frontmatterDocs.forEach(docs => {
     domModel.appendFrontmatter(docs);
   });
-  await writeFile('tree.html', domModel.html);
+  await writeFile('static/tree.html', domModel.html);
 
   const stackEditPaths = domData.files.map(({ item: { id } }) => {
     const names = domModel.getNamesFromId(id);
@@ -62,6 +62,7 @@ async function run(cloudant, database, frontMatterDocsArg = null) {
   });
 
   const synchronizer = new FileSynchronizer(stackEditPaths);
+  await synchronizer.writeHugoConfig();
   await synchronizer.processInvalidChecksums();
   await synchronizer.calculate();
   await synchronizer.prune();
@@ -89,5 +90,5 @@ async function run(cloudant, database, frontMatterDocsArg = null) {
 
   const changesWritableParams = await run(cloudant, database);
   changesWritableParams.run = run.bind(undefined, cloudant);
-  await cloudant.followChanges(new ChangesWritable(changesWritableParams));
+  process.env.CI || await cloudant.followChanges(new ChangesWritable(changesWritableParams));
 }

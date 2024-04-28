@@ -9,6 +9,7 @@ import { FRONTMATTER_PREFIX } from './cloudant.js';
 import StackEditPath from './path.js';
 import { appendFrontMatterAttachments } from './frontmatter.js';
 import { parseFrontMatters } from './markdownlint.js';
+import { replaceHugoMount } from './file-sync.js';
 
 /**
  * @typedef {import('./types.js').StackEditItem} StackEditItem
@@ -93,9 +94,10 @@ export default class ChangesWritable extends Foo {
 
     const names = this.domModel.getNamesFromId(item.id.replace('/content', ''));
     const path = new StackEditPath({ names, etag, contentId: docId });
-    await path.prune();
+    const [prunedPath] = await path.prune();
     await path.createMarkdownWritable()
       .then(writable => writable.end(markdown));
+    await replaceHugoMount(prunedPath, path.markdownPath);
   }
 
   /**
