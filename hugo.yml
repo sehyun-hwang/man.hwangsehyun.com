@@ -167,4 +167,5 @@ services:
   twitter:
     disableInlineCSS: true
 
-uglyURLs: true
+ignoreFiles:
+  - \.generated.md.gz$

@@ -26,9 +26,8 @@ build: | hugo.yml hugo.generated.json
 deploy:
 	aws s3 sync public s3://${BUCKET}
 
-	cd public && for o in $$(find * -name index.html); do \
-		aws s3 cp $$o s3://${BUCKET}/$$(echo $$o | sed 's/\/index.html//'); \
-	done
+	# https://stackoverflow.com/a/66467783/3389370
+	python deploy_index_html.py
 
 	aws cloudfront create-invalidation \
 		--distribution-id E2JWAONP1BG780 \
