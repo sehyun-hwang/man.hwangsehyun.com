@@ -1,3 +1,20 @@
+body.dark {
+  @import "grid-dark";
+}
+
+.main {
+  max-width: unset;
+}
+
+.post-content {
+  max-width: calc(var(--main-width) + var(--gap)* 2);
+  margin: auto;
+}
+
+.project-table h4 {
+  display: inline;
+}
+
 .truncated {
   display: -webkit-box;
   -webkit-box-orient: vertical;
@@ -5,10 +22,6 @@
   overflow: hidden;
   padding-bottom: 0 !important;
   border-bottom: none !important;
-}
-
-body.dark {
-  @import "grid-dark";
 }
 
 td.importance-1,
