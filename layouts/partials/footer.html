@@ -27,5 +27,5 @@
         "code_copied": "{{- i18n "code_copied" | default "copied!" }}"
     },
     "highlightCode": {{- print (and (eq .Kind "page") (ne .Layout "archives") (ne .Layout "search") (.Param "ShowCodeCopyButtons")) }},
-    "mermaid": {{- or .Params.mermaid false | print }}
+    "mermaid": {{- or (.Param "mermaid") false | print }}
 }'/>
