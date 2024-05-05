@@ -52,7 +52,7 @@ export default class ChangesWritable extends Foo {
   }
 
   async processNode(doc) {
-    Object.assign(this, await this.run(this.database));
+    Object.assign(this, await this.run(this.database, this.frontmatterDocs));
   }
 
   /**
@@ -80,6 +80,8 @@ export default class ChangesWritable extends Foo {
         data: '',
       },
     };
+    console.log('Changed frontmatter', document);
+    this.frontmatterDocs.push(document);
 
     try {
       await client.postDocument({

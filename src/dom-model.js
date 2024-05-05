@@ -45,6 +45,7 @@ export default class StackEditDomModel {
     // eslint-disable-next-line no-restricted-syntax
     for (const node of sortedDocs.values())
       this.appendNode(node);
+    console.table(Array.from(sortedDocs.values()));
   }
 
   get html() {
@@ -66,7 +67,6 @@ export default class StackEditDomModel {
    * @param dbItem {import('./types.js').StackEditItem}
    */
   appendNode(dbItem) {
-    console.log('Appending', JSON.stringify(dbItem));
     const { document } = this;
     const tag = TYPE2HTML_TAGS[dbItem.type];
     const element = document.createElement(tag);
