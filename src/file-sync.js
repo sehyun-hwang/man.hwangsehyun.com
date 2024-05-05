@@ -1,16 +1,17 @@
 import { execFile, spawn } from 'child_process';
+import {
+  mkdir, readFile, unlink, writeFile,
+} from 'fs/promises';
 import { createInterface } from 'readline';
-import { readFile, unlink, writeFile } from 'fs/promises';
 
+import YAML from 'yaml';
 import { glob } from 'glob';
 import setDifference from 'set.prototype.difference';
-import YAML from 'yaml';
 
-// eslint-disable-next-line no-unused-vars
-import StackEditPath, { HUGO_CONTENT_DIR } from './path.js';
+import { HUGO_CONTENT_DIR } from './path.js';
 
 const HUGO_CONFIG_PATH = 'hugo.yml';
-const HUGO_CONFIG_GENERATED_PATH = 'hugo.generated.json';
+const HUGO_CONFIG_GENERATED_PATH = 'config/_default/hugo.json';
 
 const gzipFiles = paths => new Promise((resolve, reject) => {
   console.log('gzip', paths.length);
@@ -71,6 +72,7 @@ async function calculateInvalidChecksums(gzips) {
 const addHugoMount = sources => readFile(HUGO_CONFIG_PATH, 'utf-8')
   .then(YAML.parse)
   .then(({ module }) => {
+    const hugoConfigFolder = HUGO_CONFIG_GENERATED_PATH.replace('/hugo.json', '');
     const hugoConfig = {
       module: {
         mounts: sources.map(source => ({
@@ -81,14 +83,15 @@ const addHugoMount = sources => readFile(HUGO_CONFIG_PATH, 'utf-8')
       },
     };
     console.log(HUGO_CONFIG_GENERATED_PATH, hugoConfig);
-    return writeFile(HUGO_CONFIG_GENERATED_PATH, JSON.stringify(hugoConfig));
+    return mkdir(hugoConfigFolder, { recursive: true })
+      .then(() => writeFile(HUGO_CONFIG_GENERATED_PATH, JSON.stringify(hugoConfig)));
   });
 
 export const replaceHugoMount = (pattern, replacement) => readFile(HUGO_CONFIG_GENERATED_PATH, 'utf-8')
   .then(original => {
     const replaced = original.replace(pattern, replacement);
     if (replaced === original)
-      return;
+      return Promise.resolve();
     return writeFile(HUGO_CONFIG_GENERATED_PATH, replaced);
   });
 
