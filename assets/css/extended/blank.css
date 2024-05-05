@@ -2,6 +2,9 @@ html {
   scroll-behavior: smooth;
 }
 
+a:hover, .post-entry:hover h2 {
+  text-decoration: underline;
+}
 /* home start */
 .post-content:has(+ .home-info.first-entry) {
   display: none;
