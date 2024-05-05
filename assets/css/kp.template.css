@@ -9,11 +9,11 @@
   {{ end }}
 {{ end }}
 
-
 body {
   font-family: 'WKFixd', 'Georgia', serif;
 }
 
 h1, h2, h3, h4, h5, h6 {
   font-family: 'WKCalligraphy', 'Georgia', serif;
+  background: #ED1C27;
 }
