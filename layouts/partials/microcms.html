@@ -1,17 +1,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridjs/dist/theme/mermaid.min.css" />
-{{ $style := resources.Get "scss/grid.scss" | resources.ToCSS | resources.Fingerprint }}
-<link rel="stylesheet" href="{{ $style.Permalink }}" integrity="{{ $style.Data.Integrity }}">
-
-<style>
-.main {
-  max-width: unset;
-}
-
-.post-content {
-  max-width: calc(var(--main-width) + var(--gap)* 2);
-  margin: auto;
-}
-</style>
+{{ with resources.Get "scss/grid.scss" | resources.ToCSS | resources.Fingerprint }}
+<link rel="stylesheet" href="{{ .Permalink }}" integrity="{{ .Data.Integrity }}">
+{{ end }}
 
 <noscript>
   <style>
@@ -46,16 +36,25 @@
         <span class="importance-{{ .importance }}"></span>
         <a href="/project/{{ .id }}">
           {{ .emoji }}
-          <span class="name">{{ .name }}</span>
+          <h4 class="name">{{ .name }}</h4>
         </a>
       </td>
       <td class="truncated">{{ .description }}</td>
       <td>
         <ul>
-          {{ range .techs }}
+          {{ range (first 3 .techs) }}
           <li>{{ .name }}</li>
           {{ end }}
         </ul>
+
+        {{ if gt (len .techs) 3 }}
+        <details>
+          <summary>More</summary>
+          {{ range (after 3 .techs) }}
+          <li>{{ .name }}</li>
+          {{ end }}
+        </details>
+        {{ end }}
       </td>
       <td>
         <ul class="period">

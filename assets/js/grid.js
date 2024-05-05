@@ -34,7 +34,6 @@ const columns = [
       }
     },
     attributes(cell) {
-      console.log(cell);
       if (!cell?.__e) return {};
       return {
         class: cell
@@ -85,6 +84,7 @@ async function renderGridjsData(data) {
   const section = document.createElement("section");
   const grid = new Grid({
     resizable: true,
+    search: true,
     columns,
     data,
     className: {
@@ -103,9 +103,86 @@ async function renderGridjsData(data) {
   return readyPromise;
 }
 
+class GridjsManipulator {
+  fireSearchEvent(query) {
+    this.searchElement.value = query;
+    this.searchElement.dispatchEvent(
+      new Event("input", {
+        bubbles: true,
+        cancelable: true
+      })
+    );
+  }
+
+  // asc || desc
+  setSort(id, direction) {
+    const DIRECTION_SEQUENCE = ["neutral", "asc", "desc"];
+    const button = this.element.querySelector(
+      `.gridjs-th-sort[data-column-id='${id}'] button`
+    );
+    const currentDirection = button.classList[1].replace("gridjs-sort-", "");
+    const diff =
+      DIRECTION_SEQUENCE.indexOf(direction) -
+      DIRECTION_SEQUENCE.indexOf(currentDirection);
+
+    for (
+      let i = 0;
+      i < (diff >= 0 ? diff : DIRECTION_SEQUENCE.length + diff);
+      i++
+    ) {
+      console.log("click");
+      setTimeout(() => button.click(), i * 100);
+    }
+  }
+
+  constructor(gridjsElement) {
+    this.element = gridjsElement;
+    this.searchElement = gridjsElement.querySelector(".gridjs-search-input");
+  }
+
+  appendInputElements(anchorHanders) {
+    Object.entries(anchorHanders).forEach(([id, handler]) => {
+      const input = document.createElement("input");
+      input.addEventListener("focus", () => {
+        input.checked = true;
+        handler(this);
+      });
+
+      input.type = "radio";
+      input.id = id;
+      input.name = "project-table-preset";
+
+      const a = document.querySelector(`a[href$='#${id}']`);
+      a.href = "#" + id;
+      a.after(input);
+    });
+  }
+}
+
+const FOCUS_HANDLERS = {
+  ["importance-5"](self) {
+    self.fireSearchEvent("importance-5");
+  },
+  ["latest"](self) {
+    self.fireSearchEvent("crowdworks");
+  },
+  ["duration"](self) {
+    self.setSort("duration", "desc");
+    self.fireSearchEvent("");
+  },
+  ["cloud"](self) {
+    self.setSort("period", "asc");
+    self.fireSearchEvent("aws");
+  }
+};
+
 const appendGridjs = (golangTable = document.querySelector(".project-table")) =>
   renderGridjsData(buildData(golangTable))
-    .then((gridjsTable) => golangTable.replaceWith(gridjsTable))
+    .then((gridjsTable) => {
+      golangTable.replaceWith(gridjsTable);
+      const manipulator = new GridjsManipulator(gridjsTable);
+      manipulator.appendInputElements(FOCUS_HANDLERS);
+    })
     .catch((error) => {
       console.error(error);
       golangTable.prepend("Error: " + error.message);
