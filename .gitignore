@@ -1,3 +1,5 @@
+node_modules/
+
 content/**/*.generated.md
 content/**/*.generated.md.gz
 config/_default/hugo.json
