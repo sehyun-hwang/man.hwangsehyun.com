@@ -53,6 +53,7 @@ a:hover, .post-entry:hover h2 {
 .home-info + hr {
   margin-bottom: var(--gap);
 }
+
 /* home end */
 
 .post-content pre code {

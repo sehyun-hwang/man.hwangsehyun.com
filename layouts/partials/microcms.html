@@ -1,5 +1,8 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridjs/dist/theme/mermaid.min.css" />
-{{ with resources.Get "scss/grid.scss" | resources.ToCSS | resources.Fingerprint }}
+{{ $scss := resources.Get "scss/grid.scss" | resources.ToCSS }}
+{{ $css := resources.Get "css/_grid.css" | resources.ToCSS }}
+
+{{ with slice $scss $css | resources.Concat "css/grid.css" | resources.Fingerprint }} 
 <link rel="stylesheet" href="{{ .Permalink }}" integrity="{{ .Data.Integrity }}">
 {{ end }}
 
