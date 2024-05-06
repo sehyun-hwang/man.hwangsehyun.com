@@ -6,6 +6,22 @@ a:hover, .post-entry:hover h2 {
   text-decoration: underline;
 }
 
+@keyframes highlight {
+  from {
+    background: unset;
+  }
+
+  to {
+    background: yellow;
+  }
+}
+
+*:target {
+  animation-duration: 0.5s;
+  animation-iteration-count: 2;
+  animation-name: highlight;
+}
+
 /* home start */
 .post-content:has(+ .home-info.first-entry) {
   display: none;
