@@ -1,5 +1,6 @@
-import { Grid, html } from "gridjs";
+import { Grid, html } from 'gridjs';
 
+/* eslint-disable */
 function buildData(golangTable) {
   const data = Array.from(golangTable.tBodies[0].rows, ({ cells }) =>
     Array.prototype.flatMap.call(cells, (cell) => {
@@ -103,6 +104,22 @@ async function renderGridjsData(data) {
   return readyPromise;
 }
 
+const newspaperSpinning = [
+  {
+    borderColor: "#9bc2f7",
+    boxShadow: "0 0 0 3px rgba(149,189,243,.5)"
+  },
+  {
+    borderColor: "unset",
+    boxShadow: "unset"
+  }
+];
+
+const newspaperTiming = {
+  duration: 500,
+  iterations: 2
+};
+
 class GridjsManipulator {
   fireSearchEvent(query) {
     this.searchElement.value = query;
@@ -141,19 +158,24 @@ class GridjsManipulator {
   }
 
   appendInputElements(anchorHanders) {
+    const search = this.element.querySelector('.gridjs-search-input');
+    
     Object.entries(anchorHanders).forEach(([id, handler]) => {
+      const selector = `a[href$='#${id}']`;
+      const a = document.querySelector(selector);
+      if (!a) return console.warn("Selector not found" + selector);
+      a.href = "#" + id;
+
       const input = document.createElement("input");
       input.addEventListener("focus", () => {
         input.checked = true;
+        search.animate(newspaperSpinning, newspaperTiming);
         handler(this);
       });
-
       input.type = "radio";
       input.id = id;
       input.name = "project-table-preset";
 
-      const a = document.querySelector(`a[href$='#${id}']`);
-      a.href = "#" + id;
       a.after(input);
     });
   }
@@ -188,5 +210,7 @@ const appendGridjs = (golangTable = document.querySelector(".project-table")) =>
       golangTable.prepend("Error: " + error.message);
       golangTable.style.display = "unset";
     });
+
+/* eslint-enable */
 
 appendGridjs();

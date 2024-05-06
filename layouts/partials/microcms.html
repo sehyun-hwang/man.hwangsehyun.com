@@ -1,5 +1,5 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridjs/dist/theme/mermaid.min.css" />
-{{ with resources.Get "scss/grid.scss" | resources.ToCSS | resources.Fingerprint }}
+{{ with resources.Get "css/grid.css" | resources.Fingerprint }} 
 <link rel="stylesheet" href="{{ .Permalink }}" integrity="{{ .Data.Integrity }}">
 {{ end }}
 
@@ -15,6 +15,7 @@
 <script src="{{ .Permalink }}" defer></script>
 {{ end }}
 
+{{ $career_url:= absLangURL "/career" }}
 {{ $opts := dict "X-MICROCMS-API-KEY" site.Params.MICROCMS }}
 {{ $data := getJSON "https://q7h9nx3ddk.microcms.io/api/v1/projects" $opts }}
 
@@ -64,7 +65,7 @@
       </td>
       <td>
         {{ range .belonging }}
-        <a href="/carrier/{{ html . }}">{{ . }}</a>
+        <a href='{{ $career_url }}/#{{ replace . " " "" | lower }}'>{{ . }}</a>
         {{ end }}
       </td>
       <td class="number">{{ .importance }}</td>

@@ -2,6 +2,26 @@ html {
   scroll-behavior: smooth;
 }
 
+a:hover, .post-entry:hover h2 {
+  text-decoration: underline;
+}
+
+@keyframes highlight {
+  from {
+    background: unset;
+  }
+
+  to {
+    background: Highlight;
+  }
+}
+
+*:target {
+  animation-duration: 0.5s;
+  animation-iteration-count: 2;
+  animation-name: highlight;
+}
+
 /* home start */
 .post-content:has(+ .home-info.first-entry) {
   display: none;
@@ -10,22 +30,22 @@ html {
 .home-info {
   flex-direction: row;
   justify-content: space-between;
+  margin-bottom: 0;
 }
 
-@media only screen and (max-width: 640px) {
+@media only screen and (width <= 640px) {
   .home-info {
     flex-direction: column;
   }
 }
 
-.home-info blockquote:before {
-  content: "\201C";
-  font-size: 3em;
-  font-family: Georgia;
-  color: #bcbcbc;
-  float: left;
+.home-info blockquote::before {
   margin: 1.5rem 1rem 0 -1rem;
-
+  color: #bcbcbc;
+  content: "\201C";
+  float: left;
+  font-family: Georgia;
+  font-size: 3em;
   line-height: 0;
 }
 
@@ -34,8 +54,7 @@ html {
 }
 
 .home-info blockquote {
-    margin-block-start: 0.5em;
-    margin-block-end: 0.5em;
+    margin-block: 0.5em 0.5em;
 }
 
 .home-info .entry-footer {
@@ -43,12 +62,8 @@ html {
 }
 
 .home-info .entry-footer img {
-  margin: auto;
   border-radius: 25px;
-}
-
-.home-info {
-  margin-bottom: 0;
+  margin: auto;
 }
 
 .home-info + hr {

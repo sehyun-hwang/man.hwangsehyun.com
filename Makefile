@@ -1,26 +1,28 @@
-comma:= ,
-empty:=
-space:= $(empty) $(empty)
-
 BUCKET := man.hwangsehyun.com
 
-.PHONY: server server/docker
-
-server: | hugo.yml hugo.generated.json
-	hugo server --config $(subst $(space),$(comma),$|)
-
-server/docker: | hugo.yml hugo.generated.json
-	echo "Hugo configs $@"
+.PHONY: server server/ec2 server/docker
+server:
+	hugo server
+server/docker:
+	docker run -it --rm \
+		--net host \
+		-v $$PWD:/src \
+		-e HUGO_PARAMS_MICROCMS=4nPhw5spjauuCnl9KmDiZmsVTXfm36M9DFUy \
+		hugomods/hugo:base \
+		hugo server
+server/ec2:
 	docker run -it --rm --pod nginx-pod \
 		-v $$PWD:/src -v man.hwangsehyun.com-public:/src/public \
 		--security-opt label=disable \
 		-e HUGO_PARAMS_MICROCMS=4nPhw5spjauuCnl9KmDiZmsVTXfm36M9DFUy \
 		hugomods/hugo:base \
-		hugo server -b https://dev.hwangsehyun.com --liveReloadPort 443 --appendPort=false --config $(subst $(space),$(comma),$|)
+		hugo server -b https://dev.hwangsehyun.com --liveReloadPort 443 --appendPort=false
 
-.PHONY: build
-build: | hugo.yml hugo.generated.json
-	hugo -b https://d2dkq8t3u28pba.cloudfront.net --config $(subst $(space),$(comma),$|)
+.PHONY: build build/ec2
+build:
+	hugo -b https://d2dkq8t3u28pba.cloudfront.net
+build/ec2:
+	hugo -b https://www.hwangsehyun.com/man.hwangsehyun.com/public
 
 .PHONY: deploy
 deploy:

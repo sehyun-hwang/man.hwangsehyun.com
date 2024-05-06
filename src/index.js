@@ -48,11 +48,9 @@ async function run(cloudant, database, frontMatterDocsArg = null) {
 
   const frontmatterDocs = frontMatterDocsArg
     || await processFrontMatters(cloudant, database.bidirectionalMap);
-  // console.log(database);
+  console.log('Example frontmatter doc', frontmatterDocs[0]);
 
-  frontmatterDocs.forEach(docs => {
-    domModel.appendFrontmatter(docs);
-  });
+  frontmatterDocs.forEach(docs => domModel.appendFrontmatter(docs));
   await writeFile('static/tree.html', domModel.html);
 
   const stackEditPaths = domData.files.map(({ item: { id } }) => {
@@ -67,11 +65,9 @@ async function run(cloudant, database, frontMatterDocsArg = null) {
   await synchronizer.calculate();
   await synchronizer.prune();
 
-  if (!frontMatterDocsArg) {
-    const downloadCandidatePaths = Array.from(synchronizer.generateDownloadCandidates());
-    downloadCandidatePaths.length
+  const downloadCandidatePaths = Array.from(synchronizer.generateDownloadCandidates());
+  downloadCandidatePaths.length
       && await cloudant.downloadMarkdownsBatch(downloadCandidatePaths);
-  }
 
   const { client, constants: { db } } = cloudant;
   return {
