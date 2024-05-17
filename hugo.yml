@@ -29,16 +29,16 @@ languages:
     menu:
       main:
         - name: MAN
-          url: man
+          url: man/
           weight: 10
         - name: Projects
-          url: project
+          url: project/
           weight: 10
         - name: Career
-          url: career
+          url: career/
           weight: 10
         - name: 🔍
-          url: search
+          url: search/
           weight: 10
     # params:
     #   cover:
@@ -54,16 +54,16 @@ languages:
     menu:
       main:
         - name: 설명서
-          url: man
+          url: man/
           weight: 10
         - name: 과제
-          url: project
+          url: project/
           weight: 10
         - name: 경력
-          url: career
+          url: career/
           weight: 10
         - name: 🔍
-          url: search
+          url: search/
           weight: 10
 
 module:
