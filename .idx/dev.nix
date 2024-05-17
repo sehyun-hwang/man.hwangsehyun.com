@@ -44,7 +44,7 @@
       # runs when a workspace is first created with this `dev.nix` file
       # to run something each time the environment is rebuilt, use the `onStart` hook
       onCreate = {
-        install-nextlab-eslint = "yarn global add https://github.com/nextlab-ai/public-releases#eslint";
+        install-nextlab-eslint = "yarn global add https://github.com/sehyun-hwang/eslint-config-nextlab";
       };
 
       onStart = {
