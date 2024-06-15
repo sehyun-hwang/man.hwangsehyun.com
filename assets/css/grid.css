@@ -13,7 +13,7 @@
 
 /* grid.js custom start */
 
-.truncated {
+.truncated * {
   display: -webkit-box;
   overflow: hidden;
   padding-bottom: 0 !important;
@@ -32,7 +32,7 @@
   display: inline;
 }
 
-td.importance-1,
+.importance-1,
 .importance-1 + td,
 .importance-1 + td + td,
 .importance-1 + td + td + td,
@@ -41,19 +41,19 @@ td.importance-1,
   opacity: 0.8;
 }
 
-td.importance-2,
+.importance-2,
 .importance-2 + td,
 .importance-2 + td + td,
 .importance-2 + td + td + td,
 .importance-2 + td + td + td + td,
 .importance-2 + td + td + td + td + td,
-td.importance-3,
+.importance-3,
 .importance-3 + td,
 .importance-3 + td + td,
 .importance-3 + td + td + td,
 .importance-3 + td + td + td + td,
 .importance-3 + td + td + td + td + td,
-td.importance-4,
+.importance-4,
 .importance-4 + td,
 .importance-4 + td + td,
 .importance-4 + td + td + td,
@@ -62,7 +62,7 @@ td.importance-4,
   background: #68a1fe42 !important;
 }
 
-td.importance-5,
+.importance-5,
 .importance-5 + td,
 .importance-5 + td + td,
 .importance-5 + td + td + td,
