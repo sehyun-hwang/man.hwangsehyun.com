@@ -9,7 +9,7 @@ import DatabaseWritable from './database.js';
 import FileSynchronizer from './file-sync.js';
 import StackEditDomData from './dom-data.js';
 import StackEditDomModel from './dom-model.js';
-import StackEditPath, { HUGO_CONTENT_DIR } from './path.js';
+import StackEditPath from './path.js';
 
 const staticCloudant = new Cloudant4Hugo({
   serviceUrl: 'https://618cf517-eb22-487f-ab2c-8366988f9b91-bluemix.cloudant.com',
@@ -67,7 +67,7 @@ async function run(cloudant, database, frontMatterDocsArg = null) {
 
   const downloadCandidatePaths = Array.from(synchronizer.generateDownloadCandidates());
   downloadCandidatePaths.length
-      && await cloudant.downloadMarkdownsBatch(downloadCandidatePaths);
+    && await cloudant.downloadMarkdownsBatch(downloadCandidatePaths);
 
   const { client, constants: { db } } = cloudant;
   return {

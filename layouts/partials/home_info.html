@@ -6,8 +6,20 @@
         {{ .Content }}
     </div>
     <footer class="entry-footer">
-        {{- $profileImage := resources.Get "image/profile.jpg" }}
-        <img src="{{ $profileImage.Permalink }}" height="300" />
+        {{ with resources.Get "image/profile.jpg" }}
+        <picture>
+            {{ $profileImg := "" }}
+            <source srcset="
+            {{ with .Resize "x600 webp" }}
+                {{ .RelPermalink }} 2x,
+            {{ end }}
+            {{ with .Resize "x300 webp" }}
+                {{ .RelPermalink }} 1x
+                {{ $profileImg := .RelPermalink }}
+            {{ end }}
+            ">
+            <img src="{{ $profileImg }}" height="300" loading="lazy" alt="profile image">
+        {{ end }}
         {{ partial "social_icons.html" (dict "align" "center") }}
     </footer>
 </article>

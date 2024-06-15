@@ -17,7 +17,7 @@
 
 {{ $career_url:= absLangURL "/career" }}
 {{ $opts := dict "X-MICROCMS-API-KEY" site.Params.MICROCMS }}
-{{ $data := getJSON "https://q7h9nx3ddk.microcms.io/api/v1/projects" $opts }}
+{{ $data := getJSON "https://q7h9nx3ddk.microcms.io/api/v1/projects?orders=-endedAt" $opts }}
 
 <table class="project-table">
   <thead>
@@ -35,7 +35,7 @@
     <tr class="importance-{{ .importance }}">
       <td>
         <span class="importance-{{ .importance }}"></span>
-        <a href="/project/{{ .id }}">
+        <a href="/project/{{ .id }}/">
           {{ .emoji }}
           <h4 class="name">{{ .name }}</h4>
         </a>
