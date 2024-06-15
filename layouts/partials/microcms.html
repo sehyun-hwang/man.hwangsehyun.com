@@ -17,7 +17,7 @@
 
 {{ $career_url:= absLangURL "/career" }}
 {{ $opts := dict "X-MICROCMS-API-KEY" site.Params.MICROCMS }}
-{{ $data := getJSON "https://q7h9nx3ddk.microcms.io/api/v1/projects" $opts }}
+{{ $data := getJSON "https://q7h9nx3ddk.microcms.io/api/v1/projects?orders=-endedAt" $opts }}
 
 <table class="project-table">
   <thead>
