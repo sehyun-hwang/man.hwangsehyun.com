@@ -33,7 +33,8 @@ build/ec2:
 
 .PHONY: gitleaks eslint scan
 gitleaks:
-	gitleaks detect --no-git -v .
+	gitleaks detect -v
+	gitleaks detect --no-git -v
 eslint:
 	cd src && yarn lint
 scan: gitleaks eslint
