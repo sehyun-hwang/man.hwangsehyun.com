@@ -27,7 +27,7 @@ server/ec2:
 
 .PHONY: build build/ec2
 build:
-	hugo -b https://d2dkq8t3u28pba.cloudfront.net
+	hugo -b https://man.hwangsehyun.com
 build/ec2:
 	hugo -b https://www.hwangsehyun.com/man.hwangsehyun.com/public
 
