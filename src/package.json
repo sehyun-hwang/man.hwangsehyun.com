@@ -21,6 +21,6 @@
   },
   "scripts": {
     "tsc": "tsc --noEmit --allowJs -p jsconfig.json",
-    "lint": "nextlab-eslint ."
+    "lint": "ESLINT_USE_FLAT_CONFIG=true nextlab-eslint ."
   }
 }
