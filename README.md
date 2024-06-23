@@ -1,5 +1,7 @@
 # [man.hwangsehyun.com](https://man.hwangsehyun.com)
 
+![Screenshot of the site](./assets/image/index.webp)
+
 ## Requirements
 
 ### Infrastructure
@@ -23,7 +25,7 @@
 
 - Node.js, [corepack](https://nodejs.org/api/corepack.html), pnpm
 
-- [NPM Libraries]
+- NPM Libraries
 
 	```sh
 	pnpm i

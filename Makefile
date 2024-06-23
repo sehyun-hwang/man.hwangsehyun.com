@@ -25,6 +25,9 @@ server/ec2:
 		hugomods/hugo:base \
 		hugo server -b https://dev.hwangsehyun.com --liveReloadPort 443 --appendPort=false
 
+assets/image/index.webp: browser/screenshot-index.js
+	cat $< | docker run -i --rm ghcr.io/browserless/chromium node - > $@
+
 .PHONY: build build/ec2
 build:
 	hugo -b https://man.hwangsehyun.com

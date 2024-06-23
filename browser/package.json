@@ -1,0 +1,6 @@
+{
+  "type": "module",
+  "devDependencies": {
+    "puppeteer-core": "^22.12.0"
+  }
+}
