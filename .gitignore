@@ -2,7 +2,8 @@ node_modules/
 
 content/**/*.generated.md
 content/**/*.generated.md.gz
-config/_default/hugo.json
+config/_default/*.json
+cloudant.env
 
 # Created by https://www.toptal.com/developers/gitignore/api/hugo
 # Edit at https://www.toptal.com/developers/gitignore?templates=hugo

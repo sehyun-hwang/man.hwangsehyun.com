@@ -1,28 +1,46 @@
 BUCKET := man.hwangsehyun.com
 
+.PHONY: secret
+secret: cloudant.env config/_default/params.json
+cloudant.env config/_default/params.json: secret.mjs
+	node $<
+
+.PHONY: stackedit
+stackedit: cloudant.env | src
+	node --env-file $< src
+
 .PHONY: server server/ec2 server/docker
-server:
+server: config/_default/params.json
 	hugo server
-server/docker:
+server/docker: config/_default/params.json
 	docker run -it --rm \
 		--net host \
 		-v $$PWD:/src \
-		-e HUGO_PARAMS_MICROCMS=4nPhw5spjauuCnl9KmDiZmsVTXfm36M9DFUy \
 		hugomods/hugo:base \
 		hugo server
 server/ec2:
 	docker run -it --rm --pod nginx-pod \
 		-v $$PWD:/src -v man.hwangsehyun.com-public:/src/public \
 		--security-opt label=disable \
-		-e HUGO_PARAMS_MICROCMS=4nPhw5spjauuCnl9KmDiZmsVTXfm36M9DFUy \
 		hugomods/hugo:base \
 		hugo server -b https://dev.hwangsehyun.com --liveReloadPort 443 --appendPort=false
 
+assets/image/index.webp: browser/screenshot-index.js
+	cat $< | docker run -i --rm ghcr.io/browserless/chromium node - > $@
+
 .PHONY: build build/ec2
 build:
-	hugo -b https://d2dkq8t3u28pba.cloudfront.net
+	hugo -b https://man.hwangsehyun.com
 build/ec2:
 	hugo -b https://www.hwangsehyun.com/man.hwangsehyun.com/public
+
+.PHONY: gitleaks eslint scan
+gitleaks:
+	gitleaks detect -v
+	gitleaks detect --no-git -v
+eslint:
+	cd src && yarn lint
+scan: gitleaks eslint
 
 .PHONY: deploy
 deploy:

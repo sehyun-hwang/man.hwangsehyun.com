@@ -3,6 +3,7 @@ import {
   mkdir, readFile, unlink, writeFile,
 } from 'fs/promises';
 import { createInterface } from 'readline';
+import { dirname } from 'path';
 
 import YAML from 'yaml';
 import { glob } from 'glob';
@@ -11,7 +12,7 @@ import setDifference from 'set.prototype.difference';
 import { HUGO_CONTENT_DIR } from './path.js';
 
 const HUGO_CONFIG_PATH = 'hugo.yml';
-const HUGO_CONFIG_GENERATED_PATH = 'config/_default/hugo.json';
+const HUGO_CONFIG_GENERATED_PATH = 'config/_default/module.json';
 
 const gzipFiles = paths => new Promise((resolve, reject) => {
   console.log('gzip', paths.length);
@@ -72,15 +73,13 @@ async function calculateInvalidChecksums(gzips) {
 const addHugoMount = sources => readFile(HUGO_CONFIG_PATH, 'utf-8')
   .then(YAML.parse)
   .then(({ module }) => {
-    const hugoConfigFolder = HUGO_CONFIG_GENERATED_PATH.replace('/hugo.json', '');
+    const hugoConfigFolder = dirname(HUGO_CONFIG_GENERATED_PATH);
     const hugoConfig = {
-      module: {
-        mounts: sources.map(source => ({
-          source,
-          target: source.replace('/index', '').replace(/\w{32}.generated.md/, 'md'),
-        }))
-          .concat(module.mounts),
-      },
+      mounts: sources.map(source => ({
+        source,
+        target: source.replace('/index', '').replace(/\w{32}.generated.md/, 'md'),
+      }))
+        .concat(module.mounts),
     };
     console.log(HUGO_CONFIG_GENERATED_PATH, hugoConfig);
     return mkdir(hugoConfigFolder, { recursive: true })
