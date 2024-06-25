@@ -51,7 +51,7 @@ hugoData.highlightCode && document.querySelectorAll('pre > code').forEach(codebl
     try {
       document.execCommand('copy');
       copyingDone();
-    } catch (e) { }
+    } catch (e) {}
     selection.removeRange(range);
   });
 
@@ -76,3 +76,23 @@ hugoData.mermaid && import('https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.es
     });
     mermaid.run({ querySelector: '.language-mermaid' });
   });
+
+let { promise, resolve, reject } = Promise.withResolvers();
+
+window.PagedConfig = {
+  auto: false,
+  async before() {
+    console.log('before');
+    await promise;
+    const main = document.querySelector('main');
+    main && document.body.replaceChildren(main);
+  },
+  after(flow) {
+    console.log('after', flow);
+  },
+};
+
+// setTimeout(() => {
+//  window.PagedPolyfill.preview();
+// }, 1000);
+console.log('done');

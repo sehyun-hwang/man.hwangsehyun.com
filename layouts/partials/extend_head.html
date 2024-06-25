@@ -1,11 +1,19 @@
 {{ if eq .Site.Language.Lang "kp" }}
   {{ with resources.Get "css/kp.template.css" }}
     {{ with resources.ExecuteAsTemplate "css/kp.css" $ . }}
-      <link crossorigin="anonymous" href="{{ .RelPermalink }}" integrity="{{ .Data.Integrity }}" rel="preload stylesheet" as="style">
+      <link crossorigin="anonymous"
+        rel="preload stylesheet" as="style"
+        href="{{ .RelPermalink }}"
+        integrity="{{ .Data.Integrity }}"
+      >
     {{ end }}
   {{ end }}
 {{ end }}
 
-{{ with resources.Get "js/index.js" | js.Build }}
-<script defer src="{{ .Permalink }}"></script>
+{{ with resources.Get "js/index.js" | js.Build | resources.Fingerprint }}
+<script defer
+  src="{{ .Permalink }}"
+  integrity="{{ .Data.Integrity }}"
+></script>
 {{ end }}
+<script defer src="https://cdn.jsdelivr.net/npm/pagedjs@0.4.3/dist/paged.polyfill.js"></script>
