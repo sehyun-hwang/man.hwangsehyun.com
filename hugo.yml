@@ -37,6 +37,10 @@ languages:
         - name: Career
           url: career/
           weight: 10
+        - name: Download
+          title: Download entire site in PDF
+          url: '#download'
+          weight: 10
         - name: 🔍
           url: search/
           weight: 10

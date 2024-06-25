@@ -92,7 +92,12 @@ window.PagedConfig = {
   },
 };
 
-// setTimeout(() => {
-//  window.PagedPolyfill.preview();
-// }, 1000);
+const downloadButtonElement = document.querySelector('a[href$="#download"]');
+downloadButtonElement.removeAttribute('href');
+downloadButtonElement.id = 'download-menu';
+
+downloadButtonElement.addEventListener('click', () => {
+  resolve();
+  window.PagedPolyfill.preview();
+});
 console.log('done');
