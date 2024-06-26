@@ -19,7 +19,7 @@ document.getElementById('theme-toggle').addEventListener('click', () => {
   }
 });
 
-const hugoData = JSON.parse(document.querySelector('#hugo-json').value);
+const hugoData = JSON.parse(document.querySelector('#hugo-json').textContent);
 console.log('Data from hugo', hugoData);
 
 hugoData.highlightCode && document.querySelectorAll('pre > code').forEach(codeblock => {

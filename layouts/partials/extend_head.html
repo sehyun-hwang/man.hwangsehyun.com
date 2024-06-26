@@ -16,4 +16,16 @@
   integrity="{{ .Data.Integrity }}"
 ></script>
 {{ end }}
+
 <script defer src="https://cdn.jsdelivr.net/npm/pagedjs@0.4.3/dist/paged.polyfill.js"></script>
+
+<script type="application/json" id="hugo-json">
+{
+  "i18n": {
+    "code_copy": "{{- i18n "code_copy" | default "copy" }}",
+    "code_copied": "{{- i18n "code_copied" | default "copied!" }}"
+  },
+  "highlightCode": {{- print (and (eq .Kind "page") (ne .Layout "archives") (ne .Layout "search") (.Param "ShowCodeCopyButtons")) }},
+  "mermaid": {{- or .Params.mermaid false }}
+}
+</script>
