@@ -9,3 +9,14 @@
 {{ with resources.Get "js/index.js" | js.Build }}
 <script defer src="{{ .Permalink }}"></script>
 {{ end }}
+
+<script type="application/json" id="hugo-json">
+{
+  "i18n": {
+    "code_copy": "{{- i18n "code_copy" | default "copy" }}",
+    "code_copied": "{{- i18n "code_copied" | default "copied!" }}"
+  },
+  "highlightCode": {{- print (and (eq .Kind "page") (ne .Layout "archives") (ne .Layout "search") (.Param "ShowCodeCopyButtons")) }},
+  "mermaid": {{- or .Params.mermaid false }}
+}
+</script>
