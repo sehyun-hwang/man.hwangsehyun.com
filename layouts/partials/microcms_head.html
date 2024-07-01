@@ -1,0 +1,16 @@
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridjs/dist/theme/mermaid.min.css" />
+{{ with resources.Get "css/grid.css" | resources.Fingerprint }} 
+<link rel="stylesheet" href="{{ .Permalink }}" integrity="{{ .Data.Integrity }}">
+{{ end }}
+
+<noscript>
+  <style>
+  .project-table {
+    display: block;
+  }
+  </style>
+</noscript>
+
+{{ with resources.Get "js/grid.js" | js.Build | resources.Fingerprint }}
+<script src="{{ .Permalink }}" integrity="{{ .Data.Integrity }}" defer></script>
+{{ end }}

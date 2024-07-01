@@ -3,7 +3,7 @@
     {{ with resources.ExecuteAsTemplate "css/kp.css" $ . }}
       <link crossorigin="anonymous"
         rel="preload stylesheet" as="style"
-        href="{{ .RelPermalink }}"
+        href="{{ .Permalink }}"
         integrity="{{ .Data.Integrity }}"
       >
     {{ end }}
@@ -16,8 +16,16 @@
   integrity="{{ .Data.Integrity }}"
 ></script>
 {{ end }}
+{{ with resources.Get "js/paged.js" | js.Build | resources.Fingerprint }}
+<script defer="TO_BE_REMOVED_IN_PUPPETTER"
+  src="{{ .Permalink }}"
+  integrity="{{ .Data.Integrity }}"
+></script>
+{{ end }}
 
+{{ if hugo.IsDevelopment }}
 <script defer src="https://cdn.jsdelivr.net/npm/pagedjs@0.4.3/dist/paged.polyfill.js"></script>
+{{ end }}
 
 <script type="application/json" id="hugo-json">
 {
@@ -29,3 +37,9 @@
   "mermaid": {{- or .Params.mermaid false }}
 }
 </script>
+
+{{ with .Params.head_extensions }}
+  {{ range . }}
+    {{ partial . }}
+  {{ end }}
+{{ end }}
