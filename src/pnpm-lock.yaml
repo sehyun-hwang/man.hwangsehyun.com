@@ -45,9 +45,6 @@ importers:
       '@types/stream-json':
         specifier: ^1.7.7
         version: 1.7.7
-      globals:
-        specifier: ^15.0.0
-        version: 15.0.0
       ibm-cloud-sdk-core:
         specifier: ^4.3.0
         version: 4.3.0
@@ -447,10 +444,6 @@ packages:
     resolution: {integrity: sha512-fa46+tv1Ak0UPK1TOy/pZrIybNNt4HCv7SDzwyfiOZkvZLEbjsZkJBPtDHVshZjbecAoAGSC20MjLDG/qr679g==}
     engines: {node: '>=16 || 14 >=14.17'}
     hasBin: true
-
-  globals@15.0.0:
-    resolution: {integrity: sha512-m/C/yR4mjO6pXDTm9/R/SpYTAIyaUB4EOzcaaMEl7mds7Mshct9GfejiJNQGjHHbdMPey13Kpu4TMbYi9ex1pw==}
-    engines: {node: '>=18'}
 
   globalthis@1.0.3:
     resolution: {integrity: sha512-sFdI5LyBiNTHjRd7cGPWapiHWMOXKyuBNX/cWJ3NfzrZQVa8GI/8cofCl74AOVqq9W5kNmguTIzJ/1s2gyI9wA==}
@@ -1581,7 +1574,7 @@ snapshots:
       to-regex-range: 5.0.1
 
   follow-redirects@1.15.6(debug@4.3.4):
-    dependencies:
+    optionalDependencies:
       debug: 4.3.4
 
   for-each@0.3.3:
@@ -1637,8 +1630,6 @@ snapshots:
       minimatch: 9.0.3
       minipass: 7.0.4
       path-scurry: 1.10.1
-
-  globals@15.0.0: {}
 
   globalthis@1.0.3:
     dependencies:
@@ -1716,7 +1707,7 @@ snapshots:
       jsonwebtoken: 9.0.2
       lodash.isempty: 4.4.0
       mime-types: 2.1.35
-      retry-axios: 2.6.0(axios@1.6.4)
+      retry-axios: 2.6.0(axios@1.6.4(debug@4.3.4))
       tough-cookie: 4.1.3
     transitivePeerDependencies:
       - supports-color
@@ -1739,7 +1730,7 @@ snapshots:
       isstream: 0.1.2
       jsonwebtoken: 9.0.2
       mime-types: 2.1.35
-      retry-axios: 2.6.0(axios@1.6.8)
+      retry-axios: 2.6.0(axios@1.6.8(debug@4.3.4))
       tough-cookie: 4.1.3
     transitivePeerDependencies:
       - supports-color
@@ -2121,11 +2112,11 @@ snapshots:
 
   requires-port@1.0.0: {}
 
-  retry-axios@2.6.0(axios@1.6.4):
+  retry-axios@2.6.0(axios@1.6.4(debug@4.3.4)):
     dependencies:
       axios: 1.6.4(debug@4.3.4)
 
-  retry-axios@2.6.0(axios@1.6.8):
+  retry-axios@2.6.0(axios@1.6.8(debug@4.3.4)):
     dependencies:
       axios: 1.6.8(debug@4.3.4)
 

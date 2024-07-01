@@ -1,6 +1,14 @@
 {
   "type": "module",
-  "devDependencies": {
-    "puppeteer-core": "^22.12.0"
+  "dependencies": {
+    "ora": "^8.0.1",
+    "pagedjs-cli": "^0.4.3",
+    "puppeteer-core": "^22.12.0",
+    "serve-handler": "^6.1.5"
+  },
+  "pnpm": {
+    "patchedDependencies": {
+      "pagedjs-cli@0.4.3": "patches/pagedjs-cli@0.4.3.patch"
+    }
   }
 }

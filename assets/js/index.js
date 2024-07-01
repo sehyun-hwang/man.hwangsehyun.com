@@ -76,3 +76,13 @@ hugoData.mermaid && import('https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.es
     });
     mermaid.run({ querySelector: '.language-mermaid' });
   });
+
+const downloadButtonElement = document.querySelector('a[href$="#download"]');
+downloadButtonElement.removeAttribute('href');
+downloadButtonElement.id = 'download-menu';
+
+downloadButtonElement.addEventListener('click', () => {
+  window.PagedConfig?.resolve();
+  window.PagedPolyfill.preview();
+});
+console.log('done');
