@@ -77,27 +77,12 @@ hugoData.mermaid && import('https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.es
     mermaid.run({ querySelector: '.language-mermaid' });
   });
 
-let { promise, resolve, reject } = Promise.withResolvers();
-
-window.PagedConfig = {
-  auto: false,
-  async before() {
-    console.log('before');
-    await promise;
-    const main = document.querySelector('main');
-    main && document.body.replaceChildren(main);
-  },
-  after(flow) {
-    console.log('after', flow);
-  },
-};
-
 const downloadButtonElement = document.querySelector('a[href$="#download"]');
 downloadButtonElement.removeAttribute('href');
 downloadButtonElement.id = 'download-menu';
 
 downloadButtonElement.addEventListener('click', () => {
-  resolve();
+  window.PagedConfig?.resolve();
   window.PagedPolyfill.preview();
 });
 console.log('done');

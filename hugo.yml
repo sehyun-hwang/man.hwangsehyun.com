@@ -86,7 +86,7 @@ outputs:
     - JSON
 
 params:
-  env: development
+  env: production
   description: Sehyun's whatever site
   author: Sehyun Hwang
 
