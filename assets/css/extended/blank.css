@@ -34,6 +34,7 @@ a[href$="#download"], #download-menu {
     padding: 5px;
     border-radius: 5px;
     background-color: yellow;
+    color: black;
     text-align: right;
 }
 
