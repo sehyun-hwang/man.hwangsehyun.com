@@ -1,3 +1,18 @@
+const hugoData = JSON.parse(document.querySelector('#hugo-json').textContent);
+console.log('Data from hugo', hugoData);
+
+const mermaidPromise = hugoData.mermaid
+  ? import('https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.esm.min.mjs')
+    .then(({ default: mermaid }) => {
+      mermaid.initialize({
+        theme: document.body.classList.contains('dark') && 'dark',
+        startOnLoad: false,
+      });
+      return mermaid.run({ querySelector: '.language-mermaid' });
+    }) : Promise.resolve();
+
+mermaidPromise.then(window.PagedConfig?.mermaidResolvers?.resolve);
+
 const mybutton = document.getElementById('top-link');
 window.addEventListener('click', () => {
   if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
@@ -18,9 +33,6 @@ document.getElementById('theme-toggle').addEventListener('click', () => {
     localStorage.setItem('pref-theme', 'dark');
   }
 });
-
-const hugoData = JSON.parse(document.querySelector('#hugo-json').textContent);
-console.log('Data from hugo', hugoData);
 
 hugoData.highlightCode && document.querySelectorAll('pre > code').forEach(codeblock => {
   const container = codeblock.parentNode.parentNode;
@@ -68,21 +80,12 @@ hugoData.highlightCode && document.querySelectorAll('pre > code').forEach(codebl
   }
 });
 
-hugoData.mermaid && import('https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.esm.min.mjs')
-  .then(({ default: mermaid }) => {
-    mermaid.initialize({
-      theme: document.body.classList.contains('dark') && 'dark',
-      startOnLoad: false,
-    });
-    mermaid.run({ querySelector: '.language-mermaid' });
-  });
-
 const downloadButtonElement = document.querySelector('a[href$="#download"]');
 downloadButtonElement.removeAttribute('href');
 downloadButtonElement.id = 'download-menu';
 
 downloadButtonElement.addEventListener('click', () => {
-  window.PagedConfig?.resolve();
+  window.PagedConfig?.buttonResolvers?.resolve();
   window.PagedPolyfill.preview();
 });
 console.log('done');

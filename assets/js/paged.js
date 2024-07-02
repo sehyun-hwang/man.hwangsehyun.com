@@ -2,13 +2,19 @@ class PagedConfig {
   auto = false;
 
   constructor(wait) {
-    wait && Object.assign(this, Promise.withResolvers());
+    this.mermaidResolvers = Promise.withResolvers();
+    if (wait)
+      this.buttonResolvers = Promise.withResolvers();
   }
 
   async before() {
-    console.log('before');
-    await this.promise;
     const main = document.querySelector('main');
+    console.log(this);
+    await Promise.all([
+      this.mermaidResolvers.promise,
+      this.buttonResolvers?.promise,
+    ]);
+    console.log('Replacing', main);
     main && document.body.replaceChildren(main);
   }
 

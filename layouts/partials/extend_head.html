@@ -10,12 +10,6 @@
   {{ end }}
 {{ end }}
 
-{{ with resources.Get "js/index.js" | js.Build | resources.Fingerprint }}
-<script defer
-  src="{{ .Permalink }}"
-  integrity="{{ .Data.Integrity }}"
-></script>
-{{ end }}
 {{ with resources.Get "js/paged.js" | js.Build | resources.Fingerprint }}
 <script defer="TO_BE_REMOVED_IN_PUPPETTER"
   src="{{ .Permalink }}"
@@ -24,7 +18,16 @@
 {{ end }}
 
 {{ if hugo.IsDevelopment }}
-<script defer src="https://cdn.jsdelivr.net/npm/pagedjs@0.4.3/dist/paged.polyfill.js"></script>
+<script defer="TO_BE_REMOVED_IN_PUPPETTER"
+  src="https://cdn.jsdelivr.net/npm/pagedjs@0.4.3/dist/paged.polyfill.js">
+</script>
+{{ end }}
+
+{{ with resources.Get "js/index.js" | js.Build | resources.Fingerprint }}
+<script defer
+  src="{{ .Permalink }}"
+  integrity="{{ .Data.Integrity }}"
+></script>
 {{ end }}
 
 <script type="application/json" id="hugo-json">
