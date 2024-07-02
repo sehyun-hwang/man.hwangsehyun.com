@@ -34,6 +34,7 @@ assets/image/index.webp: browser/screenshot-index.js
 			ghcr.io/browserless/chromium \
 			node --input-type module > $@
 public/index.pdf: browser/print-pdf.js
+	# -e DEBUG="puppeteer:*"
 	docker run -i --rm \
 		-v $$PWD/public:/usr/src/app/public -v $$PWD/browser:/usr/src/app/browser:ro \
 		ghcr.io/browserless/chromium \
