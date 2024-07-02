@@ -82,12 +82,18 @@ hugoData.highlightCode && document.querySelectorAll('pre > code').forEach(codebl
   }
 });
 
+const { href: pdfHref } = document.querySelector('link[rel="alternate"][type="application/pdf"]');
 const downloadButtonElement = document.querySelector('a[href$="#download"]');
 downloadButtonElement.removeAttribute('href');
 downloadButtonElement.id = 'download-menu';
+downloadButtonElement.href = pdfHref;
+downloadButtonElement.download = document.title + '.pdf';
 
-downloadButtonElement.addEventListener('click', () => {
+window.PagedPolyfill && downloadButtonElement.addEventListener('click', () => {
   window.PagedConfig?.buttonResolvers?.resolve();
   setTimeout(() => window.PagedPolyfill.preview());
 });
 console.log('done');
+
+document.querySelector('#download-tooltip button')
+  .addEventListener('click', ({ target }) => target.parentElement.remove());

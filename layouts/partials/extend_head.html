@@ -1,3 +1,5 @@
+<link rel="alternate" type="application/pdf" href="{{ absURL "index.pdf" }}">
+
 {{ if eq .Site.Language.Lang "kp" }}
   {{ with resources.Get "css/kp.template.css" }}
     {{ with resources.ExecuteAsTemplate "css/kp.css" $ . }}

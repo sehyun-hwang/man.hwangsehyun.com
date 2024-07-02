@@ -22,6 +22,40 @@ a:hover, .post-entry:hover h2 {
   animation-name: highlight;
 }
 
+/* pdf download start */
+a[href$="#download"], #download-menu {
+    anchor-name: --download-menu;
+}
+
+#download-tooltip {
+    position: absolute;
+    top: anchor(--download-menu bottom);
+    right: anchor(--download-menu right);
+    padding: 5px;
+    border-radius: 5px;
+    background-color: yellow;
+    text-align: right;
+}
+
+#download-tooltip button {
+    background: blue;
+    color: white;
+}
+
+/* https://www.w3schools.com/css/css_tooltip.asp#:~:text=color%20this%20time%3A-,Top%20Arrow,-.tooltip%20.tooltiptext%3A%3Aafter  */
+#download-tooltip::after {
+  position: absolute;
+  right: 10%;
+  bottom: 100%;  /* At the top of the tooltip */
+  border-width: 5px;
+  border-style: solid;
+  border-color: transparent transparent yellow;
+  margin-left: -5px;
+  content: " ";
+}
+
+/* pdf download end */
+
 /* home start */
 .post-content:has(+ .home-info.first-entry) {
   display: none;
