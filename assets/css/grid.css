@@ -28,10 +28,6 @@
   float: unset;
 }
 
-.project-table h4 {
-  display: inline;
-}
-
 .importance-1,
 .importance-1 + td,
 .importance-1 + td + td,
@@ -95,10 +91,6 @@ th.gridjs-th[data-column-id="duration"] {
 
 td.gridjs-td {
   padding: 0.5rem 1rem;
-}
-
-.project-table ul {
-  padding-inline-start: 1rem;
 }
 
 /* grid.js custom end */

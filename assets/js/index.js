@@ -63,7 +63,9 @@ hugoData.highlightCode && document.querySelectorAll('pre > code').forEach(codebl
     try {
       document.execCommand('copy');
       copyingDone();
-    } catch (e) {}
+    } catch (error) {
+      console.error(error);
+    }
     selection.removeRange(range);
   });
 
@@ -86,6 +88,6 @@ downloadButtonElement.id = 'download-menu';
 
 downloadButtonElement.addEventListener('click', () => {
   window.PagedConfig?.buttonResolvers?.resolve();
-  window.PagedPolyfill.preview();
+  setTimeout(() => window.PagedPolyfill.preview());
 });
 console.log('done');

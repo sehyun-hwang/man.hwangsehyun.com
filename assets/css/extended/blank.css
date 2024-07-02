@@ -72,6 +72,30 @@ a:hover, .post-entry:hover h2 {
 
 /* home end */
 
+
+/* project table start */
+.project-table h4 {
+  display: inline;
+}
+
+.project-table ul {
+  padding-inline-start: 1rem;
+}
+
+@media print {
+  .project-table tr {
+    padding: 1rem 0;
+    border: solid black;
+    border-width: 2px 0;
+  }
+  
+  .project-table  tr > *{
+    display: block;
+  }
+}
+
+/* project table end */
+
 .post-content pre code {
   --code-block-bg: transparent !important;
 }
