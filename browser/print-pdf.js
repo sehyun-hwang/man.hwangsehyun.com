@@ -30,8 +30,8 @@ class BrowserlessPrinter extends Printer {
     this.browser = browser;
   }
 
-  async renderPdf(html) {
-    // console.error(html);
+  async renderPdf(input) {
+    // console.error(input);
     spinner.start('Loading: ');
 
     this.on('page', page => {
@@ -53,9 +53,9 @@ class BrowserlessPrinter extends Printer {
       spinner.start('Processing');
     });
 
-    // const output = await printer.render({ html })
+    // const output = await printer.render(input)
     // .then(page => page.pdf());
-    const buffer = await this.pdf({ html }, { outlineTags: ['h2'] });
+    const buffer = await this.pdf(input, { outlineTags: ['h2'] });
     console.error('PDF output', buffer.length);
     return Uint8Array.from(buffer);
   }
@@ -72,7 +72,7 @@ Promise.all([
     const merger = new PDFMerger();
     spinner.start('Loading: ');
 
-    await Promise.all([paths[4]].map(async path => {
+    await Promise.all(paths.map(async path => {
       const printer = new BrowserlessPrinter(browser);
       const html = await text(
         createReadStream(path)
@@ -81,7 +81,11 @@ Promise.all([
           .pipe(new HeadTransformStream('https://man.hwangsehyun.com', replacedUrl)),
       );
       // console.error(html);
-      return merger.add(await printer.renderPdf(html));
+      const { origin: url } = new URL(replacedUrl);
+      return merger.add(await printer.renderPdf({
+        url,
+        html,
+      }));
     }));
     spinner.succeed('Processed');
 
