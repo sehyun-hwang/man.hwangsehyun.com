@@ -69,10 +69,9 @@ Promise.all([
 ])
   .then(async ([replacedUrl, paths, browser]) => {
     console.error('Server to replace', replacedUrl, 'listening');
-    const merger = new PDFMerger();
     spinner.start('Loading: ');
 
-    await Promise.all(paths.map(async path => {
+    const pdfs = await Promise.all(paths.map(async path => {
       const printer = new BrowserlessPrinter(browser);
       const html = await text(
         createReadStream(path)
@@ -82,12 +81,18 @@ Promise.all([
       );
       // console.error(html);
       const { origin: url } = new URL(replacedUrl);
-      return merger.add(await printer.renderPdf({
+      return printer.renderPdf({
         url,
         html,
-      }));
+      });
     }));
     spinner.succeed('Processed');
+
+    const merger = new PDFMerger();
+    // eslint-disable-next-line no-restricted-syntax
+    for (const pdf of pdfs)
+      // eslint-disable-next-line no-await-in-loop
+      await merger.add(pdf);
 
     return Promise.all([
       merger.save('/dev/stdout'),
