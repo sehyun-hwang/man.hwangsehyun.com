@@ -10,8 +10,8 @@
 - [Cloudant CouchDB](https://www.ibm.com/products/cloudant) from IBM Cloud
 - [StackEdit](https://stackedit.io/)
 - [AWS Secrets Manager](https://aws.amazon.com/secrets-manager/) Secret
-  - HUGO_PARAMS_MICROCMS_KEY
-  - CLOUDANT_APIKEY
+  - `HUGO_PARAMS_MICROCMS_KEY`
+  - `CLOUDANT_APIKEY`
 
 ### Tools
 
@@ -41,42 +41,48 @@
 
 1. Download markdown contents from StackEdit
 
-```sh
-make stackedit
-```
+  ```sh
+  make stackedit
+  ```
 
 ### Local
 
 1. Sign in to AWS SSO using AWS CLI
 
-```sh
-aws sso sign in
-```
+  ```sh
+  aws sso login
+  ```
 
 1. Download markdown contents from StackEdit
 
-```sh
-make stackedit
-```
+  ```sh
+  make stackedit
+  ```
 
 1. Start Hugo
 
-```
-make hugo
-```
+  ```
+  make hugo
+  ```
 
 1. Navigate to <http://localhost:1313>
 
 ## Build & Deploy
 
-1. build
+1. Build site
 
-```sh
-make build
-```
+  ```sh
+  make build
+  ```
 
-1. deploy
+1. Build screenshot and pdf
 
-```sh
-make deploy
-```
+  ```sh
+  make browser -B
+  ```
+
+1. Deploy to AWS
+
+  ```sh
+  make deploy
+  ```

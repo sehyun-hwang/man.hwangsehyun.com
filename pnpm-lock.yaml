@@ -20,6 +20,10 @@ importers:
       gridjs:
         specifier: ^6.2.0
         version: 6.2.0
+    devDependencies:
+      globals:
+        specifier: ^15.7.0
+        version: 15.7.0
 
 packages:
 
@@ -367,6 +371,10 @@ packages:
     resolution: {integrity: sha512-2jelhlq3E4ho74ZyVLN03oKdAZVUa6UDZzFLVH1H7dnoax+y9qyaq8zBkfDIggjniU19z0wU18y16jMB2eyVIw==}
     engines: {node: '>=16 || 14 >=14.18'}
     hasBin: true
+
+  globals@15.7.0:
+    resolution: {integrity: sha512-ivatRXWwKC6ImcdKO7dOwXuXR5XFrdwo45qFwD7D0qOkEPzzJdLXC3BHceBdyrPOD3p1suPaWi4Y4NMm2D++AQ==}
+    engines: {node: '>=18'}
 
   gridjs@6.2.0:
     resolution: {integrity: sha512-EAGGfHjyEXWh12Txs6DjTGnWTo226wbowtMrLI+yNZQaJpvs0m7yDcyM7r+D4RA7rZQVj/cfmwEaRz/rlxg8LA==}
@@ -1164,6 +1172,8 @@ snapshots:
       minimatch: 9.0.4
       minipass: 7.1.2
       path-scurry: 1.11.1
+
+  globals@15.7.0: {}
 
   gridjs@6.2.0:
     dependencies:

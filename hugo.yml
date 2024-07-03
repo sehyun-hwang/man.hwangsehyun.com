@@ -28,18 +28,23 @@ languages:
       series: series
     menu:
       main:
-        - name: MAN
+        - name: </> MAN
           url: man/
           weight: 10
-        - name: Projects
+        - name: 🧑‍💻 Projects
           url: project/
           weight: 10
-        - name: Career
+        - name: 📜 Career
           url: career/
           weight: 10
+        - name: 💾 Download
+          title: Download entire site in PDF
+          url: '#download'
+          weight: 100
         - name: 🔍
+          title: Search
           url: search/
-          weight: 10
+          weight: 100
     # params:
     #   cover:
     #     hidden: true
@@ -82,7 +87,7 @@ outputs:
     - JSON
 
 params:
-  env: development
+  env: production
   description: Sehyun's whatever site
   author: Sehyun Hwang
 

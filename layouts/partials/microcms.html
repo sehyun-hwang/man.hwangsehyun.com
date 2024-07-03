@@ -1,20 +1,3 @@
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridjs/dist/theme/mermaid.min.css" />
-{{ with resources.Get "css/grid.css" | resources.Fingerprint }} 
-<link rel="stylesheet" href="{{ .Permalink }}" integrity="{{ .Data.Integrity }}">
-{{ end }}
-
-<noscript>
-  <style>
-  .project-table {
-    display: block;
-  }
-  </style>
-</noscript>
-
-{{ with resources.Get "js/grid.js" | js.Build }}
-<script src="{{ .Permalink }}" defer></script>
-{{ end }}
-
 {{ $career_url:= absLangURL "/career" }}
 {{ $opts := dict "X-MICROCMS-API-KEY" site.Params.MICROCMS_KEY }}
 {{ $data := getJSON "https://q7h9nx3ddk.microcms.io/api/v1/projects?orders=-endedAt" $opts }}

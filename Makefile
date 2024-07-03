@@ -25,8 +25,20 @@ server/ec2:
 		hugomods/hugo:base \
 		hugo server -b https://dev.hwangsehyun.com --liveReloadPort 443 --appendPort=false
 
+.PHONY: browser
+browser: assets/image/index.webp public/index.pdf
 assets/image/index.webp: browser/screenshot-index.js
-	cat $< | docker run -i --rm ghcr.io/browserless/chromium node - > $@
+	cat $< \
+		| docker run -i --rm \
+			-v $$PWD/browser/lib:/usr/src/app/lib:ro \
+			ghcr.io/browserless/chromium \
+			node --input-type module > $@
+public/index.pdf: browser/print-pdf.js
+	# -e DEBUG="puppeteer:*"
+	docker run -i --rm \
+		-v $$PWD/public:/usr/src/app/public -v $$PWD/browser:/usr/src/app/browser:ro \
+		ghcr.io/browserless/chromium \
+		node $< > $@
 
 .PHONY: build build/ec2
 build:
