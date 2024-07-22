@@ -1,3 +1,8 @@
+import { install } from 'ga-gtag';
+
+// Substitute your tracking ID (begins with "G-", "UA-", "AW-" or "DC-")
+install('G-0L26XYYVKB');
+
 const hugoData = JSON.parse(document.querySelector('#hugo-json').textContent);
 console.log('Data from hugo', hugoData);
 
