@@ -22,6 +22,10 @@ a:hover, .post-entry:hover h2 {
   animation-name: highlight;
 }
 
+.post-content img {
+  height: auto;
+}
+
 /* pdf download start */
 a[href$="#download"], #download-menu {
     anchor-name: --download-menu;
