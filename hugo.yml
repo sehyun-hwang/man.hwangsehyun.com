@@ -3,6 +3,7 @@ title: man.hwangsehyun.com
 paginate: 5
 theme:
   - hugo-PaperMod
+  - shortcodes
 
 enableInlineShortcodes: true
 enableRobotsTXT: true
