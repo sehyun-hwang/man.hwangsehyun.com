@@ -1,6 +1,6 @@
 {{ $career_url:= absLangURL "/career" }}
-{{ $opts := dict "X-MICROCMS-API-KEY" site.Params.MICROCMS_KEY }}
-{{ $data := getJSON "https://q7h9nx3ddk.microcms.io/api/v1/projects?orders=-endedAt" $opts }}
+{{ $headers := dict "X-MICROCMS-API-KEY" site.Params.MICROCMS_KEY }}
+{{ $data := resources.GetRemote "https://q7h9nx3ddk.microcms.io/api/v1/projects?orders=-endedAt" (dict "headers" $headers) | unmarshal }}
 
 <table class="project-table">
   <thead>

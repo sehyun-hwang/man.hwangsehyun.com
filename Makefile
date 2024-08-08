@@ -1,24 +1,28 @@
 BUCKET := man.hwangsehyun.com
+SUBMODULES := $(wildcard themes/*)
 
 .PHONY: secret
 secret: cloudant.env config/_default/params.json
-cloudant.env config/_default/params.json: secret.mjs
+cloudant.env config/_default/params.json: src/bin/secret.js
 	node $<
 
 .PHONY: stackedit
 stackedit: cloudant.env | src
 	node --env-file $< src
 
+$(SUBMODULES):
+	git submodule update --init
+
 .PHONY: server server/ec2 server/docker
-server: config/_default/params.json
+server: config/_default/params.json | $(SUBMODULES)
 	hugo server
-server/docker: config/_default/params.json
+server/docker: config/_default/params.json | $(SUBMODULES)
 	docker run -it --rm \
 		--net host \
 		-v $$PWD:/src \
 		hugomods/hugo:base \
 		hugo server
-server/ec2:
+server/ec2: | $(SUBMODULES)
 	docker run -it --rm --pod nginx-pod \
 		-v $$PWD:/src -v man.hwangsehyun.com-public:/src/public \
 		--security-opt label=disable \
@@ -41,9 +45,9 @@ public/index.pdf: browser/print-pdf.js
 		node $< > $@
 
 .PHONY: build build/ec2
-build:
+build: | $(SUBMODULES)
 	hugo -b https://man.hwangsehyun.com
-build/ec2:
+build/ec2: | $(SUBMODULES)
 	hugo -b https://www.hwangsehyun.com/man.hwangsehyun.com/public
 
 .PHONY: gitleaks eslint scan

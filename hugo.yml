@@ -3,12 +3,15 @@ title: man.hwangsehyun.com
 paginate: 5
 theme:
   - hugo-PaperMod
+  - shortcodes
 
 enableInlineShortcodes: true
 enableRobotsTXT: true
 enableEmoji: true
 pygmentsUseClasses: true
 mainSections:
+  - tech
+  - posts
   - project
 # googleAnalytics: UA-123-45
 
@@ -31,13 +34,20 @@ languages:
         - name: </> MAN
           url: man/
           weight: 10
-        - name: 🧑‍💻 Projects
-          url: project/
-          weight: 10
         - name: 📜 Career
           url: career/
           weight: 10
-        - name: 💾 Download
+        - name: ⚒️ Tech
+          url: tech/
+          weight: 10
+        - name: 🧑‍💻 Projects
+          url: project/
+          weight: 10
+        - name: 📰 Posts
+          url: posts/
+          weight: 10
+
+        - name: 💾 PDF
           title: Download entire site in PDF
           url: '#download'
           weight: 100
@@ -61,12 +71,23 @@ languages:
         - name: 설명서
           url: man/
           weight: 10
-        - name: 과제
-          url: project/
-          weight: 10
         - name: 경력
           url: career/
           weight: 10
+        - name: 기술
+          url: tech/
+          weight: 10
+        - name: 과제
+          url: project/
+          weight: 10
+        - name: 게시물
+          url: posts/
+          weight: 10
+
+        - name: 박제 
+          title: 피디에프 박제본을 다운로드
+          url: '#download'
+          weight: 100
         - name: 🔍
           url: search/
           weight: 10

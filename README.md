@@ -29,8 +29,6 @@
 
 	```sh
 	pnpm i
-	cd src
-	pnpm i
 	```
 
 ## Develpment
