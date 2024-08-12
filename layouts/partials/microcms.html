@@ -23,7 +23,7 @@
           <h4 class="name">{{ .name }}</h4>
         </a>
       </td>
-      <td class="truncated">{{ .description }}</td>
+      <td class="truncated">{{ .description | markdownify }}</td>
       <td>
         <ul>
           {{ range (first 3 .techs) }}
