@@ -94,7 +94,8 @@ downloadButtonElement.id = 'download-menu';
 downloadButtonElement.href = pdfHref;
 downloadButtonElement.download = document.title + '.pdf';
 
-window.PagedPolyfill && downloadButtonElement.addEventListener('click', () => {
+window.PagedPolyfill && downloadButtonElement.addEventListener('click', event => {
+  event.preventDefault();
   window.PagedConfig?.buttonResolvers?.resolve();
   setTimeout(() => window.PagedPolyfill.preview());
 });

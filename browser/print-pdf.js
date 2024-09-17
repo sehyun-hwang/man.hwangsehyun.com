@@ -12,6 +12,7 @@ import launchBrowser from './lib/puppeteer-browser.js';
 import listLocalPermalinks from './lib/permalink-json.js';
 
 const overridePaths = process.argv.slice(2);
+console.error({ overridePaths });
 
 const server = createServer((request, response) => {
   response.setHeader('Access-Control-Allow-Origin', '*');
@@ -71,10 +72,11 @@ Promise.all([
   launchBrowser(),
 ])
   .then(async ([replacedUrl, paths, browser]) => {
+    console.error(paths);
     console.error('Server to replace', replacedUrl, 'listening');
     spinner.start('Loading: ');
 
-    const pdfs = await Promise.all(paths.slice(0, 100).map(async path => {
+    const pdfs = await Promise.all(paths.map(async path => {
       const printer = new BrowserlessPrinter(browser);
       printer.path = path;
       const html = await text(
@@ -83,7 +85,6 @@ Promise.all([
           .pipe(new HeadTransformStream('integrity', 'nointegrity'))
           .pipe(new HeadTransformStream('https://man.hwangsehyun.com', replacedUrl)),
       );
-      // console.error(html);
       const { origin: url } = new URL(replacedUrl);
       return printer.renderPdf({
         url,
