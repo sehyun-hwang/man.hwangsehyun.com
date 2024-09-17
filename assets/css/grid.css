@@ -1,7 +1,14 @@
+/* stylelint-disable media-feature-range-notation */
+
 /* hugo start */
 
+table.gridjs-table {
+  width: unset;
+}
+
 .main {
-  max-width: unset;
+  max-width: calc(var(--nav-width) + var(--gap) * 2);
+  margin: auto;
 }
 
 .post-content {
@@ -9,102 +16,194 @@
   margin: auto;
 }
 
+.monospace {
+  font-family: monospace;
+}
+
+.chip {
+  display: inline-block;
+  padding: 0 10px;
+  border: solid;
+  border-radius: 25px;
+  margin-bottom: 10px;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.period li {
+  padding-right: 2rem;
+  float: left;
+}
+
+@media screen {
+  .truncated > * {
+    display: -webkit-box;
+    overflow: hidden;
+    padding-bottom: 0 !important;
+    border-bottom: none !important;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 5;
+    line-clamp: 5;
+  }
+
+  .importance-1,
+  .importance-1 + td {
+    opacity: 0.8;
+  }
+
+  .importance-2,
+  .importance-2 + td,
+  .importance-3,
+  .importance-3 + td,
+  .importance-4,
+  .importance-4 + td {
+    background-color: #68a1fe42 !important;
+  }
+
+  .importance-5,
+  .importance-5 + td {
+    background-color: #fff20050 !important;
+  }
+}
+
+@media screen and (min-width: 1280px) {
+  .importance-1 + td {
+    opacity: unset;
+  }
+
+  .importance-2 + td,
+  .importance-3 + td,
+  .importance-4 + td {
+    background-color: unset !important;
+  }
+
+  .importance-5 + td {
+    background-color: unset !important;
+  }
+}
+
+.project-table .gridjs-tr {
+  display: grid;
+}
+
+.project-table tr {
+  align-items: center;
+  margin: 1rem 0;
+  grid-auto-flow: row;
+  grid-template-columns: 2fr 1fr;
+  list-style-position: inside;
+}
+
+.project-table td {
+  height: 100%;
+  box-sizing: border-box;
+  align-content: center;
+}
+
+.project-table td:not(.truncated) {
+  text-align: center;
+}
+
+.project-table .gridjs-tbody td:first-child {
+  grid-row: 1 / 2;
+}
+
+.project-table .gridjs-tbody td:last-child {
+  grid-area: 3 / 1 / 4 / 2;
+}
+
+@media screen and (min-width: 1280px) {
+  .main {
+    max-width: calc(100% - var(--gap) * 2);
+  }
+
+  .project-table tr {
+    grid-template-columns: 2fr 1fr 1fr 1fr 2fr;
+  }
+
+  .project-table .gridjs-thead th:last-child {
+    display: none;
+  }
+
+  .project-table .gridjs-tbody td:first-child {
+    grid-area: 1 / 1 / 4 / 2;
+  }
+
+  .project-table .gridjs-tbody td:last-child {
+    grid-column: 2 / 6;
+  }
+}
+
+@media print {
+  .gridjs-search,
+  .gridjs-thead,
+  .gridjs-sort {
+    display: none;
+  }
+
+  .project-table .period > * {
+    display: inline-block;
+    overflow: hidden;
+  }
+
+  .project-table .period time {
+    max-width: 10ch;
+    white-space: nowrap;
+  }
+}
+
 /* hugo end */
 
 /* grid.js custom start */
 
-.truncated * {
-  display: -webkit-box;
-  overflow: hidden;
-  padding-bottom: 0 !important;
-  border-bottom: none !important;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 5;
+@media screen {
+  .gridjs-search {
+    max-width: calc(var(--main-width) + var(--gap) * 2);
+    margin: auto;
+    float: unset;
+  }
 }
 
-.gridjs-search {
-  max-width: calc(var(--main-width) + var(--gap) * 2);
-  margin: auto;
-  float: unset;
-}
-
-.importance-1,
-.importance-1 + td,
-.importance-1 + td + td,
-.importance-1 + td + td + td,
-.importance-1 + td + td + td + td,
-.importance-1 + td + td + td + td + td {
-  opacity: 0.8;
-}
-
-.importance-2,
-.importance-2 + td,
-.importance-2 + td + td,
-.importance-2 + td + td + td,
-.importance-2 + td + td + td + td,
-.importance-2 + td + td + td + td + td,
-.importance-3,
-.importance-3 + td,
-.importance-3 + td + td,
-.importance-3 + td + td + td,
-.importance-3 + td + td + td + td,
-.importance-3 + td + td + td + td + td,
-.importance-4,
-.importance-4 + td,
-.importance-4 + td + td,
-.importance-4 + td + td + td,
-.importance-4 + td + td + td + td,
-.importance-4 + td + td + td + td + td {
-  background-color: #68a1fe42 !important;
-}
-
-.importance-5,
-.importance-5 + td,
-.importance-5 + td + td,
-.importance-5 + td + td + td,
-.importance-5 + td + td + td + td,
-.importance-5 + td + td + td + td + td {
-  background-color: #fff20050 !important;
-}
-
-th.gridjs-th[data-column-id="period"] {
-  padding-right: 0;
-}
-
-th.gridjs-th-sort[data-column-id="period"] .gridjs-th-content {
+th.gridjs-th .gridjs-th-content {
   width: unset;
 }
 
-th.gridjs-th[data-column-id="period"] .gridjs-th-content {
-  display: inline-block;
-  float: unset;
-}
-
-th.gridjs-th[data-column-id="period"] button.gridjs-sort {
-  /*   margin-left: 3px; */
-  float: unset;
-}
-
-th.gridjs-th[data-column-id="duration"] {
-  padding-left: 0;
-}
-
-td.gridjs-td {
-  padding: 0.5rem 1rem;
-}
-
-/* grid.js custom end */
-
-/*
-https://github.com/grid-js/gridjs/issues/115#issuecomment-1151543389
-https://www.diffchecker.com/6YQw7yuo/
-*/
-
 html {
-  container-name: html;
+  /* container-name: html; */
+}
+
+.gridjs-thead {
+  font-size: 0.9rem;
+}
+
+.gridjs-tbody,
+td.gridjs-td {
+  background-color: unset;
+}
+
+tr.gridjs-tr {
+  background-color: #fff;
+}
+
+td.gridjs-td:first-child,
+td.gridjs-td:last-child {
+  border: 1px solid #e5e7eb;
+}
+
+.gridjs-wrapper {
+  border-color: unset;
+  box-shadow: unset;
 }
 
 @container style(--color-scheme: dark) {
+  tr.gridjs-tr {
+    border-color: #1a1814;
+    background-color: #000;
+    box-shadow:
+      0 1px 3px 0 rgb(255 255 255 / 10%),
+      0 1px 2px 0 rgb(255 255 255 / 26%);
+  }
+
   .gridjs-container {
     color: #fff;
   }
@@ -120,8 +219,6 @@ html {
 
   input.gridjs-input {
     border: 1px solid #2d2923;
-
-    /* outline: none; */
     background-color: #000;
   }
 
@@ -159,10 +256,12 @@ html {
     background-color: #000;
   }
 
+  /* stylelint-disable-next-line selector-class-pattern */
   .gridjs-pagination .gridjs-pages button.gridjs-currentPage {
     background-color: #080808;
   }
 
+  /* stylelint-disable-next-line no-descending-specificity */
   .gridjs-pagination .gridjs-pages button:last-child {
     border-right: 1px solid #2d2923;
   }
@@ -173,13 +272,10 @@ html {
     filter: invert(100%);
   }
 
-  .gridjs-tbody {
-    background-color: #000;
-  }
-
-  td.gridjs-td {
+  td.gridjs-td,
+  td.gridjs-td:first-child,
+  td.gridjs-td:last-child {
     border: 1px solid #1a1814;
-    background-color: #000;
   }
 
   th.gridjs-th {
@@ -208,13 +304,6 @@ html {
 
   .gridjs-tr-selected td {
     background-color: #140a00;
-  }
-
-  .gridjs-wrapper {
-    border-color: #1a1814;
-    box-shadow:
-      0 1px 3px 0 rgb(255 255 255 / 10%),
-      0 1px 2px 0 rgb(255 255 255 / 26%);
   }
 
   .gridjs-loading-bar {

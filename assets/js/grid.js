@@ -1,18 +1,31 @@
 import { Grid, html } from 'gridjs';
 
 /* eslint-disable */
-function buildData(golangTable) {
-  const data = Array.from(golangTable.tBodies[0].rows, ({ cells }) =>
-    Array.prototype.flatMap.call(cells, (cell) => {
-      if (cell.classList.contains("number")) return Number(cell.textContent);
+// Start
 
-      const period = cell.querySelector(".period");
-      if (!period) return cell;
-      const [{ textContent: start }, { textContent: end }] = period.children;
-      return [start + "_" + end, new Date(end) - new Date(start)];
-    })
+function buildData(golangTable) {
+  window.golangTable = golangTable;
+  console.log(golangTable.tBodies);
+  const data = Array.from(
+    golangTable.tBodies,
+    ({
+      rows: [
+        { cells },
+        {
+          cells: [cell]
+        }
+      ]
+    }) =>
+      Array.prototype.flatMap.call([...cells, cell], (cell) => {
+        if (cell.classList.contains("number")) return Number(cell.textContent);
+        const period = cell.classList.contains("period");
+        if (!period) return cell;
+        const [{ dateTime: start }, { dateTime: end }] = cell.querySelectorAll(
+          "time"
+        );
+        return [start + "_" + end, new Date(end) - new Date(start)];
+      })
   );
-  console.log(data);
   return data;
 }
 
@@ -43,48 +56,48 @@ const columns = [
       };
     }
   },
-  {
-    name: "Description",
-    attributes: (cell) => ({
-      class: cell ? "gridjs-td truncated" : "gridjs-th"
-    })
-  },
-  "Technologies",
+  "Belonging",
+
   {
     name: "Period",
     sort: true,
     attributes: (cell) => ({
-      colspan: cell && "2"
+      class: cell ? "gridjs-td period monospace" : "gridjs-th"
     }),
     formatter: (data) => {
       const [start, end] = data.split("_").map((date) => new Date(date));
-      const duration = (end - start) / 1000 / 3600 / 24 / 30;
-      return html(
-        `<li>From ${start.toLocaleDateString()}</li>
-        <li>Until ${end.toLocaleDateString()}</li>
-        <li>For ${duration.toFixed(1)} Months</li>`,
-        "ul"
-      );
+      return start.toLocaleDateString() + " ~ " + end.toLocaleDateString();
     }
   },
   {
     name: "Duration",
     sort: true,
-    attributes: (cell) => ({
-      hidden: Boolean(cell)
-    })
+    formatter(data) {
+      const months = data / 1000 / 3600 / 24 / 30;
+      return html(`<span class="chip">${months.toFixed(1)} Months</span>`);
+    }
   },
-  "Belonging",
+  "Technologies",
   {
     name: "Importance",
     hidden: true
+  },
+  {
+    name: "Description",
+    attributes: (cell) => {
+      console.log(cell);
+      return {
+        class: cell ? "gridjs-td truncated" : "gridjs-th"
+      };
+    }
   }
 ];
 
 async function renderGridjsData(data) {
   const section = document.createElement("section");
   const grid = new Grid({
-    resizable: true,
+    resizable: false,
+    autoWidth: false,
     search: true,
     columns,
     data,
@@ -133,9 +146,10 @@ class GridjsManipulator {
 
   // asc || desc
   setSort(id, direction) {
+    console.log('Setting sort', { id, direction });
     const DIRECTION_SEQUENCE = ["neutral", "asc", "desc"];
     const button = this.element.querySelector(
-      `.gridjs-th-sort[data-column-id='${id}'] button`
+      `.gridjs-th[data-column-id='${id}'] .gridjs-sort`
     );
     const currentDirection = button.classList[1].replace("gridjs-sort-", "");
     const diff =
@@ -158,8 +172,8 @@ class GridjsManipulator {
   }
 
   appendInputElements(anchorHanders) {
-    const search = this.element.querySelector('.gridjs-search-input');
-    
+    const search = this.element.querySelector(".gridjs-search-input");
+
     Object.entries(anchorHanders).forEach(([id, handler]) => {
       const selector = `a[href$='#${id}']`;
       const a = document.querySelector(selector);
@@ -213,4 +227,4 @@ const appendGridjs = (golangTable = document.querySelector(".project-table")) =>
 
 /* eslint-enable */
 
-appendGridjs();
+new URLSearchParams(window.location.search).has('print') || appendGridjs();
