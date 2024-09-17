@@ -11,6 +11,8 @@ import HeadTransformStream from './lib/head-transform-stream.js';
 import launchBrowser from './lib/puppeteer-browser.js';
 import listLocalPermalinks from './lib/permalink-json.js';
 
+const overridePaths = process.argv.slice(2);
+
 const server = createServer((request, response) => {
   response.setHeader('Access-Control-Allow-Origin', '*');
   handler(request, response, {
@@ -35,6 +37,7 @@ class BrowserlessPrinter extends Printer {
     spinner.start('Loading: ');
 
     this.on('page', page => {
+      console.error(this.path);
       if (page.position === 0) {
         spinner.succeed('Loaded');
         spinner.start('Rendering: Page ' + (page.position + 1));
@@ -64,15 +67,16 @@ class BrowserlessPrinter extends Printer {
 Promise.all([
   new Promise(resolve => server.listen(0, resolve))
     .then(() => `http://localhost:${server.address().port}`),
-  listLocalPermalinks(),
+  overridePaths.length ? overridePaths : listLocalPermalinks(),
   launchBrowser(),
 ])
   .then(async ([replacedUrl, paths, browser]) => {
     console.error('Server to replace', replacedUrl, 'listening');
     spinner.start('Loading: ');
 
-    const pdfs = await Promise.all(paths.map(async path => {
+    const pdfs = await Promise.all(paths.slice(0, 100).map(async path => {
       const printer = new BrowserlessPrinter(browser);
+      printer.path = path;
       const html = await text(
         createReadStream(path)
           .pipe(new HeadTransformStream('defer="TO_BE_REMOVED_IN_PUPPETTER"', ''))

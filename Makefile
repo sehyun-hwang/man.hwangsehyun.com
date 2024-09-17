@@ -15,13 +15,13 @@ $(SUBMODULES):
 
 .PHONY: server server/ec2 server/docker
 server: config/_default/params.json | $(SUBMODULES)
-	hugo server
+	hugo server -M
 server/docker: config/_default/params.json | $(SUBMODULES)
 	docker run -it --rm \
 		--net host \
 		-v $$PWD:/src \
 		hugomods/hugo:base \
-		hugo server
+		hugo server -M
 server/ec2: | $(SUBMODULES)
 	docker run -it --rm --pod nginx-pod \
 		-v $$PWD:/src -v man.hwangsehyun.com-public:/src/public \
@@ -43,7 +43,7 @@ public/index.pdf: browser/print-pdf.js
 		--add-host=www.youtube.com:127.0.0.1 \
 		-v $$PWD/public:/usr/src/app/public -v $$PWD/browser:/usr/src/app/browser:ro \
 		ghcr.io/browserless/chromium \
-		node $< > $@
+		node $< $$PDF_HTML_PATHS > $@
 
 .PHONY: build build/ec2
 build: | $(SUBMODULES)
