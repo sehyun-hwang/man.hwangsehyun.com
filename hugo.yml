@@ -1,6 +1,9 @@
+# yaml-language-server: $schema=https://json.schemastore.org/hugo.json
+
 # baseURL: "https://man.hwangsehyun.com"
 title: man.hwangsehyun.com
-paginate: 5
+pagination:
+  pagerSize: 5
 theme:
   - hugo-PaperMod
   - shortcodes
@@ -49,7 +52,7 @@ languages:
 
         - name: 💾 PDF
           title: Download entire site in PDF
-          url: '#download'
+          url: "#download"
           weight: 100
         - name: 🔍
           title: Search
@@ -84,9 +87,9 @@ languages:
           url: posts/
           weight: 10
 
-        - name: 박제 
+        - name: 박제
           title: 피디에프 박제본을 다운로드
-          url: '#download'
+          url: "#download"
           weight: 100
         - name: 🔍
           url: search/
@@ -94,12 +97,12 @@ languages:
 
 module:
   mounts:
-  - source: content
-    target: content
-    lang: kr
-  - source: content
-    target: content
-    lang: kp
+    - source: content
+      target: content
+      lang: kr
+    - source: content
+      target: content
+      lang: kp
 
 outputs:
   home:
@@ -131,7 +134,6 @@ params:
   homeInfoParams:
     Title:
     Content:
-
 
   socialIcons:
     - name: github
