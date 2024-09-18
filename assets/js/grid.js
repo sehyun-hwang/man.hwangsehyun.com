@@ -2,7 +2,6 @@ import { Grid, html } from 'gridjs';
 
 /* eslint-disable */
 // Start
-
 function buildData(golangTable) {
   window.golangTable = golangTable;
   console.log(golangTable.tBodies);
@@ -56,6 +55,7 @@ const columns = [
       };
     }
   },
+
   "Belonging",
 
   {
@@ -69,6 +69,7 @@ const columns = [
       return start.toLocaleDateString() + " ~ " + end.toLocaleDateString();
     }
   },
+
   {
     name: "Duration",
     sort: true,
@@ -77,11 +78,14 @@ const columns = [
       return html(`<span class="chip">${months.toFixed(1)} Months</span>`);
     }
   },
+
   "Technologies",
+
   {
     name: "Importance",
     hidden: true
   },
+
   {
     name: "Description",
     attributes: (cell) => {
@@ -102,7 +106,8 @@ async function renderGridjsData(data) {
     columns,
     data,
     className: {
-      table: "project-table"
+      table: "project-table",
+      tbody: "post-content"
     }
   });
 

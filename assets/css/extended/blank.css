@@ -6,10 +6,19 @@ body {
   font-size: 1.1rem;
 }
 
+.entry-content a,
+.post-content a {
+  box-shadow: unset;
+  color: light-dark(#0073bb, #44b9d6);
+}
+
 @media screen {
-  a:hover,
+  .entry-content a:hover,
+  .post-content a:hover,
   .post-entry:hover h2 {
+    color: light-dark(#0a4a74, #99cbe4);
     text-decoration: underline;
+    text-underline-offset: 0.25rem;
   }
 }
 
@@ -17,6 +26,10 @@ body {
   a::before,
   .post-entry:hover h2::before {
     content: "🔗";
+  }
+
+  .share-buttons {
+    display: none;
   }
 }
 
@@ -40,8 +53,12 @@ body {
   padding: unset;
 }
 
-p {
+.post-content p {
   text-indent: 1rem;
+}
+
+.post-content li p {
+  text-indent: unset;
 }
 
 .post-content img {

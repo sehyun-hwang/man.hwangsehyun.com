@@ -112,6 +112,27 @@ table.gridjs-table {
   grid-area: 3 / 1 / 4 / 2;
 }
 
+.project-table h3,
+.project-table h4 {
+  display: inline;
+}
+
+.project-table a:has(h3),
+.project-table a:has(h4) {
+  text-decoration: underline;
+  text-underline-offset: 0.25rem;
+}
+
+.project-table h3:hover,
+.project-table h4:hover {
+  color: inherit;
+}
+
+.project-table ul {
+  margin-bottom: 0px;
+  padding-inline-start: 0px;
+}
+
 @media screen and (min-width: 1280px) {
   .main {
     max-width: calc(100% - var(--gap) * 2);
