@@ -5,9 +5,9 @@ settings:
   excludeLinksFromLockfile: false
 
 patchedDependencies:
-  pagedjs-cli@0.4.3:
-    hash: wbiuhntv7t522owfri7irwr72m
-    path: browser/patches/pagedjs-cli@0.4.3.patch
+  pagedjs-cli:
+    hash: hmzjzl4kigi7ktbysgqcytrkvi
+    path: patches/pagedjs-cli.patch
 
 importers:
 
@@ -39,7 +39,10 @@ importers:
         version: 8.0.1
       pagedjs-cli:
         specifier: ^0.4.3
-        version: 0.4.3(patch_hash=wbiuhntv7t522owfri7irwr72m)(typescript@5.5.3)
+        version: 0.4.3(patch_hash=hmzjzl4kigi7ktbysgqcytrkvi)(typescript@5.6.2)
+      pdf-lib:
+        specifier: ^1.17.1
+        version: 1.17.1
       pdf-merger-js:
         specifier: ^5.1.2
         version: 5.1.2
@@ -99,8 +102,8 @@ importers:
         specifier: ^4.3.0
         version: 4.3.3
       typescript:
-        specifier: ^5.4.3
-        version: 5.5.3
+        specifier: ^5.6.2
+        version: 5.6.2
 
 packages:
 
@@ -2161,8 +2164,8 @@ packages:
     resolution: {integrity: sha512-/OxDN6OtAk5KBpGb28T+HZc2M+ADtvRxXrKKbUwtsLgdoxgX13hyy7ek6bFRl5+aBs2yZzB0c4CnQfAtVypW/g==}
     engines: {node: '>= 0.4'}
 
-  typescript@5.5.3:
-    resolution: {integrity: sha512-/hreyEujaB0w76zKo6717l3L0o/qEUtRgdvUBvlkhoWeOVMjMuHNHk0BRBzikzuGDqNmPQbg5ifMEqsHLiIUcQ==}
+  typescript@5.6.2:
+    resolution: {integrity: sha512-NW8ByodCSNCwZeghjN3o+JX5OFH0Ojg6sadjEKY4huZ52TqbJTJnDo5+Tw98lSy63NZvi4n+ez5m2u5d4PkZyw==}
     engines: {node: '>=14.17'}
     hasBin: true
 
@@ -2786,7 +2789,7 @@ snapshots:
   '@pkgjs/parseargs@0.11.0':
     optional: true
 
-  '@puppeteer/browsers@1.4.6(typescript@5.5.3)':
+  '@puppeteer/browsers@1.4.6(typescript@5.6.2)':
     dependencies:
       debug: 4.3.4
       extract-zip: 2.0.1
@@ -2796,7 +2799,7 @@ snapshots:
       unbzip2-stream: 1.4.3
       yargs: 17.7.1
     optionalDependencies:
-      typescript: 5.5.3
+      typescript: 5.6.2
     transitivePeerDependencies:
       - supports-color
 
@@ -4485,7 +4488,7 @@ snapshots:
       degenerator: 5.0.1
       netmask: 2.0.2
 
-  pagedjs-cli@0.4.3(patch_hash=wbiuhntv7t522owfri7irwr72m)(typescript@5.5.3):
+  pagedjs-cli@0.4.3(patch_hash=hmzjzl4kigi7ktbysgqcytrkvi)(typescript@5.6.2):
     dependencies:
       commander: 11.1.0
       express: 4.19.2
@@ -4497,7 +4500,7 @@ snapshots:
       ora: 6.3.1
       pagedjs: 0.4.3
       pdf-lib: 1.17.1
-      puppeteer: 20.9.0(typescript@5.5.3)
+      puppeteer: 20.9.0(typescript@5.6.2)
       replace-ext: 2.0.0
     transitivePeerDependencies:
       - bufferutil
@@ -4635,16 +4638,16 @@ snapshots:
 
   punycode@2.3.1: {}
 
-  puppeteer-core@20.9.0(typescript@5.5.3):
+  puppeteer-core@20.9.0(typescript@5.6.2):
     dependencies:
-      '@puppeteer/browsers': 1.4.6(typescript@5.5.3)
+      '@puppeteer/browsers': 1.4.6(typescript@5.6.2)
       chromium-bidi: 0.4.16(devtools-protocol@0.0.1147663)
       cross-fetch: 4.0.0
       debug: 4.3.4
       devtools-protocol: 0.0.1147663
       ws: 8.13.0
     optionalDependencies:
-      typescript: 5.5.3
+      typescript: 5.6.2
     transitivePeerDependencies:
       - bufferutil
       - encoding
@@ -4663,11 +4666,11 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  puppeteer@20.9.0(typescript@5.5.3):
+  puppeteer@20.9.0(typescript@5.6.2):
     dependencies:
-      '@puppeteer/browsers': 1.4.6(typescript@5.5.3)
+      '@puppeteer/browsers': 1.4.6(typescript@5.6.2)
       cosmiconfig: 8.2.0
-      puppeteer-core: 20.9.0(typescript@5.5.3)
+      puppeteer-core: 20.9.0(typescript@5.6.2)
     transitivePeerDependencies:
       - bufferutil
       - encoding
@@ -5075,7 +5078,7 @@ snapshots:
       is-typed-array: 1.1.13
       possible-typed-array-names: 1.0.0
 
-  typescript@5.5.3: {}
+  typescript@5.6.2: {}
 
   uc.micro@2.1.0: {}
 

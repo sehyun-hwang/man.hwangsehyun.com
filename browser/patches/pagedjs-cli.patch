@@ -1,0 +1,29 @@
+diff --git a/src/index.js b/src/index.js
+index 9e8d6b6e55e46f4d4fbf054593fb072885e295f2..5d141af21530a61d83e573c8895528f7f066f7a0 100644
+--- a/src/index.js
++++ b/src/index.js
+@@ -1,3 +1,5 @@
+ import Printer from "./printer.js";
++import { setOutline } from "./outline.js";
+ 
+ export default Printer;
++export { setOutline };
+diff --git a/src/printer.js b/src/printer.js
+index 206b4fcad71822e5c92b36fb469346a4cdd56bfb..514a23f1605a11c13c8c6192875e01f59ac52452 100644
+--- a/src/printer.js
++++ b/src/printer.js
+@@ -324,11 +324,11 @@ class Printer extends EventEmitter {
+ 
+ 			setMetadata(pdfDoc, meta);
+ 			setTrimBoxes(pdfDoc, this.pages);
+-			setOutline(pdfDoc, outline, this.enableWarnings);
++			// setOutline(pdfDoc, outline, this.enableWarnings);
+ 
+-			pdf = await pdfDoc.save();
++			// pdf = await pdfDoc.save();
+ 
+-			return pdf;
++			return { pdfDoc, outline };
+ 		} catch (error) {
+ 			this.closeAfter && this.close();
+ 			throw error;

@@ -1,16 +1,20 @@
-import { readdir } from 'fs/promises';
 import { join } from 'path';
+import { readdir } from 'fs/promises';
 
 import puppeteer from 'puppeteer-core';
 
-const BROWSER_FOLDER = '/usr/local/bin/playwright-browsers'
+const BROWSER_FOLDER = '/usr/local/bin/playwright-browsers';
 
 export default () => readdir(BROWSER_FOLDER)
+  .catch(console.error)
   .then(folders => puppeteer.launch({
-    executablePath: join(BROWSER_FOLDER, folders.find(folder => folder.includes('chromium')), 'chrome-linux/chrome'),
-    args: ['--no-sandbox'],
+    executablePath: folders ? join(BROWSER_FOLDER, folders.find(folder => folder.includes('chromium')), 'chrome-linux/chrome')
+      : '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+    headless: Boolean(folders),
+    args: ['--no-sandbox', '--export-tagged-pdf'],
     defaultViewport: {
       width: 1072,
       height: 1072,
     },
+    // slowMo: 250,
   }));
