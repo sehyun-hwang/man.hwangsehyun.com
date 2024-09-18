@@ -13,6 +13,7 @@ export default class ReplaceInHeadTransform extends Transform {
     if (this.headClosed) {
       this.push(chunkStr);
       callback();
+      return;
     }
 
     const headCloseIndex = chunkStr.indexOf('</head>');

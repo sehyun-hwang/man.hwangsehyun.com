@@ -90,7 +90,6 @@ new Promise(resolve => server.listen(0, resolve))
     listLocalPermalinks(server.address().port),
     launchBrowser(),
   ]))
-  // overridePaths.length ? overridePaths : listLocalPermalinks(),
   .then(async ([urls, browser]) => {
     console.error(urls);
     if (overridePaths.size)
