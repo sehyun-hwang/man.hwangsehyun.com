@@ -27,7 +27,7 @@ export default [{
     },
   },
   rules: {
-    'no-console': 'error',
+    'no-console': ['error', { allow: ['error'] }],
   },
 }, {
   files: ['assets/js/*.js'],

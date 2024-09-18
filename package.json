@@ -6,7 +6,7 @@
   },
   "pnpm": {
     "patchedDependencies": {
-      "pagedjs-cli@0.4.3": "browser/patches/pagedjs-cli@0.4.3.patch"
+      "pagedjs-cli": "browser/patches/pagedjs-cli.patch"
     }
   },
   "scripts": {

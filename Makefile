@@ -38,12 +38,15 @@ assets/image/index.webp: browser/screenshot-index.js
 			ghcr.io/browserless/chromium \
 			node --input-type module > $@
 public/index.pdf: browser/print-pdf.js
-	# -e DEBUG="puppeteer:*"
-	docker run -i --rm \
+	# -e DEBUG="puppeteer:*" \
+
+	docker run --rm \
 		--add-host=www.youtube.com:127.0.0.1 \
 		-v $$PWD/public:/usr/src/app/public -v $$PWD/browser:/usr/src/app/browser:ro \
 		ghcr.io/browserless/chromium \
-		node $< $$PDF_HTML_PATHS > $@
+		node $< ${PDF_HTML_PATHS} > $@
+
+	open $@
 
 .PHONY: build build/ec2
 build: | $(SUBMODULES)

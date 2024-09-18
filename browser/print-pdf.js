@@ -1,22 +1,41 @@
 import { createReadStream } from 'fs';
 import { createServer } from 'http';
-import { text } from 'stream/consumers';
 
-import PDFMerger from 'pdf-merger-js';
 import Printer from 'pagedjs-cli';
 import handler from 'serve-handler';
 import ora from 'ora';
 
 import HeadTransformStream from './lib/head-transform-stream.js';
+import PdflibMerger from './lib/pdf-lib.js';
 import launchBrowser from './lib/puppeteer-browser.js';
 import listLocalPermalinks from './lib/permalink-json.js';
 
-const overridePaths = process.argv.slice(2);
+const overridePaths = new Set(process.argv.slice(2));
+console.error({ overridePaths });
 
 const server = createServer((request, response) => {
-  response.setHeader('Access-Control-Allow-Origin', '*');
   handler(request, response, {
     public: 'public',
+    headers: [{
+      source: '**/*.html',
+      headers: [{
+        key: 'Content-Length',
+        value: null,
+      }],
+    }],
+  }, {
+    createReadStream(path) {
+      console.error(path);
+      const stream = createReadStream(path);
+      // return stream;
+      if (!path.endsWith('html'))
+        return stream;
+      const replacedUrl = `http://localhost:${server.address().port}`;
+      return stream
+        .pipe(new HeadTransformStream('defer="TO_BE_REMOVED_IN_PUPPETTER"', ''))
+        .pipe(new HeadTransformStream('integrity', 'nointegrity'))
+        .pipe(new HeadTransformStream('https://man.hwangsehyun.com', replacedUrl));
+    },
   });
 });
 
@@ -25,11 +44,13 @@ const spinner = ora({
 });
 
 class BrowserlessPrinter extends Printer {
-  constructor(browser) {
+  constructor(browser, outlines) {
     super({
       enableWarnings: true,
+      closeAfter: false,
     });
     this.browser = browser;
+    this.outlines = outlines;
   }
 
   async renderPdf(input) {
@@ -52,57 +73,48 @@ class BrowserlessPrinter extends Printer {
     });
 
     this.on('postprocessing', msg => {
-      spinner.succeed('Generated');
+      spinner.succeed(msg);
       spinner.start('Processing');
     });
 
-    // const output = await printer.render(input)
-    // .then(page => page.pdf());
-    const buffer = await this.pdf(input, { outlineTags: ['h2'] });
-    console.error('PDF output', buffer.length);
-    return Uint8Array.from(buffer);
+    const { pdfDoc, outline } = await this.pdf(input, {
+      outlineTags: ['h1.post-title', 'h2'],
+    });
+    this.outlines.push(...outline);
+    return pdfDoc;
   }
 }
 
-Promise.all([
-  new Promise(resolve => server.listen(0, resolve))
-    .then(() => `http://localhost:${server.address().port}`),
-  overridePaths.length ? overridePaths : listLocalPermalinks(),
-  launchBrowser(),
-])
-  .then(async ([replacedUrl, paths, browser]) => {
-    console.error('Server to replace', replacedUrl, 'listening');
+new Promise(resolve => server.listen(0, resolve))
+  .then(() => Promise.all([
+    listLocalPermalinks(server.address().port),
+    launchBrowser(),
+  ]))
+  // overridePaths.length ? overridePaths : listLocalPermalinks(),
+  .then(async ([urls, browser]) => {
+    console.error(urls);
+    if (overridePaths.size)
+      urls = urls.filter(url => overridePaths.has(new URL(url).pathname));
+    console.error(urls);
+    console.error(`Server to replace listening http://localhost:${server.address().port}`);
+    // await new Promise(resolve => { });
     spinner.start('Loading: ');
 
-    const pdfs = await Promise.all(paths.slice(0, 100).map(async path => {
-      const printer = new BrowserlessPrinter(browser);
-      printer.path = path;
-      const html = await text(
-        createReadStream(path)
-          .pipe(new HeadTransformStream('defer="TO_BE_REMOVED_IN_PUPPETTER"', ''))
-          .pipe(new HeadTransformStream('integrity', 'nointegrity'))
-          .pipe(new HeadTransformStream('https://man.hwangsehyun.com', replacedUrl)),
-      );
-      // console.error(html);
-      const { origin: url } = new URL(replacedUrl);
-      return printer.renderPdf({
-        url,
-        html,
-      });
-    }));
-    spinner.succeed('Processed');
-
-    const merger = new PDFMerger();
+    const merger = new PdflibMerger();
+    const pdfDocs = [];
     // eslint-disable-next-line no-restricted-syntax
-    for (const pdf of pdfs)
-      // eslint-disable-next-line no-await-in-loop
-      await merger.add(pdf);
+    for await (const url of urls) {
+      const printer = new BrowserlessPrinter(browser, merger.outline);
+      printer.path = url;
+      const pdfDoc = await printer.renderPdf({ url });
+      spinner.succeed('Processed');
+      pdfDocs.push(pdfDoc);
+      await merger.add(pdfDoc);
+    }
+    merger.setOutline(pdfDocs);
 
     return Promise.all([
       merger.save('/dev/stdout'),
-      // new Promise((resolve, reject) => process.stdout.write(output, error => {
-      //   error ? reject(error) : resolve();
-      // })),
       new Promise((resolve, reject) => server.close(error => {
         error ? reject(error) : resolve();
       })),
