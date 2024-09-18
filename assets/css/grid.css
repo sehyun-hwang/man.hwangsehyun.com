@@ -7,12 +7,12 @@ table.gridjs-table {
 }
 
 .main {
-  max-width: calc(var(--nav-width) + var(--gap) * 2);
-  margin: auto;
+  max-width: var(--nav-width);
+  margin: var(--gap);
 }
 
 .post-content {
-  max-width: calc(var(--main-width) + var(--gap) * 2);
+  max-width: var(--main-width);
   margin: auto;
 }
 
@@ -140,6 +140,7 @@ table.gridjs-table {
 
   .project-table tr {
     grid-template-columns: 2fr 1fr 1fr 1fr 2fr;
+    margin: 0;
   }
 
   .project-table .gridjs-thead th:last-child {

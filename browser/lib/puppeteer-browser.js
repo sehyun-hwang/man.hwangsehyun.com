@@ -13,5 +13,5 @@ export default (defaultViewport = undefined) => readdir(BROWSER_FOLDER)
     headless: Boolean(folders),
     args: ['--no-sandbox', '--export-tagged-pdf'],
     defaultViewport,
-    // slowMo: 250,
+    slowMo: 10, // @TODO Demolish
   }));
