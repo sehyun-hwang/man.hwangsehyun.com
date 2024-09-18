@@ -1,7 +1,10 @@
 import launchBrowser from './lib/puppeteer-browser.js';
 
 async function pipeScreenshotOfIndex() {
-  const browser = await launchBrowser();
+  const browser = await launchBrowser({
+    width: 1072,
+    height: 1072,
+  });
   const page = await browser.newPage();
   await page.goto('https://man.hwangsehyun.com', {
     waitUntil: 'networkidle0',
