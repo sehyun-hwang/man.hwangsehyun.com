@@ -1,7 +1,7 @@
 import { install } from 'ga-gtag';
 
 // Substitute your tracking ID (begins with "G-", "UA-", "AW-" or "DC-")
-install('G-0L26XYYVKB');
+navigator.webdriver || install('G-0L26XYYVKB');
 
 const hugoData = JSON.parse(document.querySelector('#hugo-json').textContent);
 console.log('Data from hugo', hugoData);
@@ -14,7 +14,8 @@ const mermaidPromise = hugoData.mermaid
         startOnLoad: false,
       });
       return mermaid.run({ querySelector: '.language-mermaid' });
-    }) : Promise.resolve();
+    })
+    .catch(console.error) : Promise.resolve();
 
 mermaidPromise.then(window.PagedConfig?.mermaidResolvers?.resolve);
 
@@ -99,6 +100,14 @@ window.PagedPolyfill && downloadButtonElement.addEventListener('click', event =>
   window.PagedConfig?.buttonResolvers?.resolve();
   setTimeout(() => window.PagedPolyfill.preview());
 });
+
+const postTitleElement = document.querySelector('h1.post-title');
+if (postTitleElement)
+  postTitleElement.id = 'post-title' + window.location.pathname.replaceAll('/', '-');
+
+navigator.webdriver && document.querySelectorAll('img[loading="lazy"]')
+  .forEach(img => img.loading = 'eager')
+
 console.log('done');
 
 document.querySelector('#download-tooltip button')
