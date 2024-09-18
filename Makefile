@@ -1,24 +1,28 @@
 BUCKET := man.hwangsehyun.com
+SUBMODULES := $(wildcard themes/*)
 
 .PHONY: secret
 secret: cloudant.env config/_default/params.json
-cloudant.env config/_default/params.json: secret.mjs
+cloudant.env config/_default/params.json: src/bin/secret.js
 	node $<
 
 .PHONY: stackedit
 stackedit: cloudant.env | src
 	node --env-file $< src
 
+$(SUBMODULES):
+	git submodule update --init
+
 .PHONY: server server/ec2 server/docker
-server: config/_default/params.json
-	hugo server
-server/docker: config/_default/params.json
+server: config/_default/params.json | $(SUBMODULES)
+	hugo server -M
+server/docker: config/_default/params.json | $(SUBMODULES)
 	docker run -it --rm \
 		--net host \
 		-v $$PWD:/src \
 		hugomods/hugo:base \
-		hugo server
-server/ec2:
+		hugo server -M
+server/ec2: | $(SUBMODULES)
 	docker run -it --rm --pod nginx-pod \
 		-v $$PWD:/src -v man.hwangsehyun.com-public:/src/public \
 		--security-opt label=disable \
@@ -34,16 +38,20 @@ assets/image/index.webp: browser/screenshot-index.js
 			ghcr.io/browserless/chromium \
 			node --input-type module > $@
 public/index.pdf: browser/print-pdf.js
-	# -e DEBUG="puppeteer:*"
-	docker run -i --rm \
+	# -e DEBUG="puppeteer:*" \
+
+	docker run --rm \
+		--add-host=www.youtube.com:127.0.0.1 \
 		-v $$PWD/public:/usr/src/app/public -v $$PWD/browser:/usr/src/app/browser:ro \
 		ghcr.io/browserless/chromium \
-		node $< > $@
+		node $< ${PDF_HTML_PATHS} > $@
+
+	open $@
 
 .PHONY: build build/ec2
-build:
+build: | $(SUBMODULES)
 	hugo -b https://man.hwangsehyun.com
-build/ec2:
+build/ec2: | $(SUBMODULES)
 	hugo -b https://www.hwangsehyun.com/man.hwangsehyun.com/public
 
 .PHONY: gitleaks eslint scan

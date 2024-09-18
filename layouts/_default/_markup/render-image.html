@@ -1,0 +1,18 @@
+{{ if hasPrefix .Destination "https://images.microcms-assets.io" }}
+{{ $text := .Text }}
+
+{{ with (urls.Parse .Destination).Path | printf "https://images.microcms-assets.io%s" | resources.GetRemote }}
+  {{ warnf "Micro CMS image: %s" . }}
+  {{ with .Err }}
+    {{ errorf "%s" . }}
+  {{ else }}
+
+    <img src="{{ .Permalink }}" {{ if ne .MediaType.SubType "svg" }} width="{{ .Width }}" height="{{ .Height }}" {{ end }} alt="{{ $text }}">
+  {{ end }}
+{{ else }}
+  {{ errorf "Unable to get remote resource %q" .Destination }}
+{{ end }}
+
+{{ else }}
+<img loading="lazy" src="{{ .Destination | safeURL }}" alt="{{ .Text }}" {{ with .Title}} title="{{ . }}" {{ end }} />
+{{ end }}

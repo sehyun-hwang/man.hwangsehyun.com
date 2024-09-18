@@ -1,0 +1,4 @@
+packages:
+  - assets
+  - browser
+  - src

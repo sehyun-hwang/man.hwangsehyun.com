@@ -1,4 +1,16 @@
-<link rel="alternate" type="application/pdf" href="{{ absURL "index.pdf" }}">
+<link rel="alternate" type="application/pdf" href="{{ absURL "index.pdf" }}"/>
+
+<style>
+@page {
+  @top-center {
+    content: "{{ .Title | htmlEscape }}";
+  }
+
+  @bottom-center {
+    content: "Printed from {{ .Site.BaseURL }}";
+  }
+}
+</style>
 
 {{ if eq .Site.Language.Lang "kp" }}
   {{ with resources.Get "css/kp.template.css" }}
@@ -7,7 +19,7 @@
         rel="preload stylesheet" as="style"
         href="{{ .Permalink }}"
         integrity="{{ .Data.Integrity }}"
-      >
+      />
     {{ end }}
   {{ end }}
 {{ end }}

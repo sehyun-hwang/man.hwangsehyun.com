@@ -91,7 +91,8 @@ const writeSecrets = secrets => {
   });
 
   return Promise.all([
-    fs.writeFile(HUGO_PARAMS_FILE, JSON.stringify(hugoParams)),
+    fs.mkdir(path.dirname(HUGO_PARAMS_FILE), { recursive: true })
+      .then(() => fs.writeFile(HUGO_PARAMS_FILE, JSON.stringify(hugoParams))),
     fs.writeFile(CLOUDANT_ENV_FILE, cloudantEnv),
   ]);
 };

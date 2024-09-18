@@ -13,6 +13,7 @@ export default class ReplaceInHeadTransform extends Transform {
     if (this.headClosed) {
       this.push(chunkStr);
       callback();
+      return;
     }
 
     const headCloseIndex = chunkStr.indexOf('</head>');
@@ -31,13 +32,13 @@ export default class ReplaceInHeadTransform extends Transform {
 }
 
 pipeline(
-  Readable.from(["needle</head>needle"]),
-  new ReplaceInHeadTransform("needle", "fire"),
-  (err) => {
+  Readable.from(['needle</head>needle']),
+  new ReplaceInHeadTransform('needle', 'fire'),
+  err => {
     if (err) {
-      console.error("Pipeline failed.", err);
+      console.error('Pipeline failed.', err);
     } else {
-      console.error("Pipeline succeeded.");
+      console.error('Pipeline succeeded.');
     }
   },
 );

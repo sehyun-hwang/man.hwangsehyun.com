@@ -1,58 +1,59 @@
-{{ $career_url:= absLangURL "/career" }}
-{{ $opts := dict "X-MICROCMS-API-KEY" site.Params.MICROCMS_KEY }}
-{{ $data := getJSON "https://q7h9nx3ddk.microcms.io/api/v1/projects?orders=-endedAt" $opts }}
+{{ $career_url:= absLangURL "/career" }} {{ $headers := dict
+"X-MICROCMS-API-KEY" site.Params.MICROCMS_KEY }} {{ $data := resources.GetRemote
+"https://q7h9nx3ddk.microcms.io/api/v1/projects?orders=-endedAt" (dict "headers"
+$headers) | unmarshal }}
 
 <table class="project-table">
   <thead>
     <tr>
-      <th>Name</th>
-      <th>Description</th>
-      <th>Technologies</th>
-      <th>Period</th>
+      <th class="description">Name</th>
       <th>Belonging</th>
+      <th>Period</th>
+      <th>Technologies</th>
       <th>Importance</th>
+      <th>Description</th>
     </tr>
   </thead>
+
+  {{ range $data.contents }}
   <tbody>
-    <!-- {{ range $data.contents }} -->
     <tr class="importance-{{ .importance }}">
-      <td>
+      <td rowspan="2">
         <span class="importance-{{ .importance }}"></span>
         <a href="/project/{{ .id }}/">
           {{ .emoji }}
-          <h4 class="name">{{ .name }}</h4>
+          <h3 class="name">{{ .name }}</h3>
         </a>
       </td>
-      <td class="truncated">{{ .description }}</td>
-      <td>
-        <ul>
-          {{ range (first 3 .techs) }}
-          <li>{{ .name }}</li>
-          {{ end }}
-        </ul>
 
-        {{ if gt (len .techs) 3 }}
-        <details>
-          <summary>More</summary>
-          {{ range (after 3 .techs) }}
-          <li>{{ .name }}</li>
-          {{ end }}
-        </details>
-        {{ end }}
-      </td>
-      <td>
-        <ul class="period">
-          <li>{{ .startedAt }}</li>
-          <li>{{ .endedAt }}</li>
-        </ul>
-      </td>
       <td>
         {{ range .belonging }}
-        <a href='{{ $career_url }}/#{{ replace . " " "" | lower }}'>{{ . }}</a>
+        <a href='{{ $career_url }}/#{{ replace . " " "" | lower }}'>
+          <h4>@{{ . }}</h4></a
+        >
         {{ end }}
       </td>
+
+      <td class="period monospace">
+        <time datetime="{{ .startedAt }}">{{ .startedAt }}</time>
+        <span>~</span>
+        <time datetime="{{ .endedAt }}">{{ .endedAt }}</time>
+      </td>
+
+      <td class="monospace">
+        <ul>
+          {{ range .techs }}
+          <li class="chip">{{ .name }}</li>
+          {{ end }}
+        </ul>
+      </td>
+
       <td class="number">{{ .importance }}</td>
     </tr>
-    <!-- {{ end }} -->
+
+    <tr>
+      <td colspan="5" class="truncated">{{ .description | markdownify }}</td>
+    </tr>
   </tbody>
+  {{ end }}
 </table>

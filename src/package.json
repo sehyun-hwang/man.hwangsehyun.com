@@ -1,6 +1,8 @@
 {
   "type": "module",
   "dependencies": {
+    "@aws-sdk/client-secrets-manager": "^3.598.0",
+    "@aws-sdk/client-sso": "^3.598.0",
     "@ibm-cloud/cloudant": "^0.9.0",
     "glob": "^10.3.10",
     "gray-matter": "^4.0.3",
@@ -16,7 +18,7 @@
     "@types/jsdom": "^21.1.6",
     "@types/stream-json": "^1.7.7",
     "ibm-cloud-sdk-core": "^4.3.0",
-    "typescript": "^5.4.3"
+    "typescript": "^5.6.2"
   },
   "scripts": {
     "tsc": "tsc --noEmit --allowJs -p jsconfig.json",
