@@ -23,8 +23,9 @@
       "amazonwebservices.aws-toolkit-vscode"
       "DavidAnson.vscode-markdownlint"
       "dbaeumer.vscode-eslint"
+      "esbenp.prettier-vscode"
       "jnoortheen.nix-ide"
-      "streetsidesoftware.code-spell-checker"
+      "tekumara.typos-vscode"
       "usernamehw.errorlens"
     ];
 
@@ -45,10 +46,11 @@
       onCreate = {
         activate-pnpm = "corepack prepare --activate pnpm@latest";
         install-nextlab-eslint = "yarn global add https://github.com/sehyun-hwang/eslint-config-nextlab";
+        update-git-submodules = "git submodule update --init";
       };
 
       onStart = {
-        pnpm-install = "cd src && pnpm i";
+        pnpm-install = "pnpm i";
       };
     };
   };

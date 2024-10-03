@@ -7,6 +7,9 @@
   "pnpm": {
     "patchedDependencies": {
       "pagedjs-cli": "browser/patches/pagedjs-cli.patch"
+    },
+    "overrides": {
+      "puppeteer": "npm:empty-module@^0.0.2"
     }
   },
   "scripts": {
