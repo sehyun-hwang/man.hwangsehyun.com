@@ -120,12 +120,12 @@ export default class Cloudant4Hugo {
   * @param {import('./path.js').default[]} stackEditPaths
   */
   async downloadMarkdownsBatch(stackEditPaths) {
-    const gathered = await Promise.all(stackEditPaths.flatMap(path => [
-      this.client.getAttachment({
+    const gathered = await Promise.all(stackEditPaths.flatMap((path, i) => [
+      new Promise(resolve => setTimeout(resolve, 50 * i)).then(() => this.client.getAttachment({
         db,
         docId: path.contentId,
         attachmentName: 'data',
-      }),
+      })),
       path.createMarkdownWritable(),
     ]));
 
