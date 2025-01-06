@@ -4,9 +4,9 @@ import { strict as assert } from 'assert';
 import { pipeline } from 'stream/promises';
 
 import { ChangesFollower, CloudantV1 } from '@ibm-cloud/cloudant';
+import parser from 'stream-json';
 import Pick from 'stream-json/filters/Pick.js';
 import StreamArray from 'stream-json/streamers/StreamArray.js';
-import parser from 'stream-json';
 
 import { frontmatterMap } from './view-function.js';
 

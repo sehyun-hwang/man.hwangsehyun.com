@@ -2,13 +2,13 @@
 
 import { writeFile } from 'fs/promises';
 
-import { insertFrontMatterDocs, processFrontMatters } from './frontmatter.js';
 import ChangesWritable from './changes.js';
 import Cloudant4Hugo from './cloudant.js';
 import DatabaseWritable from './database.js';
-import FileSynchronizer from './file-sync.js';
 import StackEditDomData from './dom-data.js';
 import StackEditDomModel from './dom-model.js';
+import FileSynchronizer from './file-sync.js';
+import { insertFrontMatterDocs, processFrontMatters } from './frontmatter.js';
 import StackEditPath from './path.js';
 
 const staticCloudant = new Cloudant4Hugo({

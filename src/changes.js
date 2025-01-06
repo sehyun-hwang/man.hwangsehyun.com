@@ -4,12 +4,12 @@
 import { Writable } from 'stream';
 import { text } from 'stream/consumers';
 
-import { DomIdError } from './dom-model.js';
 import { FRONTMATTER_PREFIX } from './cloudant.js';
-import StackEditPath from './path.js';
+import { DomIdError } from './dom-model.js';
+import { replaceHugoMount } from './file-sync.js';
 import { appendFrontMatterAttachments } from './frontmatter.js';
 import { parseFrontMatters } from './markdownlint.js';
-import { replaceHugoMount } from './file-sync.js';
+import StackEditPath from './path.js';
 
 /**
  * @typedef {import('./types.js').StackEditItem} StackEditItem
@@ -20,7 +20,6 @@ import { replaceHugoMount } from './file-sync.js';
  * @callback StreamCallback
  */
 
-// eslint-disable-next-line no-unused-vars
 export class StackEditDomModelParams {
   /** @type {import('@ibm-cloud/cloudant').CloudantV1} */
   client;
