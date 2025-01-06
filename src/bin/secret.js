@@ -1,6 +1,6 @@
-import path from 'path';
 import fs from 'fs/promises';
 import os from 'os';
+import path from 'path';
 
 import {
   SecretsManagerClient,
@@ -12,7 +12,7 @@ const accountId = '248837585826';
 const roleName = 'AdministratorAccess';
 const SecretId = 'man.hwangsehyun.com';
 const CLOUDANT_ENV_FILE = 'cloudant.env';
-const HUGO_PARAMS_FILE = 'config/_default/params.json'
+const HUGO_PARAMS_FILE = 'config/_default/params.json';
 const cacheDir = path.join(os.homedir(), '.aws', 'sso', 'cache');
 const ssoClient = new SSOClient({
   region: 'us-east-1',
@@ -22,7 +22,7 @@ async function getLastModifiedFile(dir) {
   const files = await fs.readdir(dir);
 
   // Filter files with the specified length
-  const filteredFiles = files.filter((file) => file.length === 40 + '.json'.length);
+  const filteredFiles = files.filter(file => file.length === 40 + '.json'.length);
 
   if (filteredFiles.length === 0) {
     throw new Error('No file with the specified length found.');
@@ -50,10 +50,10 @@ async function getLastModifiedFile(dir) {
   return path.join(dir, lastModifiedFile.file);
 }
 
-const fetchSecrets = () => getLastModifiedFile(cacheDir)
+const loadCredentialsFromSso = () => getLastModifiedFile(cacheDir)
   .then(filePath => fs.readFile(filePath, 'utf-8'))
   .then(JSON.parse)
-  .then(async ({ accessToken }) => {
+  .then(({ accessToken }) => {
     const command = new GetRoleCredentialsCommand({
       accountId,
       roleName,
@@ -66,8 +66,11 @@ const fetchSecrets = () => getLastModifiedFile(cacheDir)
       expiration,
       ...credentials
     },
-  }) => {
-    console.log(credentials);
+  }) => credentials)
+  .catch(console.warn);
+
+const fetchSecrets = () => loadCredentialsFromSso()
+  .then(credentials => {
     const client = new SecretsManagerClient({
       region: 'ap-northeast-1',
       credentials,
