@@ -72,7 +72,7 @@ deploy:
 	aws s3 sync public s3://${BUCKET}
 
 	# https://stackoverflow.com/a/66467783/3389370
-	python deploy_index_html.py
+	poetry run python deploy_index_html.py
 
 	aws cloudfront create-invalidation \
 		--distribution-id E2JWAONP1BG780 \
