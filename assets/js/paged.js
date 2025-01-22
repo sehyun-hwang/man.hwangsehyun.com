@@ -16,6 +16,9 @@ class PagedConfig {
     ]);
     console.log('Replacing', main);
     main && document.body.replaceChildren(main);
+
+    document.querySelectorAll('.post-content iframe')
+      .forEach(x => x.remove());
   }
 
   // eslint-disable-next-line class-methods-use-this

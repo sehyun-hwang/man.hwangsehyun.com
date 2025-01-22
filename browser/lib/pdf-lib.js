@@ -1,7 +1,7 @@
-/* eslint-disable no-underscore-dangle */
+/* eslint-disable no-restricted-syntax */
+import { setOutline } from 'pagedjs-cli';
 import { PDFDict, PDFName } from 'pdf-lib';
 import PDFMerger from 'pdf-merger-js';
-import { setOutline } from 'pagedjs-cli';
 
 const LINKS_PDF_NAME = PDFName.of('Dests');
 
@@ -10,8 +10,11 @@ function mapSourceToTargetPages(source, target, startingTargetPage) {
   const targetPages = target.getPages();
   let currentTargetPage = startingTargetPage;
   const sourcePages = source.getPages();
-  for (let i = 0; i < sourcePages.length; i++) {
+
+  // eslint-disable-next-line guard-for-in
+  for (const i in sourcePages) {
     result[sourcePages[i].ref.tag] = targetPages[currentTargetPage].ref;
+    // eslint-disable-next-line no-plusplus
     currentTargetPage++;
   }
   return { mapping: result, targetPage: currentTargetPage };
@@ -21,7 +24,7 @@ function mapSourceToTargetPages(source, target, startingTargetPage) {
 function copyLinks(sources, target) {
   const targetLinksDict = PDFDict.withContext(target.context);
   let currentTargetPage = 0;
-  // eslint-disable-next-line no-restricted-syntax
+
   for (const source of sources) {
     const { mapping, targetPage } = mapSourceToTargetPages(source, target, currentTargetPage);
     currentTargetPage = targetPage;

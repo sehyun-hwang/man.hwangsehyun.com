@@ -1,14 +1,14 @@
 import { createReadStream } from 'fs';
 import { createServer } from 'http';
 
+import ora from 'ora';
 import Printer from 'pagedjs-cli';
 import handler from 'serve-handler';
-import ora from 'ora';
 
 import HeadTransformStream from './lib/head-transform-stream.js';
 import PdflibMerger from './lib/pdf-lib.js';
-import launchBrowser from './lib/puppeteer-browser.js';
 import listLocalPermalinks from './lib/permalink-json.js';
+import launchBrowser from './lib/puppeteer-browser.js';
 
 const overridePaths = new Set(process.argv.slice(2));
 console.error({ overridePaths });
@@ -101,6 +101,7 @@ new Promise(resolve => server.listen(0, resolve))
 
     const merger = new PdflibMerger();
     const pdfDocs = [];
+
     // eslint-disable-next-line no-restricted-syntax
     for await (const url of urls) {
       const printer = new BrowserlessPrinter(browser, merger.outline);

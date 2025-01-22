@@ -2,5 +2,8 @@
   "dependencies": {
     "ga-gtag": "^1.2.0",
     "gridjs": "^6.2.0"
+  },
+  "devDependencies": {
+    "@types/ga-gtag": "^1.2.0"
   }
 }

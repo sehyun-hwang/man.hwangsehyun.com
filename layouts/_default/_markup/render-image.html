@@ -7,7 +7,7 @@
     {{ errorf "%s" . }}
   {{ else }}
 
-    <img src="{{ .Permalink }}" {{ if ne .MediaType.SubType "svg" }} width="{{ .Width }}" height="{{ .Height }}" {{ end }} alt="{{ $text }}">
+    <img src="{{ .RelPermalink }}" {{ if ne .MediaType.SubType "svg" }} width="{{ .Width }}" height="{{ .Height }}" {{ end }} alt="{{ $text }}">
   {{ end }}
 {{ else }}
   {{ errorf "Unable to get remote resource %q" .Destination }}

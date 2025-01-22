@@ -1,7 +1,7 @@
 // @ts-check
 
-import markdownlint from 'markdownlint';
 import matter from 'gray-matter';
+import markdownlint from 'markdownlint';
 import { parse as parseToml } from 'toml';
 
 import { FRONTMATTER_PREFIX } from './cloudant.js';

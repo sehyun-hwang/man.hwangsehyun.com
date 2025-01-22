@@ -17,21 +17,21 @@
 
 - [Hugo](https://gohugo.io/)
 
-	```
-	sudo apt install hugo
-	sudo dnf install hugo
-	brew install hugo
-	```
+    ```sh
+    sudo apt install hugo
+    sudo dnf install hugo
+    brew install hugo
+    ```
 
 - Node.js, [corepack](https://nodejs.org/api/corepack.html), pnpm
 
 - NPM Libraries
 
-	```sh
-	pnpm i
-	```
+  ```sh
+  pnpm i
+  ```
 
-## Develpment
+## Development
 
 ### [Project IDX](https://idx.dev/)
 
@@ -39,9 +39,9 @@
 
 1. Download markdown contents from StackEdit
 
-  ```sh
-  make stackedit
-  ```
+    ```sh
+    make stackedit
+    ```
 
 ### Local
 
@@ -53,15 +53,16 @@
 
 1. Download markdown contents from StackEdit
 
-  ```sh
-  make stackedit
-  ```
+    ```sh
+    make stackedit
+    ```
 
 1. Start Hugo
 
-  ```
-  make hugo
-  ```
+    ```sh
+    git submodule update --init
+    make hugo
+    ```
 
 1. Navigate to <http://localhost:1313>
 
@@ -69,18 +70,18 @@
 
 1. Build site
 
-  ```sh
-  make build
-  ```
+    ```sh
+    make build
+    ```
 
 1. Build screenshot and pdf
 
-  ```sh
-  make browser -B
-  ```
+    ```sh
+    make browser -B
+    ```
 
 1. Deploy to AWS
 
-  ```sh
-  make deploy
-  ```
+    ```sh
+    make deploy
+    ```

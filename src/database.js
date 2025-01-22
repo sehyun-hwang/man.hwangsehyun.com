@@ -39,7 +39,6 @@ export default class DatabaseWritable extends Writable {
    * @callback StreamCallback
    */
 
-  // eslint-disable-next-line class-methods-use-this
   /**
    * @param {ChangeData} data
    * @param {string} encoding

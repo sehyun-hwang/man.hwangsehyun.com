@@ -5,11 +5,15 @@
     "prettier-plugin-go-template": "^0.0.15"
   },
   "pnpm": {
+    "overrides": {
+      "puppeteer": "npm:empty-module@^0.0.2"
+    },
     "patchedDependencies": {
       "pagedjs-cli": "browser/patches/pagedjs-cli.patch"
     }
   },
   "scripts": {
     "preinstall": "npx only-allow pnpm"
-  }
+  },
+  "type": "module"
 }

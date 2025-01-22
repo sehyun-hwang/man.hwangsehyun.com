@@ -7,6 +7,7 @@ const hugoData = JSON.parse(document.querySelector('#hugo-json').textContent);
 console.log('Data from hugo', hugoData);
 
 const mermaidPromise = hugoData.mermaid
+  // eslint-disable-next-line import/no-unresolved
   ? import('https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.esm.min.mjs')
     .then(({ default: mermaid }) => {
       mermaid.initialize({
@@ -106,9 +107,18 @@ if (postTitleElement)
   postTitleElement.id = 'post-title' + window.location.pathname.replaceAll('/', '-');
 
 navigator.webdriver && document.querySelectorAll('img[loading="lazy"]')
-  .forEach(img => img.loading = 'eager')
+  .forEach(img => {
+    // eslint-disable-next-line no-param-reassign
+    img.loading = 'eager';
+  });
+
+if (localStorage.getItem('download-tooltip'))
+  document.querySelector('#download-tooltip').remove();
+else
+  document.querySelector('#download-tooltip button')
+    .addEventListener('click', ({ target }) => {
+      target.parentElement.remove();
+      localStorage.setItem('download-tooltip', true);
+    });
 
 console.log('done');
-
-document.querySelector('#download-tooltip button')
-  .addEventListener('click', ({ target }) => target.parentElement.remove());

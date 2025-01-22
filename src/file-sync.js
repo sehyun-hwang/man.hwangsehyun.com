@@ -2,12 +2,12 @@ import { execFile, spawn } from 'child_process';
 import {
   mkdir, readFile, unlink, writeFile,
 } from 'fs/promises';
-import { createInterface } from 'readline';
 import { dirname } from 'path';
+import { createInterface } from 'readline';
 
-import YAML from 'yaml';
 import { glob } from 'glob';
 import setDifference from 'set.prototype.difference';
+import YAML from 'yaml';
 
 import { HUGO_CONTENT_DIR } from './path.js';
 
