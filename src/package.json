@@ -1,4 +1,5 @@
 {
+  "name": "stackedit",
   "type": "module",
   "dependencies": {
     "@aws-sdk/client-secrets-manager": "^3.598.0",
