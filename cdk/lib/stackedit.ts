@@ -1,20 +1,20 @@
 /* eslint-disable max-classes-per-file */
+import { EventbridgeToStepfunctions } from '@aws-solutions-constructs/aws-eventbridge-stepfunctions';
 import {
   Artifacts, BuildSpec, CfnProject, ComputeType, IBuildImage, ImagePullPrincipalType,
   LinuxArmLambdaBuildImage, Project, Source,
 } from 'aws-cdk-lib/aws-codebuild';
 import { type IRepository, Repository } from 'aws-cdk-lib/aws-ecr';
 import { DockerImageAsset } from 'aws-cdk-lib/aws-ecr-assets';
+import { Schedule } from 'aws-cdk-lib/aws-events';
 import { Bucket } from 'aws-cdk-lib/aws-s3';
 import { BucketDeployment, Source as S3Source } from 'aws-cdk-lib/aws-s3-deployment';
 import { Secret } from 'aws-cdk-lib/aws-secretsmanager';
+import { DefinitionBody, FieldUtils, IntegrationPattern } from 'aws-cdk-lib/aws-stepfunctions';
+import { CodeBuildStartBuild } from 'aws-cdk-lib/aws-stepfunctions-tasks';
 import * as cdk from 'aws-cdk-lib/core';
 import * as ecrdeploy from 'cdk-ecr-deployment';
 import { Construct } from 'constructs';
-
-interface StackEditStackProps extends cdk.StackProps {
-  nodeModulesImage: cdk.DockerImage;
-}
 
 // @ts-expect-error Private constructor
 class EcrLinuxArmLambdaBuildImage extends LinuxArmLambdaBuildImage implements IBuildImage {
@@ -30,6 +30,46 @@ class EcrLinuxArmLambdaBuildImage extends LinuxArmLambdaBuildImage implements IB
     this.imagePullPrincipalType = ImagePullPrincipalType.SERVICE_ROLE;
     this.repository = repository;
   }
+}
+
+// https://github.com/aws/aws-cdk/blob/v2.177.0/packages/aws-cdk-lib/aws-stepfunctions-tasks/lib/private/task-utils.ts
+
+const resourceArnSuffix: Record<IntegrationPattern, string> = {
+  [IntegrationPattern.REQUEST_RESPONSE]: '',
+  [IntegrationPattern.RUN_JOB]: '.sync',
+  [IntegrationPattern.WAIT_FOR_TASK_TOKEN]: '.waitForTaskToken',
+};
+
+function integrationResourceArn(
+  service: string,
+  api: string,
+  integrationPattern?: IntegrationPattern,
+) {
+  if (!service || !api) {
+    throw new Error('Both \'service\' and \'api\' must be provided to build the resource ARN.');
+  }
+  return `arn:${cdk.Aws.PARTITION}:states:::${service}:${api}`
+    + (integrationPattern ? resourceArnSuffix[integrationPattern] : '');
+}
+
+// https://github.com/aws/aws-cdk/issues/10302
+class OverridableCodeBuildStartBuild extends CodeBuildStartBuild {
+  protected override _renderTask(): object {
+    return {
+      Resource: integrationResourceArn('codebuild', 'startBuild', this.integrationPattern),
+      Parameters: FieldUtils.renderObject({
+        ProjectName: this.props.project.projectName,
+        EnvironmentVariablesOverride: this.props.environmentVariablesOverride
+          ? this.serializeEnvVariables(this.props.environmentVariablesOverride)
+          : undefined,
+        ...(this.props.overrides || {}),
+      }),
+    };
+  }
+}
+
+interface StackEditStackProps extends cdk.StackProps {
+  nodeModulesImage: cdk.DockerImage;
 }
 
 export default class StackEditStack extends cdk.Stack {
@@ -119,6 +159,30 @@ export default class StackEditStack extends cdk.Stack {
     repository.grantPull(codebuildProject);
     secret.grantRead(codebuildProject);
 
+    const task = new OverridableCodeBuildStartBuild(this, 'Task', {
+      project: codebuildProject,
+      integrationPattern: IntegrationPattern.RUN_JOB,
+      // @ts-expect-error Deliberate
+      overrides: {
+        SecondarySourcesOverride: [{
+          Type: 'S3',
+          Location: bucket.bucketName + '/foo',
+          SourceIdentifier: 'content_cache',
+        }],
+      },
+    });
+
+    const eventBridgeToStepFunctions = new EventbridgeToStepfunctions(this, 'EventbridgeToStepFunctions', {
+      stateMachineProps: {
+        definitionBody: DefinitionBody.fromChainable(task),
+      },
+      eventRuleProps: {
+        schedule: Schedule.rate(cdk.Duration.minutes(1)),
+      },
+    });
+
+    (eventBridgeToStepFunctions.stateMachineLogGroup.node.defaultChild as cdk.CfnResource)
+      .applyRemovalPolicy(cdk.RemovalPolicy.DESTROY);
     (codebuildProject.node.defaultChild as CfnProject).addPropertyOverride('Environment.ImagePullCredentialsType', ImagePullPrincipalType.SERVICE_ROLE);
   }
 }

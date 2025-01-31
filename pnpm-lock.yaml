@@ -62,6 +62,9 @@ importers:
 
   cdk:
     dependencies:
+      '@aws-solutions-constructs/aws-eventbridge-stepfunctions':
+        specifier: ^2.76.0
+        version: 2.76.0(@aws-solutions-constructs/core@2.76.0(aws-cdk-lib@2.177.0(constructs@10.4.2))(constructs@10.4.2))(aws-cdk-lib@2.177.0(constructs@10.4.2))(constructs@10.4.2)
       aws-cdk-lib:
         specifier: 2.177.0
         version: 2.177.0(constructs@10.4.2)
@@ -78,6 +81,12 @@ importers:
       '@swc-node/register':
         specifier: ^1.10.9
         version: 1.10.9(@swc/core@1.10.9)(@swc/types@0.1.17)(typescript@5.7.3)
+      '@tsconfig/node-lts':
+        specifier: ^22.0.0
+        version: 22.0.1
+      '@tsconfig/strictest':
+        specifier: ^2.0.5
+        version: 2.0.5
       '@types/node':
         specifier: ^22.10.10
         version: 22.10.10
@@ -264,6 +273,23 @@ packages:
     peerDependenciesMeta:
       aws-crt:
         optional: true
+
+  '@aws-solutions-constructs/aws-eventbridge-stepfunctions@2.76.0':
+    resolution: {integrity: sha512-mH/yY5Dh/UsK0E+y+byvz+o5VEHI84Sms8PgcRcPsKa5OmE4Y8B1eP/P9fskDP4aV6aSIdfHa7tJo0gm0NnRbQ==}
+    peerDependencies:
+      '@aws-solutions-constructs/core': 2.76.0
+      aws-cdk-lib: ^2.173.2
+      constructs: ^10.0.0
+
+  '@aws-solutions-constructs/core@2.76.0':
+    resolution: {integrity: sha512-U9har2qDAri60D9M8M/0Bb8KxIQ7xTRGDadQ5DXp++hctce8KulEuqJ/xhHYsk6VL6hkabDvZUkZaLyYdgEAKA==}
+    peerDependencies:
+      aws-cdk-lib: ^2.173.2
+      constructs: ^10.0.0
+    bundledDependencies:
+      - deepmerge
+      - npmlog
+      - deep-diff
 
   '@babel/code-frame@7.26.2':
     resolution: {integrity: sha512-RJlIHRueQgwWitWgF8OdFYGZX328Ax5BCemNGlqHfplnRT9ESi8JkFlvaVYbS+UubVY6dpv87Fs2u5M29iNFVQ==}
@@ -687,6 +713,12 @@ packages:
 
   '@tootallnate/quickjs-emscripten@0.23.0':
     resolution: {integrity: sha512-C5Mc6rdnsaJDjO3UpGW/CQTHtCKaYlScZTly4JIu97Jxo/odCiH0ITnDXSJPTOrEKk/ycSZ0AOgTmkDtkOsvIA==}
+
+  '@tsconfig/node-lts@22.0.1':
+    resolution: {integrity: sha512-BwlbLiYurZKrj+Pa6etSE1jXmr3VEDdgJto1jEYKcpBVwZZSWVkCPyFEFYbHdIOaFMlSTtV206DYPlT109aqug==}
+
+  '@tsconfig/strictest@2.0.5':
+    resolution: {integrity: sha512-ec4tjL2Rr0pkZ5hww65c+EEPYwxOi4Ryv+0MtjeaSQRJyq322Q27eOQiFbuNgw2hpL4hB1/W/HBGk3VKS43osg==}
 
   '@tybys/wasm-util@0.9.0':
     resolution: {integrity: sha512-6+7nlbMVX/PVDCwaIQ8nTOPveOcFLSt8GcXdx8hD0bt39uWxYT88uXzqTd4fTvqta7oeUJqudepapKNt2DYJFw==}
@@ -2885,6 +2917,17 @@ snapshots:
       '@smithy/types': 4.1.0
       tslib: 2.6.3
 
+  '@aws-solutions-constructs/aws-eventbridge-stepfunctions@2.76.0(@aws-solutions-constructs/core@2.76.0(aws-cdk-lib@2.177.0(constructs@10.4.2))(constructs@10.4.2))(aws-cdk-lib@2.177.0(constructs@10.4.2))(constructs@10.4.2)':
+    dependencies:
+      '@aws-solutions-constructs/core': 2.76.0(aws-cdk-lib@2.177.0(constructs@10.4.2))(constructs@10.4.2)
+      aws-cdk-lib: 2.177.0(constructs@10.4.2)
+      constructs: 10.4.2
+
+  '@aws-solutions-constructs/core@2.76.0(aws-cdk-lib@2.177.0(constructs@10.4.2))(constructs@10.4.2)':
+    dependencies:
+      aws-cdk-lib: 2.177.0(constructs@10.4.2)
+      constructs: 10.4.2
+
   '@babel/code-frame@7.26.2':
     dependencies:
       '@babel/helper-validator-identifier': 7.25.9
@@ -3393,6 +3436,10 @@ snapshots:
   '@tokenizer/token@0.3.0': {}
 
   '@tootallnate/quickjs-emscripten@0.23.0': {}
+
+  '@tsconfig/node-lts@22.0.1': {}
+
+  '@tsconfig/strictest@2.0.5': {}
 
   '@tybys/wasm-util@0.9.0':
     dependencies:
@@ -4310,7 +4357,7 @@ snapshots:
       isstream: 0.1.2
       jsonwebtoken: 9.0.2
       mime-types: 2.1.35
-      retry-axios: 2.6.0(axios@1.6.8(debug@4.4.0))
+      retry-axios: 2.6.0(axios@1.6.8)
       tough-cookie: 4.1.4
     transitivePeerDependencies:
       - supports-color
@@ -5014,7 +5061,7 @@ snapshots:
       onetime: 7.0.0
       signal-exit: 4.1.0
 
-  retry-axios@2.6.0(axios@1.6.8(debug@4.4.0)):
+  retry-axios@2.6.0(axios@1.6.8):
     dependencies:
       axios: 1.6.8(debug@4.4.0)
 
