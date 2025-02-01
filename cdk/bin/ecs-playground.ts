@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { spawnSync } from 'child_process';
 import { createHash } from 'crypto';
-import { readFileSync, createReadStream } from 'fs';
+import { createReadStream, readFileSync } from 'fs';
 import { strict as assert } from 'node:assert';
 import { glob } from 'node:fs/promises';
 
@@ -9,6 +9,7 @@ import * as cdk from 'aws-cdk-lib';
 import { DockerfileParser } from 'dockerfile-ast';
 
 import StackEditStack from '../lib/stackedit';
+import StackEditStepFunctionsStack from '../lib/stackedit-stepfunctions';
 
 // eslint-disable-next-line dot-notation
 const DOCKER_EXECUTABLE = process.env['CDK_DOCKER'] ?? 'docker';
@@ -28,7 +29,7 @@ async function buildNodeModulesImage() {
     hash.update(assetPath);
     const stream = createReadStream(assetPath);
     stream.on('data', chunk => hash.update(chunk));
-    // eslint-disable-next-line no-await-in-loop
+
     await new Promise<void>((resolve, reject) => {
       stream.on('end', () => { resolve(); });
       stream.on('error', error => { reject(error); });
@@ -52,17 +53,22 @@ async function buildNodeModulesImage() {
   return image;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const app = new cdk.App();
 
 const env = {
-  account: process.env.CDK_DEFAULT_ACCOUNT,
-  region: process.env.CDK_DEFAULT_REGION,
+  account: process.env.CDK_DEFAULT_ACCOUNT || '',
+  region: process.env.CDK_DEFAULT_REGION || '',
 };
 
 const nodeModulesImage = await buildNodeModulesImage();
 
-new StackEditStack(app, 'StackEditStack', {
+const stackEditStack = new StackEditStack(app, 'StackEditStack', {
   env,
   nodeModulesImage,
+});
+
+// eslint-disable-next-line no-new
+new StackEditStepFunctionsStack(app, 'StackEditStepFunctionsStack', {
+  env,
+  ...stackEditStack.exports,
 });

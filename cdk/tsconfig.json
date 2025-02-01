@@ -4,6 +4,7 @@
     "lib": [
       "es2020",
     ],
+    "module": "Preserve",
     "moduleResolution": "bundler",
     "target": "ES2020"
   },
