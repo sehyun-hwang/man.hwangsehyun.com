@@ -1,9 +1,11 @@
-import { execFile, spawn } from 'child_process';
+import { spawn } from 'child_process';
 import {
   mkdir, readFile, unlink, writeFile,
 } from 'fs/promises';
 import { dirname } from 'path';
 import { createInterface } from 'readline';
+import { promisify } from 'util';
+import { gzip } from 'zlib';
 
 import { glob } from 'glob';
 import setDifference from 'set.prototype.difference';
@@ -14,18 +16,23 @@ import { HUGO_CONTENT_DIR } from './path.js';
 const HUGO_CONFIG_PATH = 'hugo.yml';
 const HUGO_CONFIG_GENERATED_PATH = 'config/_default/module.json';
 
-const gzipFiles = paths => new Promise((resolve, reject) => {
+const gzipAsync = promisify(gzip);
+
+function gzipFiles(paths) {
   console.log('gzip', paths.length);
-  const childProcess = execFile('gzip', [
-    '-fkn8',
-    ...paths,
-  ], (error, stdout, stderr) => {
-    console.log({ stdout, stderr });
-    error ? reject(error) : resolve(childProcess.exitCode);
-  });
-})
-  .then(code => (code ? Promise.reject(new Error(`gzip exited with code: ${code}`))
-    : paths.map(path => path + '.gz')));
+
+  return Promise.all(
+    paths.map(async path => {
+      const data = await readFile(path);
+      const compressedData = await gzipAsync(data, {
+        level: 8,
+      });
+      const compressedPath = `${path}.gz`;
+      await writeFile(compressedPath, compressedData);
+      return compressedPath;
+    }),
+  );
+}
 
 async function calculateInvalidChecksums(gzips) {
   /** @type {string[]} */
@@ -43,6 +50,7 @@ async function calculateInvalidChecksums(gzips) {
       const path = line.replace(/: FAILED$/, '');
       if (line === path)
         throw new Error('Unable to parse md5sum stdout:', line);
+      console.log({ line });
       invalidPaths.push(path);
     });
 
