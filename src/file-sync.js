@@ -134,7 +134,9 @@ export default class FileSynchronizer {
     invalidPaths.forEach(path => (required.has(path)
       ? downloadCandidates.add(path) : deleteCandidates.add(path)));
 
-    const results = { invalidPaths, deleteCandidates, downloadCandidates };
+    const results = {
+      localPaths, invalidPaths, deleteCandidates, downloadCandidates,
+    };
     console.log(results);
     Object.assign(this, results);
     return results;

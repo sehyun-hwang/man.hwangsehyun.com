@@ -1,6 +1,4 @@
 {
-  "name": "stackedit",
-  "type": "module",
   "dependencies": {
     "@aws-sdk/client-secrets-manager": "^3.598.0",
     "@aws-sdk/client-sso": "^3.598.0",
@@ -8,6 +6,7 @@
     "glob": "^10.3.10",
     "gray-matter": "^4.0.3",
     "jsdom": "^24.0.0",
+    "junit-report-builder": "^5.1.1",
     "markdownlint": "^0.33.0",
     "object.groupby": "^1.0.3",
     "set.prototype.difference": "^1.1.4",
@@ -17,12 +16,15 @@
   },
   "devDependencies": {
     "@types/jsdom": "^21.1.6",
+    "@types/junit-report-builder": "^3.0.2",
     "@types/stream-json": "^1.7.7",
     "ibm-cloud-sdk-core": "^4.3.0",
-    "typescript": "^5.6.2"
+    "typescript": "catalog:"
   },
+  "name": "@man-hwangsehyun-com/stackedit",
   "scripts": {
-    "tsc": "tsc --noEmit --allowJs -p jsconfig.json",
-    "lint": "nextlab-eslint ."
-  }
+    "lint": "nextlab-eslint .",
+    "tsc": "tsc --noEmit --allowJs -p jsconfig.json"
+  },
+  "type": "module"
 }
