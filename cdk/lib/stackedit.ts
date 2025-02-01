@@ -2,7 +2,7 @@
 import { EventbridgeToStepfunctions } from '@aws-solutions-constructs/aws-eventbridge-stepfunctions';
 import {
   Artifacts, BuildSpec, CfnProject, ComputeType, IBuildImage, ImagePullPrincipalType,
-  LinuxArmLambdaBuildImage, Project, Source,
+  LinuxArmLambdaBuildImage, Project, ReportGroup, Source,
 } from 'aws-cdk-lib/aws-codebuild';
 import { type IRepository, Repository } from 'aws-cdk-lib/aws-ecr';
 import { DockerImageAsset } from 'aws-cdk-lib/aws-ecr-assets';
@@ -11,7 +11,7 @@ import { Bucket } from 'aws-cdk-lib/aws-s3';
 import { BucketDeployment, Source as S3Source } from 'aws-cdk-lib/aws-s3-deployment';
 import { Secret } from 'aws-cdk-lib/aws-secretsmanager';
 import { DefinitionBody, FieldUtils, IntegrationPattern } from 'aws-cdk-lib/aws-stepfunctions';
-import { CodeBuildStartBuild } from 'aws-cdk-lib/aws-stepfunctions-tasks';
+import { CallAwsService, CodeBuildStartBuild } from 'aws-cdk-lib/aws-stepfunctions-tasks';
 import * as cdk from 'aws-cdk-lib/core';
 import * as ecrdeploy from 'cdk-ecr-deployment';
 import { Construct } from 'constructs';
@@ -106,6 +106,7 @@ export default class StackEditStack extends cdk.Stack {
       // HUGO_PARAMS_MICROCMS_KEY: secret.secretArn + ':HUGO_PARAMS_MICROCMS_KEY',
       CLOUDANT_APIKEY: secret.secretArn + ':CLOUDANT_APIKEY',
     };
+    const reportGroup = new ReportGroup(this, 'ReportGroup');
 
     const codebuildProject = new Project(this, 'Project', {
       environment: {
@@ -116,6 +117,7 @@ export default class StackEditStack extends cdk.Stack {
         identifier: 'src',
         owner: 'sehyun-hwang',
         repo: 'man.hwangsehyun.com',
+        branchOrRef: '31-cdk-codebuild',
       }),
       secondarySources: [Source.s3({
         identifier: 'content_cache',
@@ -150,6 +152,11 @@ export default class StackEditStack extends cdk.Stack {
           files: ['**/*'],
           'exclude-paths': '**/*.gz',
         },
+        reports: {
+          [reportGroup.reportGroupArn]: {
+            files: 'public/junit.xml',
+          },
+        },
       }),
       artifacts: Artifacts.s3({
         bucket,
@@ -159,7 +166,28 @@ export default class StackEditStack extends cdk.Stack {
     repository.grantPull(codebuildProject);
     secret.grantRead(codebuildProject);
 
-    const task = new OverridableCodeBuildStartBuild(this, 'Task', {
+    /** @link https://docs.aws.amazon.com/codebuild/latest/APIReference/API_ListReportsForReportGroup.html */
+    const listReportsTask = new CallAwsService(this, 'ListReportsTask', {
+      service: 'codebuild',
+      action: 'listReportsForReportGroup',
+      parameters: {
+        MaxResults: 1,
+        ReportGroupArn: reportGroup.reportGroupArn,
+      },
+      iamResources: [codebuildProject.projectArn],
+    });
+
+    /** @link https://docs.aws.amazon.com/step-functions/latest/dg/connect-codebuild.html#:~:text=%3A*%3Aproject/*%22%0A%20%20%20%20%20%20%5D%0A%20%20%20%20%7D%0A%20%20%5D%0A%7D-,BatchGetReports,-Static%20resources */
+    const batchGetReportsTask = new CallAwsService(this, 'BatchGetReportsTask', {
+      service: 'codebuild',
+      action: 'listReportsForReportGroup',
+      parameters: {
+        ReportArns: [],
+      },
+      iamResources: [reportGroup.reportGroupArn],
+    });
+
+    const startBuildTask = new OverridableCodeBuildStartBuild(this, 'StartBuildTask', {
       project: codebuildProject,
       integrationPattern: IntegrationPattern.RUN_JOB,
       // @ts-expect-error Deliberate
@@ -172,9 +200,13 @@ export default class StackEditStack extends cdk.Stack {
       },
     });
 
+    const taskChain = startBuildTask
+      .next(listReportsTask)
+      .next(batchGetReportsTask);
+
     const eventBridgeToStepFunctions = new EventbridgeToStepfunctions(this, 'EventbridgeToStepFunctions', {
       stateMachineProps: {
-        definitionBody: DefinitionBody.fromChainable(task),
+        definitionBody: DefinitionBody.fromChainable(taskChain),
       },
       eventRuleProps: {
         schedule: Schedule.rate(cdk.Duration.minutes(1)),
