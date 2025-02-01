@@ -62,8 +62,7 @@ export default class StackEditStepFunctionsStack extends cdk.Stack {
       },
       resultSelector: {
         'Reports.$': '$.Reports',
-        // eslint-disable-next-line quotes
-        ReportsLength: JsonPath.arrayLength(JsonPath.objectAt('$.Reports')).replace("'", ''),
+        ReportsLength: JsonPath.arrayLength(JsonPath.objectAt('$.Reports')),
       },
     });
 
