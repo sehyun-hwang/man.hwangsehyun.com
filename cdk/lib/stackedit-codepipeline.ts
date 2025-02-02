@@ -7,18 +7,20 @@ import { Bucket } from 'aws-cdk-lib/aws-s3';
 import * as cdk from 'aws-cdk-lib/core';
 import { Construct } from 'constructs';
 
-import { codeStarConnectionsSourceActionProps } from './config';
+import { codeStarConnectionsSourceActionProps, CONTENT_KEY } from './config';
 import { HugoBuildPipeline } from './stackedit';
 
 export const CONTENT_CACHE_IDENTIFIER = 'content_cache';
 
 interface StackEditCodePipelineStackProps extends cdk.StackProps {
   hugoImage: cdk.DockerImage;
+  deploymentBucket: Bucket;
 }
 
 export default class StackEditCodePipelineStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: StackEditCodePipelineStackProps) {
     super(scope, id, props);
+    const bucket = props.deploymentBucket;
 
     const sourceArtifact = new Artifact();
     const contentArtifact = new Artifact();
@@ -27,20 +29,17 @@ export default class StackEditCodePipelineStack extends cdk.Stack {
       ...codeStarConnectionsSourceActionProps,
       output: sourceArtifact,
     });
-    const bucket = new Bucket(this, 'DeploymentBucket', {
-      versioned: true,
-    });
+
     const trail = new Trail(this, 'CloudTrail');
-    const bucketKey = 'CloudformationSchema.zip';
     trail.addS3EventSelector([{
       bucket,
-      objectPrefix: bucketKey,
+      objectPrefix: CONTENT_KEY,
     }], {
       readWriteType: ReadWriteType.WRITE_ONLY,
     });
     const s3SourceAction = new S3SourceAction({
       actionName: 'S3Source',
-      bucketKey,
+      bucketKey: CONTENT_KEY,
       bucket,
       output: contentArtifact,
       trigger: S3Trigger.EVENTS,

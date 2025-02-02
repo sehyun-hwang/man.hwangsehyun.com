@@ -20,3 +20,5 @@ export const codeStarConnectionsSourceActionProps: Omit<CodeStarConnectionsSourc
   branch,
   codeBuildCloneOutput: true,
 } as const;
+
+export const CONTENT_KEY = 'content.zip';

@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1-labs
-FROM node:22-alpine AS pnpm
+FROM --platform=${BUILDPLATFORM} node:22-alpine AS pnpm
 
 WORKDIR /mnt
 COPY --parents package.json pnpm-*.yaml assets/package.json browser/package.json browser/patches/*.patch src/package.json /mnt/

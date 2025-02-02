@@ -78,7 +78,7 @@ export default class StackEditStack extends cdk.Stack {
       secondarySources: [Source.s3({
         identifier: 'content_cache',
         bucket,
-        path: 'empty/content/',
+        path: 'empty/',
       })],
       buildSpec: BuildSpec.fromObject({
         version: 0.2,
@@ -99,6 +99,11 @@ export default class StackEditStack extends cdk.Stack {
           build: {
             commands: [
               'node src',
+            ],
+          },
+          post_build: {
+            commands: [
+              'zip -rv -x=content/content.zip content/content.zip content',
             ],
           },
         },
@@ -162,6 +167,7 @@ export class HugoBuildPipeline extends Construct {
               `docker pull ${assetLocation.imageUri}`,
               'git submodule update --init',
               'ln -fsv /mnt/assets/node_modules assets/node_modules',
+              // cp CODEBUILD_SRC_DIR_Artifact_Source_S3Source
             ],
           },
           build: {

@@ -38,6 +38,8 @@ async function buildNodeModulesImage() {
     });
   }
 
+  const dockerBuildArgs = ['build', '..', '--platform', 'linux/amd64', '-t'];
+  dockerBuildArgs.forEach(arg => hash.update(arg));
   const digest = hash.digest('hex');
   const tag = CONTAINER_NAME + ':' + digest;
   const { stdout } = spawnSync(DOCKER_EXECUTABLE, ['image', 'inspect', tag]);
@@ -45,7 +47,7 @@ async function buildNodeModulesImage() {
   if (stdout.length)
     return image;
 
-  const { status } = spawnSync(DOCKER_EXECUTABLE, ['build', '..', '-t', tag], {
+  const { status } = spawnSync(DOCKER_EXECUTABLE, [...dockerBuildArgs, tag], {
     stdio: [ // show Docker output
       'ignore', // ignore stdin
       process.stderr, // redirect stdout to stderr
@@ -71,8 +73,7 @@ const stackEditStack = new StackEditStack(app, 'StackEditStack', {
   nodeModulesImage,
 });
 
-// eslint-disable-next-line no-new
-new StackEditStepFunctionsStack(app, 'StackEditStepFunctionsStack', {
+const { deploymentBucket } = new StackEditStepFunctionsStack(app, 'StackEditStepFunctionsStack', {
   env,
   ...stackEditStack.exports,
 });
@@ -81,4 +82,5 @@ new StackEditStepFunctionsStack(app, 'StackEditStepFunctionsStack', {
 new StackEditCodePipelineStack(app, 'StackEditCodePipelineStack', {
   env,
   hugoImage: nodeModulesImage,
+  deploymentBucket,
 });
