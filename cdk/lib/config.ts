@@ -18,4 +18,5 @@ export const codeStarConnectionsSourceActionProps: Omit<CodeStarConnectionsSourc
   owner,
   repo,
   branch,
+  codeBuildCloneOutput: true,
 } as const;

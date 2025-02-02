@@ -1,7 +1,7 @@
 /* eslint-disable max-classes-per-file */
 import {
-  Artifacts, BuildSpec, CfnProject, ComputeType, IBuildImage, ImagePullPrincipalType,
-  LinuxArmLambdaBuildImage, PipelineProject, Project, ReportGroup, Source,
+  Artifacts, BuildSpec, Cache, CfnProject, ComputeType, IBuildImage, ImagePullPrincipalType,
+  LinuxArmLambdaBuildImage, LocalCacheMode, PipelineProject, Project, ReportGroup, Source,
 } from 'aws-cdk-lib/aws-codebuild';
 import { type IRepository, Repository } from 'aws-cdk-lib/aws-ecr';
 import { DockerImageAsset } from 'aws-cdk-lib/aws-ecr-assets';
@@ -151,13 +151,23 @@ export class HugoBuildPipeline extends Construct {
     const cdkAssetRepository = Repository.fromRepositoryName(this, 'CdkAssetRepository', assetLocation.repositoryName);
 
     const pipelineProject = new PipelineProject(this, 'HugoBuildPipelineProject', {
+      cache: Cache.local(LocalCacheMode.DOCKER_LAYER),
       buildSpec: BuildSpec.fromObject({
         version: '0.2',
         phases: {
-          build: {
+          pre_build: {
             commands: [
+              'env',
               `aws ecr get-login-password | docker login --username AWS --password-stdin ${cdkAssetRepository.repositoryUri}`,
               `docker pull ${assetLocation.imageUri}`,
+              'git submodule update --init',
+              'ln -fsv /mnt/assets/node_modules assets/node_modules',
+            ],
+          },
+          build: {
+            commands: [
+              `docker run --rm -v $PWD:/src ${assetLocation.imageUri} build -b https://man.hwangsehyun.com`,
+              'ls -la public/index.json',
             ],
           },
         },
