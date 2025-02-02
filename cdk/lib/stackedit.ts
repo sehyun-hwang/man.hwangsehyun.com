@@ -1,9 +1,9 @@
 /* eslint-disable max-classes-per-file */
 import {
   Artifacts, BuildSpec, CfnProject, ComputeType, IBuildImage, ImagePullPrincipalType,
-  LinuxArmLambdaBuildImage, Project, ReportGroup, Source,
+  LinuxArmLambdaBuildImage, PipelineProject, Project, ReportGroup, Source,
 } from 'aws-cdk-lib/aws-codebuild';
-import { type IRepository } from 'aws-cdk-lib/aws-ecr';
+import { type IRepository, Repository } from 'aws-cdk-lib/aws-ecr';
 import { DockerImageAsset } from 'aws-cdk-lib/aws-ecr-assets';
 import { Bucket } from 'aws-cdk-lib/aws-s3';
 import { BucketDeployment, Source as S3Source } from 'aws-cdk-lib/aws-s3-deployment';
@@ -130,5 +130,40 @@ export default class StackEditStack extends cdk.Stack {
       codeBuildProject: codebuildProject,
       reportGroup,
     };
+  }
+}
+
+interface HugoBuildPipelineProps {
+  hugoImage: cdk.DockerImage;
+}
+
+export class HugoBuildPipeline extends Construct {
+  pipelineProject: PipelineProject;
+
+  constructor(scope: Construct, id: string, props: HugoBuildPipelineProps) {
+    super(scope, id);
+    const stack = cdk.Stack.of(this);
+
+    const assetLocation = stack.synthesizer.addDockerImageAsset({
+      sourceHash: props.hugoImage.toJSON(),
+      executable: ['echo', props.hugoImage.image],
+    });
+    const cdkAssetRepository = Repository.fromRepositoryName(this, 'CdkAssetRepository', assetLocation.repositoryName);
+
+    const pipelineProject = new PipelineProject(this, 'HugoBuildPipelineProject', {
+      buildSpec: BuildSpec.fromObject({
+        version: '0.2',
+        phases: {
+          build: {
+            commands: [
+              `aws ecr get-login-password | docker login --username AWS --password-stdin ${cdkAssetRepository.repositoryUri}`,
+              `docker pull ${assetLocation.imageUri}`,
+            ],
+          },
+        },
+      }),
+    });
+    cdkAssetRepository.grantPull(pipelineProject);
+    this.pipelineProject = pipelineProject;
   }
 }

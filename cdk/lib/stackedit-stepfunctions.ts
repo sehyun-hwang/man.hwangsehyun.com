@@ -120,3 +120,15 @@ export default class StackEditStepFunctionsStack extends cdk.Stack {
       .applyRemovalPolicy(cdk.RemovalPolicy.DESTROY);
   }
 }
+
+/** @link https://stackoverflow.com/a/75596750 */
+
+/*
+copyObject
+     "Parameters": {
+              "Bucket.$": "$.Bucket",
+              "CopySource.$": "$.CopySource",
+              "Key.$": "$.Key"
+            },
+
+*/
