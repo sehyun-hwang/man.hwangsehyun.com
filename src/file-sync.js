@@ -50,7 +50,6 @@ async function calculateInvalidChecksums(gzips) {
       const path = line.replace(/: FAILED$/, '');
       if (line === path)
         throw new Error('Unable to parse md5sum stdout:', line);
-      console.log({ line });
       invalidPaths.push(path);
     });
 

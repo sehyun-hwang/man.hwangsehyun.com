@@ -9,6 +9,7 @@ import * as cdk from 'aws-cdk-lib';
 import { DockerfileParser } from 'dockerfile-ast';
 
 import StackEditStack from '../lib/stackedit';
+import StackEditCodePipelineStack from '../lib/stackedit-codepipeline';
 import StackEditStepFunctionsStack from '../lib/stackedit-stepfunctions';
 
 // eslint-disable-next-line dot-notation
@@ -17,7 +18,8 @@ const CONTAINER_NAME = 'cdk-man-hwangsehyun-com-node-modules';
 
 async function buildNodeModulesImage() {
   const assetPaths = DockerfileParser.parse(readFileSync('../Dockerfile', 'utf-8')).getCOPYs()
-    .flatMap(x => x.getArguments())
+    .flatMap(x => (x.getFlags().some(flag => flag.getName() === 'from')
+      ? [] : x.getArguments()))
     .map(x => x.getValue())
     .slice(0, -1);
   assetPaths.push('../Dockerfile');
@@ -43,13 +45,15 @@ async function buildNodeModulesImage() {
   if (stdout.length)
     return image;
 
-  spawnSync(DOCKER_EXECUTABLE, ['build', '..', '-t', tag], {
+  const { status } = spawnSync(DOCKER_EXECUTABLE, ['build', '..', '-t', tag], {
     stdio: [ // show Docker output
       'ignore', // ignore stdin
       process.stderr, // redirect stdout to stderr
       'inherit', // inherit stderr
     ],
   });
+  if (status)
+    throw new Error('spawnSync error');
   return image;
 }
 
@@ -71,4 +75,10 @@ const stackEditStack = new StackEditStack(app, 'StackEditStack', {
 new StackEditStepFunctionsStack(app, 'StackEditStepFunctionsStack', {
   env,
   ...stackEditStack.exports,
+});
+
+// eslint-disable-next-line no-new
+new StackEditCodePipelineStack(app, 'StackEditCodePipelineStack', {
+  env,
+  hugoImage: nodeModulesImage,
 });

@@ -3,14 +3,15 @@ import {
   Artifacts, BuildSpec, CfnProject, ComputeType, IBuildImage, ImagePullPrincipalType,
   LinuxArmLambdaBuildImage, Project, ReportGroup, Source,
 } from 'aws-cdk-lib/aws-codebuild';
-import { type IRepository, Repository } from 'aws-cdk-lib/aws-ecr';
+import { type IRepository } from 'aws-cdk-lib/aws-ecr';
 import { DockerImageAsset } from 'aws-cdk-lib/aws-ecr-assets';
 import { Bucket } from 'aws-cdk-lib/aws-s3';
 import { BucketDeployment, Source as S3Source } from 'aws-cdk-lib/aws-s3-deployment';
 import { Secret } from 'aws-cdk-lib/aws-secretsmanager';
 import * as cdk from 'aws-cdk-lib/core';
-import * as ecrdeploy from 'cdk-ecr-deployment';
 import { Construct } from 'constructs';
+
+import { gitHubSourceProps } from './config';
 
 export const CONTENT_CACHE_IDENTIFIER = 'content_cache';
 
@@ -20,13 +21,13 @@ class EcrLinuxArmLambdaBuildImage extends LinuxArmLambdaBuildImage implements IB
 
   readonly repository: IRepository;
 
-  constructor({ repository, dest }: { repository: IRepository, dest: string }) {
+  constructor(dockerImageAsset: DockerImageAsset) {
     // @ts-expect-error Private constructor
     super({
-      imageId: dest,
+      imageId: dockerImageAsset.imageUri,
     });
     this.imagePullPrincipalType = ImagePullPrincipalType.SERVICE_ROLE;
-    this.repository = repository;
+    this.repository = dockerImageAsset.repository;
   }
 }
 
@@ -40,7 +41,7 @@ export interface IStackEditStack {
   reportGroup: ReportGroup;
 }
 
-export default class StackEditStack extends cdk.Stack implements IStackEditStack {
+export default class StackEditStack extends cdk.Stack {
   exports: IStackEditStack;
 
   constructor(scope: Construct, id: string, props: StackEditStackProps) {
@@ -52,17 +53,7 @@ export default class StackEditStack extends cdk.Stack implements IStackEditStack
         NODE_MODULES_IMAGE: props.nodeModulesImage.image,
       },
     });
-
-    const repository = new Repository(this, 'Repository');
-    const ecrDeploymentDest = repository.repositoryUri + ':' + buildImageAsset.assetHash;
-    const ecrDeployment = new ecrdeploy.ECRDeployment(this, 'DeployDockerImage', {
-      src: new ecrdeploy.DockerImageName(buildImageAsset.imageUri),
-      dest: new ecrdeploy.DockerImageName(ecrDeploymentDest),
-    });
-    const buildImage = new EcrLinuxArmLambdaBuildImage({
-      repository,
-      dest: ecrDeploymentDest,
-    });
+    const buildImage = new EcrLinuxArmLambdaBuildImage(buildImageAsset);
 
     const bucket = new Bucket(this, 'ArtifactBucket');
     const bucketDeployment = new BucketDeployment(this, 'EmptyCache', {
@@ -83,12 +74,7 @@ export default class StackEditStack extends cdk.Stack implements IStackEditStack
         buildImage,
         computeType: ComputeType.LAMBDA_1GB,
       },
-      source: Source.gitHub({
-        identifier: 'src',
-        owner: 'sehyun-hwang',
-        repo: 'man.hwangsehyun.com',
-        branchOrRef: '31-cdk-codebuild',
-      }),
+      source: Source.gitHub(gitHubSourceProps),
       secondarySources: [Source.s3({
         identifier: 'content_cache',
         bucket,
@@ -133,7 +119,7 @@ export default class StackEditStack extends cdk.Stack implements IStackEditStack
         packageZip: false,
       }),
     });
-    repository.grantPull(codebuildProject);
+    buildImageAsset.repository.grantPull(codebuildProject);
     secret.grantRead(codebuildProject);
     reportGroup.grantWrite(codebuildProject);
 
