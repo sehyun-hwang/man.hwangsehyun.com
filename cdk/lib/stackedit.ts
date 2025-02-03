@@ -112,6 +112,7 @@ export default class StackEditStack extends cdk.Stack {
         },
         post_build: {
           commands: [
+            'cp -v config/_default/module.json content/',
             'zip -rv -x=content/content.zip -x="*.md.gz" content/content.zip content',
           ],
         },
@@ -188,7 +189,9 @@ export class HugoBuildPipeline extends Construct {
           commands: [
             `aws ecr get-login-password | docker login --username AWS --password-stdin ${cdkAssetRepository.repositoryUri}`,
             'ln -fsv /mnt/assets/node_modules assets/node_modules',
-            'cp -rv $CODEBUILD_SRC_DIR_Artifact_Source_S3Source/content ./',
+            // eslint-disable-next-line quotes
+            `mkdir -p config/_default && echo '{"MICROCMS_KEY":"mock"}' > config/_default/params.json`,
+            'cp -rv $CODEBUILD_SRC_DIR_Artifact_Source_S3Source/content ./ && mv -v content/module.json config/_default/',
 
             'git submodule update --init',
             `docker pull ${assetLocation.imageUri}`,
@@ -207,6 +210,7 @@ export class HugoBuildPipeline extends Construct {
       cache: Cache.local(LocalCacheMode.DOCKER_LAYER),
       buildSpec,
     });
+    secret.grantRead(pipelineProject);
     cdkAssetRepository.grantPull(pipelineProject);
     this.pipelineProject = pipelineProject;
   }

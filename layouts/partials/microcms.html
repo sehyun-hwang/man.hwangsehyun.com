@@ -1,7 +1,12 @@
-{{ $career_url:= absLangURL "/career" }} {{ $headers := dict
-"X-MICROCMS-API-KEY" site.Params.MICROCMS_KEY }} {{ $data := resources.GetRemote
-"https://q7h9nx3ddk.microcms.io/api/v1/projects?orders=-endedAt" (dict "headers"
-$headers) | unmarshal }}
+{{ $career_url:= absLangURL "/career" }}
+{{ $headers := dict
+  "X-MICROCMS-API-KEY" (or site.Params.MICROCMS_KEY site.Params.MICROCMS.KEY)
+}}
+{{ $data := resources.GetRemote
+  "https://q7h9nx3ddk.microcms.io/api/v1/projects?orders=-endedAt" (dict "headers"
+  $headers) | unmarshal
+}}
+
 
 <table class="project-table">
   <thead>
@@ -16,44 +21,44 @@ $headers) | unmarshal }}
   </thead>
 
   {{ range $data.contents }}
-  <tbody>
-    <tr class="importance-{{ .importance }}">
-      <td rowspan="2">
-        <span class="importance-{{ .importance }}"></span>
-        <a href="/project/{{ .id }}/">
-          {{ .emoji }}
-          <h3 class="name">{{ .name }}</h3>
-        </a>
-      </td>
+    <tbody>
+      <tr class="importance-{{ .importance }}">
+        <td rowspan="2">
+          <span class="importance-{{ .importance }}"></span>
+          <a href="/project/{{ .id }}/">
+            {{ .emoji }}
+            <h3 class="name">{{ .name }}</h3>
+          </a>
+        </td>
 
-      <td>
-        {{ range .belonging }}
-        <a href='{{ $career_url }}/#{{ replace . " " "" | lower }}'>
-          <h4>@{{ . }}</h4></a
-        >
-        {{ end }}
-      </td>
-
-      <td class="period monospace">
-        <time datetime="{{ .startedAt }}">{{ .startedAt }}</time>
-        <span>~</span>
-        <time datetime="{{ .endedAt }}">{{ .endedAt }}</time>
-      </td>
-
-      <td class="monospace">
-        <ul>
-          {{ range .techs }}
-          <li class="chip">{{ .name }}</li>
+        <td>
+          {{ range .belonging }}
+            <a href="{{ $career_url }}/#{{ replace . " " "" | lower }}">
+              <h4>@{{ . }}</h4></a
+            >
           {{ end }}
-        </ul>
-      </td>
+        </td>
 
-      <td class="number">{{ .importance }}</td>
-    </tr>
+        <td class="period monospace">
+          <time datetime="{{ .startedAt }}">{{ .startedAt }}</time>
+          <span>~</span>
+          <time datetime="{{ .endedAt }}">{{ .endedAt }}</time>
+        </td>
 
-    <tr>
-      <td colspan="5" class="truncated">{{ .description | markdownify }}</td>
-    </tr>
-  </tbody>
+        <td class="monospace">
+          <ul>
+            {{ range .techs }}
+              <li class="chip">{{ .name }}</li>
+            {{ end }}
+          </ul>
+        </td>
+
+        <td class="number">{{ .importance }}</td>
+      </tr>
+
+      <tr>
+        <td colspan="5" class="truncated">{{ .description | markdownify }}</td>
+      </tr>
+    </tbody>
   {{ end }}
 </table>
