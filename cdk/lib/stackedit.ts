@@ -189,9 +189,8 @@ export class HugoBuildPipeline extends Construct {
           commands: [
             `aws ecr get-login-password | docker login --username AWS --password-stdin ${cdkAssetRepository.repositoryUri}`,
             'ln -fsv /mnt/assets/node_modules assets/node_modules',
-            // eslint-disable-next-line quotes
-            `mkdir -p config/_default && echo '{"MICROCMS_KEY":"mock"}' > config/_default/params.json`,
-            'cp -rv $CODEBUILD_SRC_DIR_Artifact_Source_S3Source/content ./ && mv -v content/module.json config/_default/',
+            'cp -rv $CODEBUILD_SRC_DIR_Artifact_Source_S3Source/content ./',
+            'mkdir -p config/_default && mv -v content/module.json config/_default/',
 
             'git submodule update --init',
             `docker pull ${assetLocation.imageUri}`,
@@ -199,7 +198,7 @@ export class HugoBuildPipeline extends Construct {
         },
         build: {
           commands: [
-            `docker run --rm -v $PWD:/src ${assetLocation.imageUri} build -b https://man.hwangsehyun.com`,
+            `docker run --rm -v $PWD:/src -e HUGO_PARAMS_MICROCMS_KEY ${assetLocation.imageUri} build -b https://man.hwangsehyun.com`,
             'ls -la public/index.json',
           ],
         },
