@@ -4,14 +4,15 @@ import { Schedule } from 'aws-cdk-lib/aws-events';
 import { PolicyStatement } from 'aws-cdk-lib/aws-iam';
 import { Bucket } from 'aws-cdk-lib/aws-s3';
 import {
-  Choice, Condition, DefinitionBody, FieldUtils, IntegrationPattern, JsonPath, LogLevel, StateMachine, Succeed, TaskStateBase,
+  Choice, Condition, DefinitionBody, FieldUtils, IntegrationPattern, JsonPath, LogLevel,
+  StateMachine, Succeed, type TaskStateBase,
 } from 'aws-cdk-lib/aws-stepfunctions';
 import { CallAwsService, CodeBuildStartBuild } from 'aws-cdk-lib/aws-stepfunctions-tasks';
 import * as cdk from 'aws-cdk-lib/core';
 import { Construct } from 'constructs';
 
 import { CONTENT_KEY } from './config';
-import { IStackEditStack } from './stackedit';
+import { type IStackEditStack } from './stackedit';
 
 /** @link https://github.com/aws/aws-cdk/blob/v2.177.0/packages/aws-cdk-lib/aws-stepfunctions-tasks/lib/private/task-utils.ts */
 const resourceArnSuffix: Record<IntegrationPattern, string> = {

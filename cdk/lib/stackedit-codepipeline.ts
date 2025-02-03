@@ -3,9 +3,9 @@ import { Artifact, Pipeline, PipelineType } from 'aws-cdk-lib/aws-codepipeline';
 import {
   CodeBuildAction, CodeStarConnectionsSourceAction, ManualApprovalAction, S3SourceAction, S3Trigger,
 } from 'aws-cdk-lib/aws-codepipeline-actions';
-import { Bucket } from 'aws-cdk-lib/aws-s3';
+import type { Bucket } from 'aws-cdk-lib/aws-s3';
 import * as cdk from 'aws-cdk-lib/core';
-import { Construct } from 'constructs';
+import type { Construct } from 'constructs';
 
 import { codeStarConnectionsSourceActionProps, CONTENT_KEY } from './config';
 import { HugoBuildPipeline } from './stackedit';

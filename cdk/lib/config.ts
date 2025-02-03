@@ -22,3 +22,5 @@ export const codeStarConnectionsSourceActionProps: Omit<CodeStarConnectionsSourc
 } as const;
 
 export const CONTENT_KEY = 'content.zip';
+
+export const SECRET_ARN = 'arn:aws:secretsmanager:ap-northeast-1:248837585826:secret:man.hwangsehyun.com-Wk9Cto';
