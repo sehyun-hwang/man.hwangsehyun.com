@@ -90,5 +90,7 @@ async function run(cloudant, database, frontMatterDocsArg = null) {
 
   const changesWritableParams = await run(cloudant, database);
   changesWritableParams.run = run.bind(undefined, cloudant);
-  process.env.CODEBUILD_CI || await cloudant.followChanges(new ChangesWritable(changesWritableParams));
+  process.env.CI
+    || process.env.CODEBUILD_BUILD_ARN
+    || await cloudant.followChanges(new ChangesWritable(changesWritableParams));
 }
