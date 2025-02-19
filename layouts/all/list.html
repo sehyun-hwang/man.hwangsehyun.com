@@ -1,0 +1,33 @@
+{{ define "main" }}
+  {{ .Title }}
+  {{ $content := .Content | .RenderString }}
+
+  {{ range .Site.RegularPages.GroupBy "Section" }}
+    <section>
+      <article>
+        {{ if .Key }}
+          <h2>{{ or .Key (index .Pages 0).Title }}</h2>
+        {{ else }}
+          {{ $content }}
+          <div id="toc"></div>
+        {{ end }}
+      </article>
+
+      {{ if not .Key }}
+        {{ "</section><section>" | safeHTML }}
+      {{ end }}
+
+      {{ range first 3  .Pages }}
+        {{ if and (not .Params.searchHidden) (ne .Layout `archives`) (ne .Layout `search`) }}
+          <article>
+            {{ if .IsPage }}
+              {{ or .Layout "content-single" | .Render }}
+            {{ else }}
+              {{ .ContentWithoutSummary }}
+            {{ end }}
+          </article>
+        {{ end }}
+      {{ end }}
+    </section>
+  {{ end }}
+{{ end }}

@@ -2,18 +2,18 @@
 
 /* hugo start */
 
-table.gridjs-table {
-  width: unset;
-}
-
-.main {
+.main:has(> .project-table) {
   max-width: var(--nav-width);
-  margin: var(--gap);
+  /* margin: var(--gap); */
 }
 
-.post-content {
+.post-content:has(+ .project-table) {
   max-width: var(--main-width);
   margin: auto;
+}
+
+.gridjs-table {
+  width: unset;
 }
 
 .monospace {
@@ -134,7 +134,7 @@ table.gridjs-table {
 }
 
 @media screen and (min-width: 1280px) {
-  .main {
+  .main:has(> .project-table) {
     max-width: calc(100% - var(--gap) * 2);
   }
 
@@ -189,11 +189,6 @@ table.gridjs-table {
 th.gridjs-th .gridjs-th-content {
   width: unset;
 }
-
-html {
-  /* container-name: html; */
-}
-
 .gridjs-thead {
   font-size: 0.9rem;
 }

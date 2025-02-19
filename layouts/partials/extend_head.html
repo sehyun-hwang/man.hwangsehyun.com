@@ -1,22 +1,12 @@
-<link rel="alternate" type="application/pdf" href="{{ absURL "index.pdf" }}"/>
-
-<style>
-@page {
-  @top-center {
-    content: "{{ .Title | htmlEscape }}";
-  }
-
-  @bottom-center {
-    content: "Printed from {{ .Site.BaseURL }}";
-  }
-}
-</style>
+<link rel="alternate" type="application/pdf" href="{{ absURL "index.pdf" }}" />
 
 {{ if eq .Site.Language.Lang "kp" }}
   {{ with resources.Get "css/kp.template.css" }}
     {{ with resources.ExecuteAsTemplate "css/kp.css" $ . }}
-      <link crossorigin="anonymous"
-        rel="preload stylesheet" as="style"
+      <link
+        crossorigin="anonymous"
+        rel="preload stylesheet"
+        as="style"
         href="{{ .Permalink }}"
         integrity="{{ .Data.Integrity }}"
       />
@@ -24,24 +14,12 @@
   {{ end }}
 {{ end }}
 
-{{ with resources.Get "js/paged.js" | js.Build | resources.Fingerprint }}
-<script defer="TO_BE_REMOVED_IN_PUPPETTER"
-  src="{{ .Permalink }}"
-  integrity="{{ .Data.Integrity }}"
-></script>
-{{ end }}
-
-{{ if hugo.IsDevelopment }}
-<script defer="TO_BE_REMOVED_IN_PUPPETTER"
-  src="https://cdn.jsdelivr.net/npm/pagedjs@0.4.3/dist/paged.polyfill.js">
-</script>
-{{ end }}
-
-{{ with resources.Get "js/index.js" | js.Build | resources.Fingerprint }}
-<script defer
-  src="{{ .Permalink }}"
-  integrity="{{ .Data.Integrity }}"
-></script>
+{{ with resources.Get "js/index.js" | js.Build (dict "minify" true) | resources.Fingerprint }}
+  <script
+    defer
+    src="{{ .Permalink }}"
+    integrity="{{ .Data.Integrity }}"
+  ></script>
 {{ end }}
 
 <script type="application/json" id="hugo-json">
@@ -53,9 +31,7 @@
   "highlightCode": {{- print (and (eq .Kind "page") (ne .Layout "archives") (ne .Layout "search") (.Param "ShowCodeCopyButtons")) }},
   "mermaid": {{- or .Params.mermaid false }}
 }
-</script>
-
-{{ with .Params.head_extensions }}
+</script> {{ with .Params.head_extensions }}
   {{ range . }}
     {{ partial . }}
   {{ end }}

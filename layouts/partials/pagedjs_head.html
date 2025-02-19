@@ -1,0 +1,30 @@
+<style>
+article {
+  break-after: page;
+}
+
+.post-title {
+  string-set: title content(text);
+}
+
+@page {
+  @top-left {
+    content: string(title, first);
+  }
+
+  @top-right {
+    content: "Printed from {{ .Site.BaseURL }}";
+  }
+
+  @bottom-center {
+    content: "- " counter(page) " -";
+  }
+}
+</style> {{ with resources.Get "js/paged.js" | js.Build (dict "minify" true) | resources.Fingerprint }}
+
+  <script
+    defer="TO_BE_REMOVED_IN_PUPPETTER"
+    src="{{ .Permalink }}"
+    integrity="{{ .Data.Integrity }}"
+  ></script>
+{{ end }}

@@ -96,15 +96,11 @@ downloadButtonElement.id = 'download-menu';
 downloadButtonElement.href = pdfHref;
 downloadButtonElement.download = document.title + '.pdf';
 
-window.PagedPolyfill && downloadButtonElement.addEventListener('click', event => {
+downloadButtonElement.addEventListener('click', event => {
   event.preventDefault();
   window.PagedConfig?.buttonResolvers?.resolve();
   setTimeout(() => window.PagedPolyfill.preview());
 });
-
-const postTitleElement = document.querySelector('h1.post-title');
-if (postTitleElement)
-  postTitleElement.id = 'post-title' + window.location.pathname.replaceAll('/', '-');
 
 navigator.webdriver && document.querySelectorAll('img[loading="lazy"]')
   .forEach(img => {

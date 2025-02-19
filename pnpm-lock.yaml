@@ -15,7 +15,7 @@ overrides:
 
 patchedDependencies:
   pagedjs-cli:
-    hash: hmzjzl4kigi7ktbysgqcytrkvi
+    hash: 7e9f6e839fe9ddd450d1d1c19fdda84e9752ef765b95984e3f910ed501d92f85
     path: browser/patches/pagedjs-cli.patch
 
 importers:
@@ -40,6 +40,9 @@ importers:
       gridjs:
         specifier: ^6.2.0
         version: 6.2.0
+      pagedjs:
+        specifier: 0.4.3
+        version: 0.4.3
     devDependencies:
       '@types/ga-gtag':
         specifier: ^1.2.0
@@ -52,7 +55,7 @@ importers:
         version: 8.1.1
       pagedjs-cli:
         specifier: ^0.4.3
-        version: 0.4.3(patch_hash=hmzjzl4kigi7ktbysgqcytrkvi)
+        version: 0.4.3(patch_hash=7e9f6e839fe9ddd450d1d1c19fdda84e9752ef765b95984e3f910ed501d92f85)
       pdf-lib:
         specifier: ^1.17.1
         version: 1.17.1
@@ -4940,7 +4943,7 @@ snapshots:
 
   package-json-from-dist@1.0.1: {}
 
-  pagedjs-cli@0.4.3(patch_hash=hmzjzl4kigi7ktbysgqcytrkvi):
+  pagedjs-cli@0.4.3(patch_hash=7e9f6e839fe9ddd450d1d1c19fdda84e9752ef765b95984e3f910ed501d92f85):
     dependencies:
       commander: 11.1.0
       express: 4.19.2
