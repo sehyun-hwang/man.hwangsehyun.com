@@ -92,10 +92,9 @@ console.log({ Paged, createToc });
 class PagedConfig {
   auto = false;
 
-  constructor(wait) {
+  constructor() {
     this.mermaidResolvers = Promise.withResolvers();
-    if (wait)
-      this.buttonResolvers = Promise.withResolvers();
+    this.buttonResolvers = Promise.withResolvers();
   }
 
   async before() {
@@ -103,13 +102,15 @@ class PagedConfig {
     console.log(this);
     await Promise.all([
       this.mermaidResolvers.promise,
-      this.buttonResolvers?.promise,
+      this.buttonResolvers.promise,
     ]);
     console.log('Replacing', main);
     main && document.body.replaceChildren(main);
 
     console.log(await Promise.allSettled(
-      Array.prototype.map.call(document.querySelectorAll('img'), img => {
+      Array.prototype.map.call(main.querySelectorAll('img'), img => {
+        if (img.complete)
+          return Promise.resolve();
         img.loading = 'eager';
         return new Promise((resolve, reject) => {
           img.addEventListener('load', resolve);
@@ -128,7 +129,7 @@ class PagedConfig {
   }
 }
 
-window.PagedConfig = new PagedConfig(!navigator.webdriver);
+const config = new PagedConfig();
 
 class handlers extends Paged.Handler {
   // eslint-disable-next-line class-methods-use-this
@@ -137,18 +138,23 @@ class handlers extends Paged.Handler {
     createToc({
       content,
       tocElement: '#toc',
-      titleElements: ['h1.post-title'],
+      titleElements: ['.page-header h1', 'h1.post-title'],
     });
   }
 }
 
-const previewer = new Paged.Previewer(window.PagedConfig);
+const previewer = new Paged.Previewer(config);
 previewer.registerHandlers(handlers);
 
 window.addEventListener('load', async () => {
-  await window.PagedConfig.before();
+  console.log('paged.js load');
+  await config.before();
+  console.log('paged.js before');
   await previewer.preview();
-  console.log('success');
+  console.log('paged.js preview');
+  await config.after();
+  console.log('paged.js after');
 });
 
+window.PagedConfig = config;
 window.PagedPolyfill = previewer;

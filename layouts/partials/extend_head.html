@@ -14,6 +14,12 @@
   {{ end }}
 {{ end }}
 
+{{ with .Params.head_extensions }}
+  {{ range . }}
+    {{ partial . }}
+  {{ end }}
+{{ end }}
+
 {{ with resources.Get "js/index.js" | js.Build (dict "minify" true) | resources.Fingerprint }}
   <script
     defer
@@ -31,8 +37,4 @@
   "highlightCode": {{- print (and (eq .Kind "page") (ne .Layout "archives") (ne .Layout "search") (.Param "ShowCodeCopyButtons")) }},
   "mermaid": {{- or .Params.mermaid false }}
 }
-</script> {{ with .Params.head_extensions }}
-  {{ range . }}
-    {{ partial . }}
-  {{ end }}
-{{ end }}
+</script>

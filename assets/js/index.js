@@ -98,15 +98,11 @@ downloadButtonElement.download = document.title + '.pdf';
 
 downloadButtonElement.addEventListener('click', event => {
   event.preventDefault();
-  window.PagedConfig?.buttonResolvers?.resolve();
-  setTimeout(() => window.PagedPolyfill.preview());
+  window.PagedConfig
+    ? window.PagedConfig.buttonResolvers.resolve()
+    // eslint-disable-next-line import/no-unresolved
+    : import('https://cdn.jsdelivr.net/npm/pagedjs@0.4.3/dist/paged.polyfill.js');
 });
-
-navigator.webdriver && document.querySelectorAll('img[loading="lazy"]')
-  .forEach(img => {
-    // eslint-disable-next-line no-param-reassign
-    img.loading = 'eager';
-  });
 
 if (localStorage.getItem('download-tooltip'))
   document.querySelector('#download-tooltip').remove();

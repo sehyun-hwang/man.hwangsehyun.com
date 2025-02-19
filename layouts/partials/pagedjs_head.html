@@ -1,5 +1,5 @@
 <style>
-article {
+section, article {
   break-after: page;
 }
 
@@ -13,18 +13,23 @@ article {
   }
 
   @top-right {
-    content: "Printed from {{ .Site.BaseURL }}";
+    content: "Printed from {{ absURL "" }}";
   }
 
   @bottom-center {
     content: "- " counter(page) " -";
   }
 }
-</style> {{ with resources.Get "js/paged.js" | js.Build (dict "minify" true) | resources.Fingerprint }}
 
-  <script
-    defer="TO_BE_REMOVED_IN_PUPPETTER"
-    src="{{ .Permalink }}"
+
+</style> {{ with resources.Get "css/paged.css" | resources.Fingerprint }}
+  <link
+    rel="stylesheet"
+    href="{{ .Permalink }}"
     integrity="{{ .Data.Integrity }}"
-  ></script>
+  />
+{{ end }}
+
+{{ with resources.Get "js/paged.js" | js.Build (dict "minify" true) | resources.Fingerprint }}
+  <script src="{{ .Permalink }}" integrity="{{ .Data.Integrity }}"></script>
 {{ end }}

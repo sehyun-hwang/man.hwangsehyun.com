@@ -1,31 +1,52 @@
 {{ define "main" }}
-  {{ .Title }}
+  {{ $title := .Title }}
   {{ $content := .Content | .RenderString }}
+  {{ $childPages := .Pages }}
 
   {{ range .Site.RegularPages.GroupBy "Section" }}
+    {{ if eq .Key "all" }}
+      {{ continue }}
+    {{ end }}
+
+    {{ $originalSectionIndexPage := (index .Pages 0).CurrentSection }}
+
+
+    <!-- {{ $qty := 42 }} {{ cond (le $qty 3) "few" "many" }} -> many -->
+    {{ $layout := cond (in $originalSectionIndexPage.Site.MainSections $originalSectionIndexPage.Section) "content-single" "content-list" }}
+
+
     <section>
-      <article>
-        {{ if .Key }}
-          <h2>{{ or .Key (index .Pages 0).Title }}</h2>
-        {{ else }}
+      {{ if .Key }}
+        <article>
+          {{ with where $childPages "Slug" .Key }}
+            {{ $overriddenSectionIndexPage := index . 0 }}
+            {{ $overriddenSectionIndexPage.Render (or $overriddenSectionIndexPage.Layout "cover") }}
+          {{ else }}
+            {{ $originalSectionIndexPage.Render "cover" }}
+          {{ end }}
+        </article>
+      {{ else }}
+        <article style="text-align: center;">
+          <header class="page-header">
+            <h1>{{ $title }}</h1>
+          </header>
+
           {{ $content }}
-          <div id="toc"></div>
-        {{ end }}
-      </article>
+
+
+          <p>Built at {{ now.Format "2 Jan 2006" }} from {{ absURL "" }}</p>
+        </article>
+
+        <article id="toc"></article>
+      {{ end }}
 
       {{ if not .Key }}
         {{ "</section><section>" | safeHTML }}
       {{ end }}
 
-      {{ range first 3  .Pages }}
-        {{ if and (not .Params.searchHidden) (ne .Layout `archives`) (ne .Layout `search`) }}
-          <article>
-            {{ if .IsPage }}
-              {{ or .Layout "content-single" | .Render }}
-            {{ else }}
-              {{ .ContentWithoutSummary }}
-            {{ end }}
-          </article>
+      {{ range first 3 .Pages }}
+        {{ if and (not .Params.searchHidden) (ne .Layout "archives") (ne .Layout "search") }}
+          {{ .Render $layout }}
         {{ end }}
       {{ end }}
     </section>
