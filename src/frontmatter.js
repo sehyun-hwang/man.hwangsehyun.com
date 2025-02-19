@@ -59,9 +59,9 @@ export const insertFrontMatterDocs = (client, db, contentDocs) => Promise.all(
       return entry;
     })),
 )
-  .then(async attachmentsEntires => {
-    const frontMatterBulkDocs = await parseFrontMatters(Object.fromEntries(attachmentsEntires));
-    const frontmatterAttachmentsByHash = groupBy(attachmentsEntires, ([hash]) => hash);
+  .then(async attachmentsEntries => {
+    const frontMatterBulkDocs = await parseFrontMatters(Object.fromEntries(attachmentsEntries));
+    const frontmatterAttachmentsByHash = groupBy(attachmentsEntries, ([hash]) => hash);
     frontMatterBulkDocs.forEach(doc => {
       doc._attachments = Object.assign(...frontmatterAttachmentsByHash[doc.hash].map(({ docId }) => ({
         [docId]: {

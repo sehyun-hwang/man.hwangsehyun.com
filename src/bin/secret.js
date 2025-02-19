@@ -2,11 +2,8 @@ import fs from 'fs/promises';
 import os from 'os';
 import path from 'path';
 
-import {
-  SecretsManagerClient,
-  GetSecretValueCommand,
-} from '@aws-sdk/client-secrets-manager';
-import { SSOClient, GetRoleCredentialsCommand } from '@aws-sdk/client-sso';
+import { GetSecretValueCommand, SecretsManagerClient } from '@aws-sdk/client-secrets-manager';
+import { GetRoleCredentialsCommand, SSOClient } from '@aws-sdk/client-sso';
 
 const accountId = '248837585826';
 const roleName = 'AdministratorAccess';

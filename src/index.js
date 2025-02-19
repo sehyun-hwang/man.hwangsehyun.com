@@ -10,6 +10,7 @@ import StackEditDomModel from './dom-model.js';
 import FileSynchronizer from './file-sync.js';
 import { insertFrontMatterDocs, processFrontMatters } from './frontmatter.js';
 import StackEditPath from './path.js';
+import buildTestSuite from './report.js';
 
 const staticCloudant = new Cloudant4Hugo({
   serviceUrl: 'https://618cf517-eb22-487f-ab2c-8366988f9b91-bluemix.cloudant.com',
@@ -62,12 +63,15 @@ async function run(cloudant, database, frontMatterDocsArg = null) {
   const synchronizer = new FileSynchronizer(stackEditPaths);
   await synchronizer.writeHugoConfig();
   await synchronizer.processInvalidChecksums();
-  await synchronizer.calculate();
+  const syncResults = await synchronizer.calculate();
+  const reportBuilder = buildTestSuite(syncResults);
   await synchronizer.prune();
 
   const downloadCandidatePaths = Array.from(synchronizer.generateDownloadCandidates());
   downloadCandidatePaths.length
     && await cloudant.downloadMarkdownsBatch(downloadCandidatePaths);
+
+  reportBuilder.writeTo('public/junit.xml');
 
   const { client, constants: { db } } = cloudant;
   return {
@@ -86,5 +90,7 @@ async function run(cloudant, database, frontMatterDocsArg = null) {
 
   const changesWritableParams = await run(cloudant, database);
   changesWritableParams.run = run.bind(undefined, cloudant);
-  process.env.CI || await cloudant.followChanges(new ChangesWritable(changesWritableParams));
+  process.env.CI
+    || process.env.CODEBUILD_BUILD_ARN
+    || await cloudant.followChanges(new ChangesWritable(changesWritableParams));
 }

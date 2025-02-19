@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "exactOptionalPropertyTypes": false,
+    "lib": [
+      "es2020",
+    ],
+    "module": "Preserve",
+    "moduleResolution": "bundler",
+    "target": "ES2020"
+  },
+  "exclude": [
+    "cdk.out"
+  ],
+  "extends": [
+    "@tsconfig/node-lts/tsconfig.json",
+    "@tsconfig/strictest/tsconfig.json",
+  ],
+  "include": [
+    "lib",
+    "bin"
+  ]
+}

@@ -1,7 +1,3 @@
 {
-    "cSpell.words": [
-        "cloudant",
-        "frontmatters"
-    ],
-    "js/ts.implicitProjectConfig.checkJs": true
+    "js/ts.implicitProjectConfig.checkJs": true,
 }

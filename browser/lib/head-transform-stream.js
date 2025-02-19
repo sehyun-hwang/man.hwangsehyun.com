@@ -1,4 +1,4 @@
-import { Readable, Transform, pipeline } from 'stream';
+import { pipeline, Readable, Transform } from 'stream';
 
 export default class ReplaceInHeadTransform extends Transform {
   constructor(searchString, replaceString, options = {}) {

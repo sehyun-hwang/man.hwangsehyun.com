@@ -1,18 +1,44 @@
 {{ if hasPrefix .Destination "https://images.microcms-assets.io" }}
-{{ $text := .Text }}
+  {{ $text := .Text }}
 
-{{ with (urls.Parse .Destination).Path | printf "https://images.microcms-assets.io%s" | resources.GetRemote }}
-  {{ warnf "Micro CMS image: %s" . }}
-  {{ with .Err }}
-    {{ errorf "%s" . }}
+  {{ with (urls.Parse .Destination).Path | printf "https://images.microcms-assets.io%s" | resources.GetRemote }}
+    {{ warnf "Micro CMS image: %s" . }}
+    {{ if isset . "Err" }}
+      {{ with .Err }}
+        {{ warnf "%s" . }}
+      {{ else }}
+        <img
+          src="{{ .RelPermalink }}"
+          {{ if ne .MediaType.SubType "svg" }}
+            width="{{ .Width }}" height="{{ .Height }}"
+          {{ end }}
+          alt="{{ $text }}"
+        />
+      {{ end }}
+    {{ else }}
+      <img
+        src="{{ .RelPermalink }}"
+        {{ if ne .MediaType.SubType "svg" }}
+          width="{{ .Width }}" height="{{ .Height }}"
+        {{ end }}
+        alt="{{ $text }}"
+      />
+    {{ end }}
   {{ else }}
-
-    <img src="{{ .RelPermalink }}" {{ if ne .MediaType.SubType "svg" }} width="{{ .Width }}" height="{{ .Height }}" {{ end }} alt="{{ $text }}">
+    {{ errorf "Unable to get remote resource %q" .Destination }}
   {{ end }}
-{{ else }}
-  {{ errorf "Unable to get remote resource %q" .Destination }}
-{{ end }}
 
 {{ else }}
-<img loading="lazy" src="{{ .Destination | safeURL }}" alt="{{ .Text }}" {{ with .Title}} title="{{ . }}" {{ end }} />
+  <img
+    loading="lazy"
+    src="{{ .Destination | safeURL }}"
+    alt="{{ .Text }}"
+    {{ with .Title }}title="{{ . }}"{{ end }}
+  />
 {{ end }}
+
+
+<!-- https://gohugo.io/functions/resources/getremote/#:~:text=New%20in-,v0.141.0,-. -->
+{{/* if lt .Hugo.Version "0.141" */}}
+{{/* else */}}
+{{/* end */}}
