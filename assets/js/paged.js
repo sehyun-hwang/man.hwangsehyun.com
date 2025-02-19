@@ -89,17 +89,30 @@ function createToc(config) {
 /* global Paged */
 console.log({ Paged, createToc });
 
-class PagedConfig {
-  auto = false;
+class Handlers extends Paged.Handler {
+  // eslint-disable-next-line class-methods-use-this
+  beforeParsed(content) {
+    console.log('beforeParsed');
+    createToc({
+      content,
+      tocElement: '#toc',
+      titleElements: ['.page-header h1', 'h1.post-title'],
+    });
+  }
+}
 
+class PagedConfig {
   constructor() {
     this.mermaidResolvers = Promise.withResolvers();
     this.buttonResolvers = Promise.withResolvers();
+    navigator.webdriver && this.buttonResolvers.resolve();
   }
 
   async before() {
+    const previewer = window.PagedPolyfill;
+    previewer.registerHandlers(Handlers);
+
     const main = document.querySelector('main');
-    console.log(this);
     await Promise.all([
       this.mermaidResolvers.promise,
       this.buttonResolvers.promise,
@@ -130,31 +143,4 @@ class PagedConfig {
 }
 
 const config = new PagedConfig();
-
-class handlers extends Paged.Handler {
-  // eslint-disable-next-line class-methods-use-this
-  beforeParsed(content) {
-    console.log('beforeParsed');
-    createToc({
-      content,
-      tocElement: '#toc',
-      titleElements: ['.page-header h1', 'h1.post-title'],
-    });
-  }
-}
-
-const previewer = new Paged.Previewer(config);
-previewer.registerHandlers(handlers);
-
-window.addEventListener('load', async () => {
-  console.log('paged.js load');
-  await config.before();
-  console.log('paged.js before');
-  await previewer.preview();
-  console.log('paged.js preview');
-  await config.after();
-  console.log('paged.js after');
-});
-
 window.PagedConfig = config;
-window.PagedPolyfill = previewer;

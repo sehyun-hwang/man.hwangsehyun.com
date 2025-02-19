@@ -4,13 +4,14 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+catalogs:
+  default:
+    typescript:
+      specifier: ~5.7.3
+      version: 5.7.3
+
 overrides:
   puppeteer: npm:empty-module@^0.0.2
-
-patchedDependencies:
-  pagedjs-cli:
-    hash: 7e9f6e839fe9ddd450d1d1c19fdda84e9752ef765b95984e3f910ed501d92f85
-    path: browser/patches/pagedjs-cli.patch
 
 importers:
 
@@ -49,7 +50,7 @@ importers:
         version: 8.1.1
       pagedjs-cli:
         specifier: ^0.4.3
-        version: 0.4.3(patch_hash=7e9f6e839fe9ddd450d1d1c19fdda84e9752ef765b95984e3f910ed501d92f85)
+        version: 0.4.3
       pdf-lib:
         specifier: ^1.17.1
         version: 1.17.1
@@ -4418,7 +4419,7 @@ snapshots:
       isstream: 0.1.2
       jsonwebtoken: 9.0.2
       mime-types: 2.1.35
-      retry-axios: 2.6.0(axios@1.6.8)
+      retry-axios: 2.6.0(axios@1.6.8(debug@4.4.0))
       tough-cookie: 4.1.4
     transitivePeerDependencies:
       - supports-color
@@ -4937,7 +4938,7 @@ snapshots:
 
   package-json-from-dist@1.0.1: {}
 
-  pagedjs-cli@0.4.3(patch_hash=7e9f6e839fe9ddd450d1d1c19fdda84e9752ef765b95984e3f910ed501d92f85):
+  pagedjs-cli@0.4.3:
     dependencies:
       commander: 11.1.0
       express: 4.19.2
@@ -5136,7 +5137,7 @@ snapshots:
       onetime: 7.0.0
       signal-exit: 4.1.0
 
-  retry-axios@2.6.0(axios@1.6.8):
+  retry-axios@2.6.0(axios@1.6.8(debug@4.4.0)):
     dependencies:
       axios: 1.6.8(debug@4.4.0)
 

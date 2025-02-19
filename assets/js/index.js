@@ -96,12 +96,11 @@ downloadButtonElement.id = 'download-menu';
 downloadButtonElement.href = pdfHref;
 downloadButtonElement.download = document.title + '.pdf';
 
-downloadButtonElement.addEventListener('click', event => {
+hugoData.env === 'development' && downloadButtonElement.addEventListener('click', event => {
   event.preventDefault();
-  window.PagedConfig
-    ? window.PagedConfig.buttonResolvers.resolve()
-    // eslint-disable-next-line import/no-unresolved
-    : import('https://cdn.jsdelivr.net/npm/pagedjs@0.4.3/dist/paged.polyfill.js');
+  window?.PagedConfig?.buttonResolvers?.resolve();
+  // eslint-disable-next-line import/no-unresolved
+  import('https://cdn.jsdelivr.net/npm/pagedjs@0.4.3/dist/paged.polyfill.js');
 });
 
 if (localStorage.getItem('download-tooltip'))

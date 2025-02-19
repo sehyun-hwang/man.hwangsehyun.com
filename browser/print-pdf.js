@@ -6,8 +6,7 @@ import Printer from 'pagedjs-cli';
 import handler from 'serve-handler';
 
 import HeadTransformStream from './lib/head-transform-stream.js';
-import PdflibMerger from './lib/pdf-lib.js';
-import listLocalPermalinks from './lib/permalink-json.js';
+// import PdflibMerger from './lib/pdf-lib.js';
 import launchBrowser from './lib/puppeteer-browser.js';
 
 const overridePaths = new Set(process.argv.slice(2));
@@ -77,44 +76,39 @@ class BrowserlessPrinter extends Printer {
       spinner.start('Processing');
     });
 
-    const { pdfDoc, outline } = await this.pdf(input, {
-      outlineTags: ['h1.post-title', 'h2'],
+    return this.pdf(input, {
+      outlineTags: ['.page-header h1', 'h1.post-title'],
     });
-    this.outlines.push(...outline);
-    return pdfDoc;
   }
 }
 
 new Promise(resolve => server.listen(0, resolve))
   .then(() => Promise.all([
-    listLocalPermalinks(server.address().port),
+    `http://localhost:${server.address().port}/all`,
     launchBrowser(),
   ]))
-  .then(async ([urls, browser]) => {
-    console.error(urls);
-    if (overridePaths.size)
-      urls = urls.filter(url => overridePaths.has(new URL(url).pathname));
-    console.error(urls);
+  .then(async ([url, browser]) => {
+    console.error(url);
     console.error(`Server to replace listening http://localhost:${server.address().port}`);
     // await new Promise(resolve => { });
     spinner.start('Loading: ');
 
-    const merger = new PdflibMerger();
-    const pdfDocs = [];
+    // const merger = new PdflibMerger();
+    // const pdfDocs = [];
 
     // eslint-disable-next-line no-restricted-syntax
-    for await (const url of urls) {
-      const printer = new BrowserlessPrinter(browser, merger.outline);
-      printer.path = url;
-      const pdfDoc = await printer.renderPdf({ url });
-      spinner.succeed('Processed');
-      pdfDocs.push(pdfDoc);
-      await merger.add(pdfDoc);
-    }
-    merger.setOutline(pdfDocs);
+    // for await (const url of urls) {
+    const printer = new BrowserlessPrinter(browser);
+    printer.path = url;
+    const pdfBuffer = await printer.renderPdf({ url });
+    spinner.succeed('Processed');
+    // pdfDocs.push(pdfDoc);
+    // await merger.add(pdfDoc);
+    // }
+    // merger.setOutline(pdfDocs);
 
     return Promise.all([
-      merger.save('/dev/stdout'),
+      process.stdout.write(pdfBuffer),
       new Promise((resolve, reject) => server.close(error => {
         error ? reject(error) : resolve();
       })),
