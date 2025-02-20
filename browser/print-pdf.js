@@ -16,6 +16,10 @@ const server = createServer((request, response) => {
       headers: [{
         key: 'Content-Length',
         value: null,
+      }, {
+        key: 'Content-Security-Policy',
+        // eslint-disable-next-line quotes
+        value: "frame-src 'none';",
       }],
     }],
   }, {
