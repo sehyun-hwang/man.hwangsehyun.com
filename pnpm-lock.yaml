@@ -3,6 +3,7 @@ lockfileVersion: '9.0'
 settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
+  injectWorkspacePackages: true
 
 catalogs:
   default:
@@ -51,12 +52,6 @@ importers:
       pagedjs-cli:
         specifier: ^0.4.3
         version: 0.4.3
-      pdf-lib:
-        specifier: ^1.17.1
-        version: 1.17.1
-      pdf-merger-js:
-        specifier: ^5.1.2
-        version: 5.1.2
       puppeteer-core:
         specifier: ^22.12.0
         version: 22.15.0
@@ -2013,11 +2008,6 @@ packages:
 
   pdf-lib@1.17.1:
     resolution: {integrity: sha512-V/mpyJAoTsN4cnP31vc0wfNA1+p20evqqnap0KLoRUN0Yk/p3wN52DOEsL4oBFcLdb76hlpKPtzJIgo67j/XLw==}
-
-  pdf-merger-js@5.1.2:
-    resolution: {integrity: sha512-RCBjLQILZ8UA4keO/Ip2/gjUuxigMMoK7mO5eJg6zjlnyymboFnRTgzKwOs/FiU9ornS2m72Qr95oARX1C24fw==}
-    engines: {node: '>=14'}
-    hasBin: true
 
   peek-readable@4.1.0:
     resolution: {integrity: sha512-ZI3LnwUv5nOGbQzD9c2iDG6toheuXSZP5esSHBjopsXH4dg19soufvpUGA3uohi5anFtGb2lhAVdHzH6R/Evvg==}
@@ -4996,11 +4986,6 @@ snapshots:
       '@pdf-lib/upng': 1.0.1
       pako: 1.0.11
       tslib: 1.14.1
-
-  pdf-merger-js@5.1.2:
-    dependencies:
-      commander: 11.1.0
-      pdf-lib: 1.17.1
 
   peek-readable@4.1.0: {}
 

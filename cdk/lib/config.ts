@@ -3,7 +3,7 @@ import type { CodeStarConnectionsSourceActionProps } from 'aws-cdk-lib/aws-codep
 
 const owner = 'sehyun-hwang';
 const repo = 'man.hwangsehyun.com';
-const branch = '31-cdk-codebuild';
+const branch = '33-pdf-refactoring-2';
 
 export const gitHubSourceProps: GitHubSourceProps = {
   identifier: 'src',
