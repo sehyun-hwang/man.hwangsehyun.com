@@ -71,17 +71,7 @@ function createToc(config) {
       tocNewLi.classList.add(`toc-${meta}`);
     });
 
-    // get the existing class
-    // Keep class of title elements
-    const classTocElement = tocElement.classList;
-    // for (var n = 0; n < classTocElement.length; n++) {
-    //   if (classTocElement[n] != 'title-element') {
-    //     tocNewLi.classList.add(classTocElement[n])
-    //   }
-    // }
-
-    // Create the element
-    tocNewLi.innerHTML = '<a href="#' + tocElement.id + '">' + tocElement.innerHTML + '</a>';
+    tocNewLi.innerHTML = `<a href="#${tocElement.id}">${tocElement.textContent}<span class="leader"></span></a>`;
     tocUl.appendChild(tocNewLi);
   });
 }
@@ -124,6 +114,7 @@ class PagedConfig {
       Array.prototype.map.call(main.querySelectorAll('img'), img => {
         if (img.complete)
           return Promise.resolve();
+        // eslint-disable-next-line no-param-reassign
         img.loading = 'eager';
         return new Promise((resolve, reject) => {
           img.addEventListener('load', resolve);

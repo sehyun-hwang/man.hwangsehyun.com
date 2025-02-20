@@ -6,11 +6,7 @@ import Printer from 'pagedjs-cli';
 import handler from 'serve-handler';
 
 import HeadTransformStream from './lib/head-transform-stream.js';
-// import PdflibMerger from './lib/pdf-lib.js';
 import launchBrowser from './lib/puppeteer-browser.js';
-
-const overridePaths = new Set(process.argv.slice(2));
-console.error({ overridePaths });
 
 const server = createServer((request, response) => {
   handler(request, response, {
@@ -26,7 +22,6 @@ const server = createServer((request, response) => {
     createReadStream(path) {
       console.error(path);
       const stream = createReadStream(path);
-      // return stream;
       if (!path.endsWith('html'))
         return stream;
       const replacedUrl = `http://localhost:${server.address().port}`;
@@ -43,21 +38,23 @@ const spinner = ora({
 });
 
 class BrowserlessPrinter extends Printer {
-  constructor(browser, outlines) {
+  constructor(browser) {
     super({
       enableWarnings: true,
       closeAfter: false,
+      styles: [
+        'https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@100..900&display=swap',
+        'data:text/css,' + encodeURIComponent('body { font-family: "Noto Sans KR", serif !important; }'),
+      ],
     });
     this.browser = browser;
-    this.outlines = outlines;
   }
 
-  async renderPdf(input) {
+  renderPdf(input) {
     // console.error(input);
     spinner.start('Loading: ');
 
     this.on('page', page => {
-      console.error(this.path);
       if (page.position === 0) {
         spinner.succeed('Loaded');
         spinner.start('Rendering: Page ' + (page.position + 1));
@@ -90,22 +87,11 @@ new Promise(resolve => server.listen(0, resolve))
   .then(async ([url, browser]) => {
     console.error(url);
     console.error(`Server to replace listening http://localhost:${server.address().port}`);
-    // await new Promise(resolve => { });
     spinner.start('Loading: ');
 
-    // const merger = new PdflibMerger();
-    // const pdfDocs = [];
-
-    // eslint-disable-next-line no-restricted-syntax
-    // for await (const url of urls) {
     const printer = new BrowserlessPrinter(browser);
-    printer.path = url;
     const pdfBuffer = await printer.renderPdf({ url });
     spinner.succeed('Processed');
-    // pdfDocs.push(pdfDoc);
-    // await merger.add(pdfDoc);
-    // }
-    // merger.setOutline(pdfDocs);
 
     return Promise.all([
       process.stdout.write(pdfBuffer),
