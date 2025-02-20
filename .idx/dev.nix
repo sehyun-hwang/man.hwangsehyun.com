@@ -1,16 +1,17 @@
 # To learn more about how to use Nix to configure your environment
 # see: https://developers.google.com/idx/guides/customize-idx-env
-{ pkgs, ... }: {
-  channel = "stable-24.05"; # "stable-23.11" or "unstable"
+{pkgs, ...}: {
+  channel = "stable-24.11"; # "stable-23.11" or "unstable"
   # Use https://search.nixos.org/packages to  find packages
-  packages = [
-    pkgs.corepack
-    pkgs.fish
-    pkgs.gitleaks
-    pkgs.gnumake
-    pkgs.hugo
-    pkgs.nodejs_20
-    pkgs.nodePackages.eslint
+  packages = with pkgs; [
+    alejandra
+    chromium
+    corepack_22
+    fish
+    gitleaks
+    gnumake
+    hugo
+    nodejs_22
   ];
   # Sets environment variables in the workspace
   env = {
@@ -25,19 +26,17 @@
       "dbaeumer.vscode-eslint"
       "esbenp.prettier-vscode"
       "jnoortheen.nix-ide"
+      "kamadorueda.alejandra"
       "tekumara.typos-vscode"
       "usernamehw.errorlens"
     ];
 
     previews = {
       enable = true;
-      previews = [
-        {
-          command = ["sh" "base-web-host.sh" "hugo" "server" "-p" "$PORT" "--liveReloadPort" "443" "--appendPort=false"];
-          manager = "web";
-          id = "web";
-        }
-      ];
+      previews.web = {
+        command = ["sh" "base-web-host.sh" "hugo" "server" "-p" "$PORT" "--liveReloadPort" "443" "--appendPort=false"];
+        manager = "web";
+      };
     };
 
     workspace = {
