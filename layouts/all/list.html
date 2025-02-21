@@ -44,7 +44,7 @@
         {{ "</section><section>" | safeHTML }}
       {{ end }}
 
-      {{ range first 3 .Pages }}
+      {{ range .Pages }}
         {{ if and (not .Params.searchHidden) (ne .Layout "archives") (ne .Layout "search") }}
           {{ .Render $layout }}
         {{ end }}
