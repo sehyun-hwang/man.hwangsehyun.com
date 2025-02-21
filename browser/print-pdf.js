@@ -6,12 +6,7 @@ import Printer from 'pagedjs-cli';
 import handler from 'serve-handler';
 
 import HeadTransformStream from './lib/head-transform-stream.js';
-import PdflibMerger from './lib/pdf-lib.js';
-import listLocalPermalinks from './lib/permalink-json.js';
 import launchBrowser from './lib/puppeteer-browser.js';
-
-const overridePaths = new Set(process.argv.slice(2));
-console.error({ overridePaths });
 
 const server = createServer((request, response) => {
   handler(request, response, {
@@ -21,13 +16,16 @@ const server = createServer((request, response) => {
       headers: [{
         key: 'Content-Length',
         value: null,
+      }, {
+        key: 'Content-Security-Policy',
+        // eslint-disable-next-line quotes
+        value: "frame-src 'none';",
       }],
     }],
   }, {
     createReadStream(path) {
       console.error(path);
       const stream = createReadStream(path);
-      // return stream;
       if (!path.endsWith('html'))
         return stream;
       const replacedUrl = `http://localhost:${server.address().port}`;
@@ -44,21 +42,23 @@ const spinner = ora({
 });
 
 class BrowserlessPrinter extends Printer {
-  constructor(browser, outlines) {
+  constructor(browser) {
     super({
       enableWarnings: true,
       closeAfter: false,
+      styles: [
+        'https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@100..900&display=swap',
+        'data:text/css,' + encodeURIComponent('body { font-family: "Noto Sans KR", serif !important; }'),
+      ],
     });
     this.browser = browser;
-    this.outlines = outlines;
   }
 
-  async renderPdf(input) {
+  renderPdf(input) {
     // console.error(input);
     spinner.start('Loading: ');
 
     this.on('page', page => {
-      console.error(this.path);
       if (page.position === 0) {
         spinner.succeed('Loaded');
         spinner.start('Rendering: Page ' + (page.position + 1));
@@ -77,44 +77,28 @@ class BrowserlessPrinter extends Printer {
       spinner.start('Processing');
     });
 
-    const { pdfDoc, outline } = await this.pdf(input, {
-      outlineTags: ['h1.post-title', 'h2'],
+    return this.pdf(input, {
+      outlineTags: ['.page-header h1', 'h1.post-title'],
     });
-    this.outlines.push(...outline);
-    return pdfDoc;
   }
 }
 
 new Promise(resolve => server.listen(0, resolve))
   .then(() => Promise.all([
-    listLocalPermalinks(server.address().port),
+    `http://localhost:${server.address().port}/all`,
     launchBrowser(),
   ]))
-  .then(async ([urls, browser]) => {
-    console.error(urls);
-    if (overridePaths.size)
-      urls = urls.filter(url => overridePaths.has(new URL(url).pathname));
-    console.error(urls);
+  .then(async ([url, browser]) => {
+    console.error(url);
     console.error(`Server to replace listening http://localhost:${server.address().port}`);
-    // await new Promise(resolve => { });
     spinner.start('Loading: ');
 
-    const merger = new PdflibMerger();
-    const pdfDocs = [];
-
-    // eslint-disable-next-line no-restricted-syntax
-    for await (const url of urls) {
-      const printer = new BrowserlessPrinter(browser, merger.outline);
-      printer.path = url;
-      const pdfDoc = await printer.renderPdf({ url });
-      spinner.succeed('Processed');
-      pdfDocs.push(pdfDoc);
-      await merger.add(pdfDoc);
-    }
-    merger.setOutline(pdfDocs);
+    const printer = new BrowserlessPrinter(browser);
+    const pdfBuffer = await printer.renderPdf({ url });
+    spinner.succeed('Processed');
 
     return Promise.all([
-      merger.save('/dev/stdout'),
+      process.stdout.write(pdfBuffer),
       new Promise((resolve, reject) => server.close(error => {
         error ? reject(error) : resolve();
       })),

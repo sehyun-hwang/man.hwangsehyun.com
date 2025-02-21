@@ -44,8 +44,6 @@ public/index.pdf: browser/print-pdf.js public/index.json | public
 
 	${DOCKER_CLI} run --rm \
 		-e DEBUG="puppeteer:*" \
-		--add-host=www.youtube.com:127.0.0.1 \
-		--add-host=app.eraser.io:127.0.0.1 \
 		-v $$PWD/public:/usr/src/app/public -v $$PWD/browser:/usr/src/app/browser:ro \
 		ghcr.io/browserless/chromium \
 		node $< ${PDF_HTML_PATHS} > $@

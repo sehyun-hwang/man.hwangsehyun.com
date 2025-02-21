@@ -89,7 +89,6 @@ const columns = [
   {
     name: "Description",
     attributes: (cell) => {
-      console.log(cell);
       return {
         class: cell ? "gridjs-td truncated" : "gridjs-th"
       };
@@ -99,6 +98,7 @@ const columns = [
 
 async function renderGridjsData(data) {
   const section = document.createElement("section");
+  section.classList.add("project-table");
   const grid = new Grid({
     resizable: false,
     autoWidth: false,
@@ -106,7 +106,6 @@ async function renderGridjsData(data) {
     columns,
     data,
     className: {
-      table: "project-table",
       tbody: "post-content"
     }
   });
@@ -220,6 +219,9 @@ const FOCUS_HANDLERS = {
 const appendGridjs = (golangTable = document.querySelector(".project-table")) =>
   renderGridjsData(buildData(golangTable))
     .then((gridjsTable) => {
+      // @TODO Wait for support
+      gridjsTable.querySelectorAll("tr")
+        .forEach((x) => x.style.breakInside = "avoid");
       golangTable.replaceWith(gridjsTable);
       const manipulator = new GridjsManipulator(gridjsTable);
       manipulator.appendInputElements(FOCUS_HANDLERS);

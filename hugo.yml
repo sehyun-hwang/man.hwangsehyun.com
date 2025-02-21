@@ -7,15 +7,10 @@ pagination:
 theme:
   - hugo-PaperMod
   - shortcodes
-
 enableInlineShortcodes: true
 enableRobotsTXT: true
 enableEmoji: true
 pygmentsUseClasses: true
-mainSections:
-  - tech
-  - posts
-  - project
 # googleAnalytics: UA-123-45
 
 minify:
@@ -172,6 +167,11 @@ params:
   #     threshold: 0.4
   #     minMatchCharLength: 0
   #     keys: ["title", "permalink", "summary", "content"]
+
+  mainSections:
+    - ""
+    - tech
+    - project
 
 markup:
   goldmark:

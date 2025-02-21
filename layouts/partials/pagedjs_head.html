@@ -1,0 +1,35 @@
+<style>
+section, article {
+  break-after: page;
+}
+
+.post-title {
+  string-set: title content(text);
+}
+
+@page {
+  @top-left {
+    content: string(title, first);
+  }
+
+  @top-right {
+    content: "Printed from {{ absURL "" }}";
+  }
+
+  @bottom-center {
+    content: "- " counter(page) " -";
+  }
+}
+
+
+</style> {{ with resources.Get "css/paged.css" | resources.Fingerprint }}
+  <link
+    rel="stylesheet"
+    href="{{ .Permalink }}"
+    integrity="{{ .Data.Integrity }}"
+  />
+{{ end }}
+
+{{ with resources.Get "js/paged.js" | js.Build (dict "minify" true) | resources.Fingerprint }}
+  <script src="{{ .Permalink }}" integrity="{{ .Data.Integrity }}"></script>
+{{ end }}
