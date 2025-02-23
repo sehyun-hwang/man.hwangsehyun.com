@@ -1,13 +1,14 @@
 #!/usr/bin/env node
+import assert from 'assert/strict';
 import { spawnSync } from 'child_process';
 import { createHash } from 'crypto';
 import { createReadStream, readFileSync } from 'fs';
-import { strict as assert } from 'node:assert';
 import { glob } from 'node:fs/promises';
 
 import * as cdk from 'aws-cdk-lib';
 import { DockerfileParser } from 'dockerfile-ast';
 
+import CloudFrontStack from '../lib/cloudfront';
 import StackEditStack from '../lib/stackedit';
 import StackEditCodePipelineStack from '../lib/stackedit-codepipeline';
 import StackEditStepFunctionsStack from '../lib/stackedit-stepfunctions';
@@ -73,14 +74,25 @@ const stackEditStack = new StackEditStack(app, 'StackEditStack', {
   nodeModulesImage,
 });
 
-const { deploymentBucket } = new StackEditStepFunctionsStack(app, 'StackEditStepFunctionsStack', {
+const { artifactsBucket, lambdaRole } = stackEditStack;
+const { deploymentBucket } = new CloudFrontStack(app, 'CloudFrontStack', {
   env,
-  ...stackEditStack.exports,
+  artifactsBucket,
+  lambdaRole,
 });
 
 // eslint-disable-next-line no-new
-new StackEditCodePipelineStack(app, 'StackEditCodePipelineStack', {
+const { pipelineBucket } = new StackEditCodePipelineStack(app, 'StackEditCodePipelineStack', {
   env,
   hugoImage: nodeModulesImage,
   deploymentBucket,
+  artifactsBucket,
+});
+
+// eslint-disable-next-line no-new
+new StackEditStepFunctionsStack(app, 'BuildConnectorStepFunctionsStack', {
+  env,
+  ...stackEditStack.exports,
+  srcBucket: artifactsBucket,
+  destBucket: pipelineBucket,
 });

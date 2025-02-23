@@ -2,7 +2,7 @@
 import { EventbridgeToStepfunctions } from '@aws-solutions-constructs/aws-eventbridge-stepfunctions';
 import { Schedule } from 'aws-cdk-lib/aws-events';
 import { PolicyStatement } from 'aws-cdk-lib/aws-iam';
-import { Bucket } from 'aws-cdk-lib/aws-s3';
+import { Bucket, type IBucket } from 'aws-cdk-lib/aws-s3';
 import {
   Choice, Condition, DefinitionBody, FieldUtils, IntegrationPattern, JsonPath, LogLevel,
   StateMachine, Succeed, type TaskStateBase,
@@ -50,7 +50,8 @@ class OverridableCodeBuildStartBuild extends CodeBuildStartBuild {
 }
 
 interface CommonTasksProps extends IStackEditStack {
-  deploymentBucket: Bucket;
+  srcBucket: Bucket;
+  destBucket: IBucket;
 }
 
 class CommonTasks extends Construct {
@@ -101,7 +102,7 @@ class CommonTasks extends Construct {
         SecondarySourcesOverride: [{
           Type: 'S3',
           Location: JsonPath.format(
-            props.artifactsBucket.bucketName + '/{}/',
+            props.srcBucket.bucketName + '/{}/',
             JsonPath.arrayGetItem(
               JsonPath.stringSplit(JsonPath.stringAt('$.Reports[0].ExecutionId'), ':'),
               6,
@@ -129,9 +130,9 @@ class CommonTasks extends Construct {
       service: 's3',
       action: 'copyObject',
       parameters: {
-        Bucket: props.deploymentBucket.bucketName,
+        Bucket: props.destBucket.bucketName,
         CopySource: JsonPath.format(
-          `/${props.artifactsBucket.bucketName}/{}/content/${CONTENT_KEY}`,
+          `/${props.srcBucket.bucketName}/{}/content/${CONTENT_KEY}`,
           JsonPath.arrayGetItem(
             JsonPath.stringSplit(JsonPath.stringAt('$.Reports[0].ExecutionId'), ':'),
             6,
@@ -140,14 +141,14 @@ class CommonTasks extends Construct {
         Key: CONTENT_KEY,
       },
       iamAction: 's3:ListBucket',
-      iamResources: [props.artifactsBucket.bucketArn, props.deploymentBucket.bucketArn],
+      iamResources: [props.srcBucket.bucketArn, props.destBucket.bucketArn],
       additionalIamStatements: [
         new PolicyStatement({
           actions: [
             's3:GetObject',
             's3:GetObjectTagging',
           ],
-          resources: [props.artifactsBucket.arnForObjects('*/' + CONTENT_KEY)],
+          resources: [props.srcBucket.arnForObjects('*/' + CONTENT_KEY)],
         }),
         new PolicyStatement({
           actions: [
@@ -155,30 +156,20 @@ class CommonTasks extends Construct {
             's3:PutObjectTagging',
             's3:PutObjectAcl',
           ],
-          resources: [props.deploymentBucket.arnForObjects(CONTENT_KEY)],
+          resources: [props.destBucket.arnForObjects(CONTENT_KEY)],
         }),
       ],
     });
   }
 }
 
-interface StackEditStepFunctionsStackProps extends cdk.StackProps, IStackEditStack { }
+interface StackEditStepFunctionsStackProps extends cdk.StackProps, CommonTasksProps { }
 
 export default class StackEditStepFunctionsStack extends cdk.Stack {
-  deploymentBucket: Bucket;
-
   constructor(scope: Construct, id: string, props: StackEditStepFunctionsStackProps) {
     super(scope, id, props);
 
-    const deploymentBucket = new Bucket(this, 'DeploymentBucket', {
-      versioned: true,
-    });
-    this.deploymentBucket = deploymentBucket;
-
-    const commonTasks = new CommonTasks(this, 'CommonTasks', {
-      deploymentBucket,
-      ...props,
-    });
+    const commonTasks = new CommonTasks(this, 'CommonTasks', props);
     const succeed = new Succeed(this, 'Succeed');
     const copyObjectChoice = new Choice(this, ' CopyObjectChoice')
       .when(Condition.stringEquals('$.Reports[0].Status', 'FAILED'), commonTasks.copyObjectTask)
@@ -207,10 +198,7 @@ export default class StackEditStepFunctionsStack extends cdk.Stack {
       },
     });
 
-    const commonTasks2 = new CommonTasks(this, 'FreshCommonTasks', {
-      deploymentBucket,
-      ...props,
-    });
+    const commonTasks2 = new CommonTasks(this, 'FreshCommonTasks', props);
     const freshTaskChain = commonTasks2.startBuildTask
       .next(commonTasks2.getReportTask)
       .next(commonTasks2.copyObjectTask);
