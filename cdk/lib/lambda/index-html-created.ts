@@ -1,7 +1,7 @@
 /* eslint-disable import/prefer-default-export */
 import { glob } from 'fs/promises';
 
-import { S3EventNotificationEventBridgeSchema } from '@aws-lambda-powertools/parser/schemas';
+import { S3Schema } from '@aws-lambda-powertools/parser/schemas';
 import type { EventBridgeEvent } from '@aws-lambda-powertools/parser/types';
 import { CopyObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import type { Context } from 'aws-lambda';
@@ -24,12 +24,14 @@ export function handler(
   context: Context,
 ) {
   console.log(eventBridgeEvent, context);
-  const event = S3EventNotificationEventBridgeSchema.parse(eventBridgeEvent);
-  const {
-    bucket: { name: bucket },
-    object: { key },
-  } = event.detail;
-  return copyObject({ bucket, key });
+  const event = S3Schema.parse(eventBridgeEvent);
+  console.log(event);
+  return Promise.all(event.Records.map(({
+    s3: {
+      bucket: { name: bucket },
+      object: { key },
+    },
+  }) => copyObject({ bucket, key })));
 }
 
 // await (async () => {

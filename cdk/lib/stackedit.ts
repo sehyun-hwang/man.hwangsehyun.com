@@ -77,8 +77,6 @@ export default class StackEditStack extends cdk.Stack {
 
   artifactsBucket: Bucket;
 
-  lambdaRole: Role;
-
   constructor(scope: Construct, id: string, props: StackEditStackProps) {
     super(scope, id, props);
 
@@ -166,13 +164,6 @@ export default class StackEditStack extends cdk.Stack {
       codeBuildProject,
       reportGroup,
     };
-
-    const lambdaRole = new Role(this, 'ServiceRole', {
-      assumedBy: new ServicePrincipal('lambda.amazonaws.com'),
-      managedPolicies: [ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole')],
-    });
-    bucket.grantReadWrite(lambdaRole);
-    this.lambdaRole = lambdaRole;
   }
 }
 

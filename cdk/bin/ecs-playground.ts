@@ -74,19 +74,21 @@ const stackEditStack = new StackEditStack(app, 'StackEditStack', {
   nodeModulesImage,
 });
 
-const { artifactsBucket, lambdaRole } = stackEditStack;
-const { deploymentBucket } = new CloudFrontStack(app, 'CloudFrontStack', {
+const devCloudFrontStack = new CloudFrontStack(app, 'CloudFrontStack-Dev', {
   env,
-  artifactsBucket,
-  lambdaRole,
+});
+const prodCloudFrontStack = new CloudFrontStack(app, 'CloudFrontStack-Prod', {
+  env,
 });
 
+const { artifactsBucket } = stackEditStack;
 // eslint-disable-next-line no-new
-const { pipelineBucket } = new StackEditCodePipelineStack(app, 'StackEditCodePipelineStack', {
+new StackEditCodePipelineStack(app, 'StackEditCodePipelineStack', {
   env,
   hugoImage: nodeModulesImage,
-  deploymentBucket,
   artifactsBucket,
+  devCloudFrontStack,
+  prodCloudFrontStack,
 });
 
 // eslint-disable-next-line no-new
@@ -94,5 +96,5 @@ new StackEditStepFunctionsStack(app, 'BuildConnectorStepFunctionsStack', {
   env,
   ...stackEditStack.exports,
   srcBucket: artifactsBucket,
-  destBucket: pipelineBucket,
+  destBucket: artifactsBucket,
 });
