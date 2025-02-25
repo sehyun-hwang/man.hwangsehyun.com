@@ -1,26 +1,22 @@
 {
-  "bin": {
-    "ecs-playground": "bin/ecs-playground.js"
-  },
   "dependencies": {
-    "@aws-lambda-powertools/parser": "^2.14.0",
+    "@aws-lambda-powertools/parser": "^2.15.0",
     "@aws-sdk/client-s3": "^3.750.0",
     "@aws-solutions-constructs/aws-cloudfront-s3": "^2.77.0",
-    "@aws-solutions-constructs/aws-eventbridge-stepfunctions": "^2.76.0",
+    "@aws-solutions-constructs/aws-eventbridge-stepfunctions": "^2.77.0",
     "@aws-solutions-constructs/aws-s3-lambda": "^2.77.0",
-    "aws-cdk-lib": "2.177.0",
-    "aws-delivlib": "^14.15.13",
-    "cdk-ecr-deployment": "3.0.154",
+    "aws-cdk-lib": "2.180.0",
+    "aws-delivlib": "^14.15.31",
+    "cdk-ecr-deployment": "3.1.9",
     "constructs": "^10.4.2",
     "dockerfile-ast": "^0.7.0"
   },
   "devDependencies": {
     "@swc-node/register": "^1.10.9",
-    "@tsconfig/node-lts": "^22.0.0",
+    "@tsconfig/node-lts": "^22.0.1",
     "@tsconfig/strictest": "^2.0.5",
     "@types/aws-lambda": "^8.10.147",
-    "@types/node": "^22.10.10",
-    "aws-cdk": "2.177.0",
+    "@types/node": "^22.13.5",
     "typescript": "catalog:"
   },
   "name": "@man-hwangsehyun-com/cdk",

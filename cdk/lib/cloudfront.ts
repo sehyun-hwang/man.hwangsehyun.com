@@ -8,7 +8,11 @@ import { CloudFrontToS3 } from '@aws-solutions-constructs/aws-cloudfront-s3';
 import { S3ToLambda } from '@aws-solutions-constructs/aws-s3-lambda';
 import { Template } from 'aws-cdk-lib/assertions';
 import { Certificate } from 'aws-cdk-lib/aws-certificatemanager';
-import { Distribution, PriceClass } from 'aws-cdk-lib/aws-cloudfront';
+import {
+  type CfnDistribution, Distribution, type DistributionProps,
+  HttpVersion,
+  PriceClass, ResponseHeadersPolicy,
+} from 'aws-cdk-lib/aws-cloudfront';
 import { Artifact } from 'aws-cdk-lib/aws-codepipeline';
 import { LayerVersion } from 'aws-cdk-lib/aws-lambda';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
@@ -25,12 +29,18 @@ const entry = fileURLToPath(import.meta.resolve('./lambda/index-html-created.ts'
 export enum CloudFrontTemplateStackParameters {
   DistributionIdParameter = 'DistributionIdParameter',
   DistributionDomainNameParameter = 'DistributionDomainNameParameter',
+  BucketArnParameter = 'BucketArnParameter',
+  PipelineExecutionIdParameter = 'PipelineExecutionIdParameter',
 }
 
 class CloudFrontTemplateStack extends cdk.Stack {
   constructor(id: string, props: cdk.StackProps) {
     super(undefined, id, props);
 
+    const bucketArnParameter = new cdk.CfnParameter(
+      this,
+      CloudFrontTemplateStackParameters.BucketArnParameter,
+    );
     const distributionIdParameter = new cdk.CfnParameter(
       this,
       CloudFrontTemplateStackParameters.DistributionIdParameter,
@@ -39,29 +49,44 @@ class CloudFrontTemplateStack extends cdk.Stack {
       this,
       CloudFrontTemplateStackParameters.DistributionDomainNameParameter,
     );
+    const pipelineExecutionIdParameter = new cdk.CfnParameter(
+      this,
+      CloudFrontTemplateStackParameters.PipelineExecutionIdParameter,
+      {
+        default: '',
+      },
+    );
 
     const distribution = Distribution.fromDistributionAttributes(this, 'Distribution', {
       distributionId: distributionIdParameter.valueAsString,
       domainName: distributionDomainNameParameter.valueAsString,
     });
-    // eslint-disable-next-line no-new
 
-    const destinationBucket = new Bucket(this, 'EmptyBucket', {
-      autoDeleteObjects: true,
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
-    });
+    // eslint-disable-next-line no-new
+    const destinationBucket = Bucket.fromBucketArn(this, 'EmptyBucket', bucketArnParameter.valueAsString);
 
     // eslint-disable-next-line no-new
     new BucketDeployment(this, 'BucketDeployment', {
       sources: [],
       destinationBucket,
       distribution,
+      prune: false,
+    });
+
+    const isPipelineExecutionIdParameterEmpty = new cdk.CfnCondition(this, 'IsPipelineExecutionIdParameterEmpty', {
+      expression: cdk.Fn.conditionNot(cdk.Fn.conditionEquals(pipelineExecutionIdParameter.valueAsString, '')),
+    });
+    // eslint-disable-next-line no-new
+    new cdk.CfnOutput(this, 'UrlOutput', {
+      value: `https://${distributionDomainNameParameter.valueAsString}/${pipelineExecutionIdParameter.valueAsString}`,
+      condition: isPipelineExecutionIdParameterEmpty,
     });
   }
 }
 
 interface CloudFrontStackProps extends cdk.StackProps {
   domainName?: string;
+  forbiddenResponsePagePath?: string;
 }
 
 export default class CloudFrontStack extends cdk.Stack {
@@ -94,7 +119,7 @@ export default class CloudFrontStack extends cdk.Stack {
       layers: [LayerVersion.fromLayerVersionArn(
         this,
         'PowerToolsLayer',
-        `arn:aws:lambda:${this.region}:094274105915:layer:AWSLambdaPowertoolsTypeScriptV2:20`,
+        `arn:aws:lambda:${this.region}:094274105915:layer:AWSLambdaPowertoolsTypeScriptV2:21`,
       )],
     });
 
@@ -119,15 +144,27 @@ export default class CloudFrontStack extends cdk.Stack {
 
     const { cloudFrontWebDistribution } = new CloudFrontToS3(this, 'CloudFrontToS3', {
       existingBucketObj: s3Bucket,
-      cloudFrontDistributionProps: {
+      cloudFrontDistributionProps: ({
         priceClass: PriceClass.PRICE_CLASS_200,
         domainNames: props.domainName ? [props.domainName] : [],
         certificate: props.domainName && certificate,
+        httpVersion: HttpVersion.HTTP2_AND_3,
         defaultRootObject: 'index.html',
-      },
+        errorResponses: props.forbiddenResponsePagePath ? [{
+          httpStatus: 403,
+          responseHttpStatus: 404,
+          responsePagePath: props.forbiddenResponsePagePath,
+        }] : [],
+      } as DistributionProps),
+      insertHttpSecurityHeaders: false,
     });
     this.domainName = props.domainName || cloudFrontWebDistribution.distributionDomainName;
     this.distribution = cloudFrontWebDistribution;
+
+    (cloudFrontWebDistribution.node.defaultChild as CfnDistribution).addPropertyOverride(
+      'DistributionConfig.DefaultCacheBehavior.ResponseHeadersPolicyId',
+      ResponseHeadersPolicy.SECURITY_HEADERS.responseHeadersPolicyId,
+    );
 
     const workdir = cdk.FileSystem.mkdtemp('s3-deployment-custom-');
     writeFileSync(

@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-import assert from 'assert/strict';
 import { spawnSync } from 'child_process';
 import { createHash } from 'crypto';
 import { createReadStream, readFileSync } from 'fs';
@@ -80,6 +79,7 @@ const devCloudFrontStack = new CloudFrontStack(app, 'CloudFrontStack-Dev', {
 const prodCloudFrontStack = new CloudFrontStack(app, 'CloudFrontStack-Prod', {
   env,
   domainName: 'man2.hwangsehyun.com',
+  forbiddenResponsePagePath: '/404.html',
 });
 
 const { artifactsBucket } = stackEditStack;

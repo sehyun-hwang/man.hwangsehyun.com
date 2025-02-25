@@ -29,6 +29,8 @@ interface StackEditCodePipelineStackProps extends cdk.StackProps {
 }
 
 export default class StackEditCodePipelineStack extends cdk.Stack {
+  pipeline: Pipeline;
+
   constructor(scope: Construct, id: string, props: StackEditCodePipelineStackProps) {
     super(scope, id, props);
     const { artifactsBucket: bucket } = props;
@@ -45,37 +47,12 @@ export default class StackEditCodePipelineStack extends cdk.Stack {
       hugoImage,
     });
 
-    const gitHubSourceAction = new CodeStarConnectionsSourceAction({
-      ...codeStarConnectionsSourceActionProps,
-      output: sourceArtifact,
-    });
-
     const trail = new Trail(this, 'CloudTrail');
     trail.addS3EventSelector([{
       bucket,
       objectPrefix: CONTENT_KEY,
     }], {
       readWriteType: ReadWriteType.WRITE_ONLY,
-    });
-
-    const buildDeploy = (stage: 'Dev' | 'Prod') => ({
-      stageName: 'Deploy' + stage,
-      actions: [new S3DeployAction({
-        actionName: 'S3DeployAction',
-        extract: true,
-        input: cloudFrontStacks[stage].publicArtifact,
-        bucket: cloudFrontStacks[stage].deploymentBucket,
-      }),
-      new CloudFormationCreateUpdateStackAction({
-        actionName: 'CloudFormationCreateUpdate',
-        stackName: this.stackName + '-CloudFormation-' + stage,
-        adminPermissions: true,
-        templatePath: templateArtifact.atPath(TEMPLATE_PATH),
-        parameterOverrides: ({
-          DistributionIdParameter: cloudFrontStacks[stage].distribution.distributionId,
-          DistributionDomainNameParameter: cloudFrontStacks[stage].domainName,
-        }),
-      })],
     });
 
     const codeBuildActionProps: Omit<CodeBuildActionProps, 'actionName'> = {
@@ -91,6 +68,33 @@ export default class StackEditCodePipelineStack extends cdk.Stack {
       PDF_HTML_PATH: BuildEnvironmentVariable;
     };
 
+    const emptyBucket = new Bucket(this, 'EmptyBucket', {
+      autoDeleteObjects: true,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+    });
+
+    const buildDeploy = (stage: 'Dev' | 'Prod') => ({
+      stageName: 'Deploy' + stage,
+      actions: [new S3DeployAction({
+        actionName: 'S3Deploy',
+        extract: true,
+        input: cloudFrontStacks[stage].publicArtifact,
+        bucket: cloudFrontStacks[stage].deploymentBucket,
+      }),
+      new CloudFormationCreateUpdateStackAction({
+        actionName: 'CloudFormationCreateUpdate',
+        stackName: this.stackName + '-CloudFormation-' + stage,
+        adminPermissions: true,
+        templatePath: templateArtifact.atPath(TEMPLATE_PATH),
+        parameterOverrides: ({
+          DistributionIdParameter: cloudFrontStacks[stage].distribution.distributionId,
+          DistributionDomainNameParameter: cloudFrontStacks[stage].domainName,
+          BucketArnParameter: emptyBucket.bucketArn,
+          ...(stage === 'Dev' ? { PipelineExecutionIdParameter: '#{codepipeline.PipelineExecutionId}' } : {}),
+        }),
+      })],
+    });
+
     this.pipeline = new Pipeline(this, 'Pipeline', {
       pipelineType: PipelineType.V2,
       artifactBucket: bucket,
@@ -98,7 +102,10 @@ export default class StackEditCodePipelineStack extends cdk.Stack {
         {
           stageName: 'Source',
           actions: [
-            gitHubSourceAction,
+            new CodeStarConnectionsSourceAction({
+              ...codeStarConnectionsSourceActionProps,
+              output: sourceArtifact,
+            }),
             new S3SourceAction({
               actionName: 'S3Source',
               bucketKey: CONTENT_KEY,
@@ -107,7 +114,7 @@ export default class StackEditCodePipelineStack extends cdk.Stack {
               trigger: S3Trigger.EVENTS,
             }),
             new S3SourceAction({
-              actionName: 'CloudFormationTemplateS3SourceAction',
+              actionName: 'CloudFormationTemplateS3Source',
               bucketKey: cloudFrontStacks.Dev.templateAsset.s3ObjectKey,
               bucket: cloudFrontStacks.Dev.templateAsset.bucket,
               output: templateArtifact,
@@ -160,7 +167,7 @@ export default class StackEditCodePipelineStack extends cdk.Stack {
         {
           stageName: 'Approval',
           actions: [new ManualApprovalAction({
-            actionName: 'ApprovalTest',
+            actionName: 'ManualApproval',
           })],
         },
         buildDeploy('Prod'),
