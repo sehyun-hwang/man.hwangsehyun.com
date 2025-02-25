@@ -1,11 +1,12 @@
 /* eslint-disable max-classes-per-file */
 import { ReadWriteType, Trail } from 'aws-cdk-lib/aws-cloudtrail';
-import { BuildEnvironmentVariableType } from 'aws-cdk-lib/aws-codebuild';
+import { type BuildEnvironmentVariable, BuildEnvironmentVariableType } from 'aws-cdk-lib/aws-codebuild';
 import { Artifact, Pipeline, PipelineType } from 'aws-cdk-lib/aws-codepipeline';
 import {
   CloudFormationCreateUpdateStackAction,
-  CodeBuildAction, CodeStarConnectionsSourceAction, ManualApprovalAction,
-  S3DeployAction, S3SourceAction, S3Trigger,
+  CodeBuildAction, type CodeBuildActionProps, CodeStarConnectionsSourceAction,
+  ManualApprovalAction, S3DeployAction, S3SourceAction,
+  S3Trigger,
 } from 'aws-cdk-lib/aws-codepipeline-actions';
 import { Bucket } from 'aws-cdk-lib/aws-s3';
 import * as cdk from 'aws-cdk-lib/core';
@@ -77,6 +78,19 @@ export default class StackEditCodePipelineStack extends cdk.Stack {
       })],
     });
 
+    const codeBuildActionProps: Omit<CodeBuildActionProps, 'actionName'> = {
+      project: pipelineProject,
+      input: sourceArtifact,
+      extraInputs: [contentArtifact],
+    };
+
+    // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+    type CodeBuildEnvironmentVariables = {
+      HUGO_BASEURL: BuildEnvironmentVariable;
+      HUGO_PUBLISHDIR: BuildEnvironmentVariable;
+      PDF_HTML_PATH: BuildEnvironmentVariable;
+    };
+
     this.pipeline = new Pipeline(this, 'Pipeline', {
       pipelineType: PipelineType.V2,
       artifactBucket: bucket,
@@ -103,23 +117,44 @@ export default class StackEditCodePipelineStack extends cdk.Stack {
         },
         {
           stageName: 'Build',
-          actions: (['Dev', 'Prod'] as const).map(stage => new CodeBuildAction({
-            actionName: 'Build' + stage,
-            project: pipelineProject,
-            input: sourceArtifact,
-            extraInputs: [contentArtifact],
-            outputs: [cloudFrontStacks[stage].publicArtifact],
+          actions: [new CodeBuildAction({
+            ...codeBuildActionProps,
+            actionName: 'BuildDev',
+            outputs: [cloudFrontStacks.Dev.publicArtifact],
             environmentVariables: {
-              BASE_URL: {
+              HUGO_BASEURL: {
                 type: BuildEnvironmentVariableType.PLAINTEXT,
-                value: 'https://' + cloudFrontStacks[stage].domainName + '$CODEBUILD_BUILD_NUMBER',
+                value: `https://${cloudFrontStacks.Dev.domainName}/#{codepipeline.PipelineExecutionId}`,
               },
-              PUBLISH_DIR: {
+              HUGO_PUBLISHDIR: {
                 type: BuildEnvironmentVariableType.PLAINTEXT,
-                value: stage === 'Dev' ? 'public/$CODEBUILD_BUILD_NUMBER' : 'public',
+                value: 'public/#{codepipeline.PipelineExecutionId}',
               },
-            },
-          })),
+              PDF_HTML_PATH: {
+                type: BuildEnvironmentVariableType.PLAINTEXT,
+                value: '/#{codepipeline.PipelineExecutionId}/all/',
+              },
+            } as CodeBuildEnvironmentVariables,
+          }),
+          new CodeBuildAction({
+            ...codeBuildActionProps,
+            actionName: 'BuildProd',
+            outputs: [cloudFrontStacks.Prod.publicArtifact],
+            environmentVariables: {
+              HUGO_BASEURL: {
+                type: BuildEnvironmentVariableType.PLAINTEXT,
+                value: 'https://' + cloudFrontStacks.Prod.domainName,
+              },
+              HUGO_PUBLISHDIR: {
+                type: BuildEnvironmentVariableType.PLAINTEXT,
+                value: 'public',
+              },
+              PDF_HTML_PATH: {
+                type: BuildEnvironmentVariableType.PLAINTEXT,
+                value: '/all/',
+              },
+            } as CodeBuildEnvironmentVariables,
+          })],
         },
         buildDeploy('Dev'),
         {

@@ -202,8 +202,8 @@ export class HugoBuildPipeline extends Construct {
         },
         build: {
           commands: [
-            `docker run --rm -v $PWD:/src -e HUGO_PARAMS_MICROCMS_KEY -e HUGO_PUBLISHDIR=$(echo '$PUBLISH_DIR' | envsubst) ${assetLocation.imageUri} build -b https://$(echo '$BASE_URL' | envsubst)`,
-            'node browser/print-pdf.js > public/index.pdf',
+            `docker run --rm -v $PWD:/src -e HUGO_PARAMS_MICROCMS_KEY -e HUGO_PUBLISHDIR ${assetLocation.imageUri} build -b $HUGO_BASEURL`,
+            'node browser/print-pdf.js $PDF_HTML_PATH > public/index.pdf',
           ],
         },
         post_build: {

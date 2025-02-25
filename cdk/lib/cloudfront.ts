@@ -7,6 +7,7 @@ import { fileURLToPath } from 'url';
 import { CloudFrontToS3 } from '@aws-solutions-constructs/aws-cloudfront-s3';
 import { S3ToLambda } from '@aws-solutions-constructs/aws-s3-lambda';
 import { Template } from 'aws-cdk-lib/assertions';
+import { Certificate } from 'aws-cdk-lib/aws-certificatemanager';
 import { Distribution, PriceClass } from 'aws-cdk-lib/aws-cloudfront';
 import { Artifact } from 'aws-cdk-lib/aws-codepipeline';
 import { LayerVersion } from 'aws-cdk-lib/aws-lambda';
@@ -110,11 +111,18 @@ export default class CloudFrontStack extends cdk.Stack {
     this.deploymentBucket = s3Bucket;
     s3Bucket.grantReadWrite(existingLambdaObj);
 
+    const certificate = Certificate.fromCertificateArn(
+      this,
+      'Certificate',
+      'arn:aws:acm:us-east-1:248837585826:certificate/486915f0-f494-4093-a0ba-5b10fcf8c663',
+    );
+
     const { cloudFrontWebDistribution } = new CloudFrontToS3(this, 'CloudFrontToS3', {
       existingBucketObj: s3Bucket,
       cloudFrontDistributionProps: {
         priceClass: PriceClass.PRICE_CLASS_200,
         domainNames: props.domainName ? [props.domainName] : [],
+        certificate: props.domainName && certificate,
         defaultRootObject: 'index.html',
       },
     });

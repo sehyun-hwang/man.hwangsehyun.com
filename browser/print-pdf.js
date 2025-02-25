@@ -8,6 +8,9 @@ import handler from 'serve-handler';
 import HeadTransformStream from './lib/head-transform-stream.js';
 import launchBrowser from './lib/puppeteer-browser.js';
 
+const BASE_PATH = process.argv[2] || '/all/';
+console.error({ BASE_PATH });
+
 const server = createServer((request, response) => {
   handler(request, response, {
     public: 'public',
@@ -30,9 +33,8 @@ const server = createServer((request, response) => {
         return stream;
       const replacedUrl = `http://localhost:${server.address().port}`;
       return stream
-        .pipe(new HeadTransformStream('defer="TO_BE_REMOVED_IN_PUPPETTER"', ''))
         .pipe(new HeadTransformStream('integrity', 'nointegrity'))
-        .pipe(new HeadTransformStream(/https:\/\/.+.(:?com|net)/g, replacedUrl));
+        .pipe(new HeadTransformStream(/https:\/\/.+.(:?hwangsehyun.com|cloudfront.net)/g, replacedUrl));
     },
   });
 });
@@ -85,7 +87,7 @@ class BrowserlessPrinter extends Printer {
 
 new Promise(resolve => server.listen(0, resolve))
   .then(() => Promise.all([
-    `http://localhost:${server.address().port}/all`,
+    `http://localhost:${server.address().port}${BASE_PATH}`,
     launchBrowser(),
   ]))
   .then(async ([url, browser]) => {
