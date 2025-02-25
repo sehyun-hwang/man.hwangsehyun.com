@@ -1,6 +1,6 @@
 /* eslint-disable max-classes-per-file */
-import type { Distribution } from 'aws-cdk-lib/aws-cloudfront';
 import { ReadWriteType, Trail } from 'aws-cdk-lib/aws-cloudtrail';
+import { BuildEnvironmentVariableType } from 'aws-cdk-lib/aws-codebuild';
 import { Artifact, Pipeline, PipelineType } from 'aws-cdk-lib/aws-codepipeline';
 import {
   CloudFormationCreateUpdateStackAction,
@@ -8,11 +8,11 @@ import {
   S3DeployAction, S3SourceAction, S3Trigger,
 } from 'aws-cdk-lib/aws-codepipeline-actions';
 import { Bucket } from 'aws-cdk-lib/aws-s3';
-import type { Asset } from 'aws-cdk-lib/aws-s3-assets';
 import * as cdk from 'aws-cdk-lib/core';
 import type { Construct } from 'constructs';
 
 import type CloudFrontStack from './cloudfront';
+import { CloudFrontTemplateStackParameters } from './cloudfront';
 import {
   codeStarConnectionsSourceActionProps, CONTENT_KEY, TEMPLATE_PATH,
 } from './config';
@@ -67,12 +67,13 @@ export default class StackEditCodePipelineStack extends cdk.Stack {
       }),
       new CloudFormationCreateUpdateStackAction({
         actionName: 'CloudFormationCreateUpdate',
-        stackName: 'MyStackName-' + stage,
+        stackName: this.stackName + '-CloudFormation-' + stage,
         adminPermissions: true,
         templatePath: templateArtifact.atPath(TEMPLATE_PATH),
-        parameterOverrides: {
-          BucketArnParameter: cloudFrontStacks[stage].deploymentBucket.bucketArn,
-        },
+        parameterOverrides: ({
+          DistributionIdParameter: cloudFrontStacks[stage].distribution.distributionId,
+          DistributionDomainNameParameter: cloudFrontStacks[stage].domainName,
+        }),
       })],
     });
 
@@ -102,21 +103,23 @@ export default class StackEditCodePipelineStack extends cdk.Stack {
         },
         {
           stageName: 'Build',
-          actions: [new CodeBuildAction({
-            actionName: 'BuildDev',
+          actions: (['Dev', 'Prod'] as const).map(stage => new CodeBuildAction({
+            actionName: 'Build' + stage,
             project: pipelineProject,
             input: sourceArtifact,
             extraInputs: [contentArtifact],
-            outputs: [cloudFrontStacks.Dev.publicArtifact],
-            environmentVariables: {},
-          }), new CodeBuildAction({
-            actionName: 'BuildProd',
-            project: pipelineProject,
-            input: sourceArtifact,
-            extraInputs: [contentArtifact],
-            outputs: [cloudFrontStacks.Prod.publicArtifact],
-            environmentVariables: {},
-          })],
+            outputs: [cloudFrontStacks[stage].publicArtifact],
+            environmentVariables: {
+              BASE_URL: {
+                type: BuildEnvironmentVariableType.PLAINTEXT,
+                value: 'https://' + cloudFrontStacks[stage].domainName + '$CODEBUILD_BUILD_NUMBER',
+              },
+              PUBLISH_DIR: {
+                type: BuildEnvironmentVariableType.PLAINTEXT,
+                value: stage === 'Dev' ? 'public/$CODEBUILD_BUILD_NUMBER' : 'public',
+              },
+            },
+          })),
         },
         buildDeploy('Dev'),
         {

@@ -9,7 +9,6 @@ import { S3ToLambda } from '@aws-solutions-constructs/aws-s3-lambda';
 import { Template } from 'aws-cdk-lib/assertions';
 import { Distribution, PriceClass } from 'aws-cdk-lib/aws-cloudfront';
 import { Artifact } from 'aws-cdk-lib/aws-codepipeline';
-import { Effect, PolicyStatement, ServicePrincipal } from 'aws-cdk-lib/aws-iam';
 import { LayerVersion } from 'aws-cdk-lib/aws-lambda';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import { Bucket, EventType } from 'aws-cdk-lib/aws-s3';
@@ -22,12 +21,23 @@ import { TEMPLATE_PATH } from './config';
 
 const entry = fileURLToPath(import.meta.resolve('./lambda/index-html-created.ts'));
 
+export enum CloudFrontTemplateStackParameters {
+  DistributionIdParameter = 'DistributionIdParameter',
+  DistributionDomainNameParameter = 'DistributionDomainNameParameter',
+}
+
 class CloudFrontTemplateStack extends cdk.Stack {
   constructor(id: string, props: cdk.StackProps) {
     super(undefined, id, props);
 
-    const distributionDomainNameParameter = new cdk.CfnParameter(this, 'DistributionDomainNameParameter');
-    const distributionIdParameter = new cdk.CfnParameter(this, 'DistributionIdParameter');
+    const distributionIdParameter = new cdk.CfnParameter(
+      this,
+      CloudFrontTemplateStackParameters.DistributionIdParameter,
+    );
+    const distributionDomainNameParameter = new cdk.CfnParameter(
+      this,
+      CloudFrontTemplateStackParameters.DistributionDomainNameParameter,
+    );
 
     const distribution = Distribution.fromDistributionAttributes(this, 'Distribution', {
       distributionId: distributionIdParameter.valueAsString,
@@ -50,6 +60,7 @@ class CloudFrontTemplateStack extends cdk.Stack {
 }
 
 interface CloudFrontStackProps extends cdk.StackProps {
+  domainName?: string;
 }
 
 export default class CloudFrontStack extends cdk.Stack {
@@ -60,6 +71,8 @@ export default class CloudFrontStack extends cdk.Stack {
   templateAsset: Asset;
 
   publicArtifact = new Artifact();
+
+  domainName: string;
 
   constructor(scope: Construct, id: string, props: CloudFrontStackProps) {
     super(scope, id, props);
@@ -101,8 +114,11 @@ export default class CloudFrontStack extends cdk.Stack {
       existingBucketObj: s3Bucket,
       cloudFrontDistributionProps: {
         priceClass: PriceClass.PRICE_CLASS_200,
+        domainNames: props.domainName ? [props.domainName] : [],
+        defaultRootObject: 'index.html',
       },
     });
+    this.domainName = props.domainName || cloudFrontWebDistribution.distributionDomainName;
     this.distribution = cloudFrontWebDistribution;
 
     const workdir = cdk.FileSystem.mkdtemp('s3-deployment-custom-');

@@ -6,7 +6,6 @@ import {
 } from 'aws-cdk-lib/aws-codebuild';
 import { type IRepository, Repository } from 'aws-cdk-lib/aws-ecr';
 import { DockerImageAsset } from 'aws-cdk-lib/aws-ecr-assets';
-import { ManagedPolicy, Role, ServicePrincipal } from 'aws-cdk-lib/aws-iam';
 import { Bucket } from 'aws-cdk-lib/aws-s3';
 import { BucketDeployment, Source as S3Source } from 'aws-cdk-lib/aws-s3-deployment';
 import { type ISecret, Secret } from 'aws-cdk-lib/aws-secretsmanager';
@@ -203,7 +202,7 @@ export class HugoBuildPipeline extends Construct {
         },
         build: {
           commands: [
-            `docker run --rm -v $PWD:/src -e HUGO_PARAMS_MICROCMS_KEY ${assetLocation.imageUri} build -b https://man.hwangsehyun.com`,
+            `docker run --rm -v $PWD:/src -e HUGO_PARAMS_MICROCMS_KEY -e HUGO_PUBLISHDIR=$(echo '$PUBLISH_DIR' | envsubst) ${assetLocation.imageUri} build -b https://$(echo '$BASE_URL' | envsubst)`,
             'node browser/print-pdf.js > public/index.pdf',
           ],
         },

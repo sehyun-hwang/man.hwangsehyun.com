@@ -32,7 +32,7 @@ const server = createServer((request, response) => {
       return stream
         .pipe(new HeadTransformStream('defer="TO_BE_REMOVED_IN_PUPPETTER"', ''))
         .pipe(new HeadTransformStream('integrity', 'nointegrity'))
-        .pipe(new HeadTransformStream('https://man.hwangsehyun.com', replacedUrl));
+        .pipe(new HeadTransformStream(/https:\/\/.+.(:?com|net)/g, replacedUrl));
     },
   });
 });
