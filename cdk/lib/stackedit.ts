@@ -150,6 +150,7 @@ export default class StackEditStack extends cdk.Stack {
       artifacts: Artifacts.s3({
         bucket,
         packageZip: false,
+        encryption: false,
       }),
     });
     buildImageAsset.repository.grantPull(codeBuildProject);
