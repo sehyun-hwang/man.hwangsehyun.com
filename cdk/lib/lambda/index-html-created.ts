@@ -12,20 +12,25 @@ function copyObject(copySource: {
   bucket: string;
   key: string;
 }) {
+  if (copySource.key === 'index.html') {
+    console.log('Skipping index.html');
+    return Promise.resolve();
+  }
+  const destinationKey = copySource.key.replace(/index\.html$/, '');
+  console.log('Copying', copySource, destinationKey);
   return s3.send(new CopyObjectCommand({
     CopySource: `${copySource.bucket}/${copySource.key}`,
     Bucket: copySource.bucket,
-    Key: copySource.key.replace(/index\.html$/, ''),
+    Key: destinationKey,
   }));
 }
 
 export function handler(
   eventBridgeEvent: EventBridgeEvent,
-  context: Context,
+  _context: Context,
 ) {
-  console.log(eventBridgeEvent, context);
   const event = S3Schema.parse(eventBridgeEvent);
-  console.log(event);
+  console.log('event', JSON.stringify(event));
   return Promise.all(event.Records.map(({
     s3: {
       bucket: { name: bucket },

@@ -85,6 +85,9 @@ importers:
       cdk-ecr-deployment:
         specifier: 3.1.9
         version: 3.1.9(aws-cdk-lib@2.180.0(constructs@10.4.2))(constructs@10.4.2)
+      cdk-monitoring-constructs:
+        specifier: ^9.2.0
+        version: 9.2.0(aws-cdk-lib@2.180.0(constructs@10.4.2))(constructs@10.4.2)
       constructs:
         specifier: ^10.4.2
         version: 10.4.2
@@ -1217,6 +1220,12 @@ packages:
     bundledDependencies:
       - got
       - hpagent
+
+  cdk-monitoring-constructs@9.2.0:
+    resolution: {integrity: sha512-KiYHEGIgClb+cWhQ9g3y2dH0pF8Z5LLP562DMPuH042TVrukhVKlrt/14WHg4lIW+5SiKWKZOPds0+8rKy8Lmg==}
+    peerDependencies:
+      aws-cdk-lib: ^2.160.0
+      constructs: ^10.0.5
 
   chalk@4.1.2:
     resolution: {integrity: sha512-oKnbhFyRIXpUuez8iBMmyEa4nbj4IOQyuhc/wy9kY7/WVPcwIO9VA668Pu8RkO7+0G76SLROeyw9CpQ061i4mA==}
@@ -4537,6 +4546,11 @@ snapshots:
       aws-cdk-lib: 2.180.0(constructs@10.4.2)
       constructs: 10.4.2
 
+  cdk-monitoring-constructs@9.2.0(aws-cdk-lib@2.180.0(constructs@10.4.2))(constructs@10.4.2):
+    dependencies:
+      aws-cdk-lib: 2.180.0(constructs@10.4.2)
+      constructs: 10.4.2
+
   chalk@4.1.2:
     dependencies:
       ansi-styles: 4.3.0
@@ -5197,7 +5211,7 @@ snapshots:
       isstream: 0.1.2
       jsonwebtoken: 9.0.2
       mime-types: 2.1.35
-      retry-axios: 2.6.0(axios@1.6.8(debug@4.4.0))
+      retry-axios: 2.6.0(axios@1.6.8)
       tough-cookie: 4.1.4
     transitivePeerDependencies:
       - supports-color
@@ -5910,7 +5924,7 @@ snapshots:
       onetime: 7.0.0
       signal-exit: 4.1.0
 
-  retry-axios@2.6.0(axios@1.6.8(debug@4.4.0)):
+  retry-axios@2.6.0(axios@1.6.8):
     dependencies:
       axios: 1.6.8(debug@4.4.0)
 

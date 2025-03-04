@@ -20,6 +20,7 @@ import { Bucket, EventType } from 'aws-cdk-lib/aws-s3';
 import { Asset } from 'aws-cdk-lib/aws-s3-assets';
 import { BucketDeployment } from 'aws-cdk-lib/aws-s3-deployment';
 import * as cdk from 'aws-cdk-lib/core';
+import { MonitoringFacade } from 'cdk-monitoring-constructs';
 import type { Construct } from 'constructs';
 
 import { TEMPLATE_PATH } from './config';
@@ -78,7 +79,7 @@ class CloudFrontTemplateStack extends cdk.Stack {
     });
     // eslint-disable-next-line no-new
     new cdk.CfnOutput(this, 'UrlOutput', {
-      value: `https://${distributionDomainNameParameter.valueAsString}/${pipelineExecutionIdParameter.valueAsString}`,
+      value: `https://${distributionDomainNameParameter.valueAsString}/${pipelineExecutionIdParameter.valueAsString}/`,
       condition: isPipelineExecutionIdParameterEmpty,
     });
   }
@@ -106,7 +107,7 @@ export default class CloudFrontStack extends cdk.Stack {
     const stack = new CloudFrontTemplateStack('CloudFrontStack', {});
     // eslint-disable-next-line no-new
 
-    const existingLambdaObj = new NodejsFunction(this, 'NodejsFunction', {
+    const lambdaFunction = new NodejsFunction(this, 'NodejsFunction', {
       entry,
       bundling: {
         minify: true,
@@ -121,12 +122,14 @@ export default class CloudFrontStack extends cdk.Stack {
         'PowerToolsLayer',
         `arn:aws:lambda:${this.region}:094274105915:layer:AWSLambdaPowertoolsTypeScriptV2:21`,
       )],
+      // @TODO Temp
+      reservedConcurrentExecutions: 10,
     });
 
     const { s3Bucket } = new S3ToLambda(this, 'S3ToLambda', {
-      existingLambdaObj,
+      existingLambdaObj: lambdaFunction,
       s3EventSourceProps: {
-        events: [EventType.OBJECT_CREATED],
+        events: [EventType.OBJECT_CREATED_PUT],
         filters: [{
           suffix: '.html',
         }],
@@ -134,7 +137,7 @@ export default class CloudFrontStack extends cdk.Stack {
     });
     assert(s3Bucket);
     this.deploymentBucket = s3Bucket;
-    s3Bucket.grantReadWrite(existingLambdaObj);
+    s3Bucket.grantReadWrite(lambdaFunction);
 
     const certificate = Certificate.fromCertificateArn(
       this,
@@ -142,7 +145,7 @@ export default class CloudFrontStack extends cdk.Stack {
       'arn:aws:acm:us-east-1:248837585826:certificate/486915f0-f494-4093-a0ba-5b10fcf8c663',
     );
 
-    const { cloudFrontWebDistribution } = new CloudFrontToS3(this, 'CloudFrontToS3', {
+    const { cloudFrontWebDistribution: distribution } = new CloudFrontToS3(this, 'CloudFrontToS3', {
       existingBucketObj: s3Bucket,
       cloudFrontDistributionProps: ({
         priceClass: PriceClass.PRICE_CLASS_200,
@@ -158,13 +161,28 @@ export default class CloudFrontStack extends cdk.Stack {
       } as DistributionProps),
       insertHttpSecurityHeaders: false,
     });
-    this.domainName = props.domainName || cloudFrontWebDistribution.distributionDomainName;
-    this.distribution = cloudFrontWebDistribution;
+    this.domainName = props.domainName || distribution.distributionDomainName;
+    this.distribution = distribution;
 
-    (cloudFrontWebDistribution.node.defaultChild as CfnDistribution).addPropertyOverride(
+    (distribution.node.defaultChild as CfnDistribution).addPropertyOverride(
       'DistributionConfig.DefaultCacheBehavior.ResponseHeadersPolicyId',
       ResponseHeadersPolicy.SECURITY_HEADERS.responseHeadersPolicyId,
     );
+
+    const monitoring = new MonitoringFacade(this, this.stackName + 'Monitoring', {
+
+    });
+    monitoring.monitorLambdaFunction({
+      lambdaFunction,
+      addFaultCountAlarm: {
+        AnyFault: {
+          maxErrorCount: 0,
+        },
+      },
+    });
+    monitoring.monitorCloudFrontDistribution({
+      distribution,
+    });
 
     const workdir = cdk.FileSystem.mkdtemp('s3-deployment-custom-');
     writeFileSync(
