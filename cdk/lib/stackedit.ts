@@ -209,7 +209,7 @@ export class HugoBuildPipeline extends Construct {
         },
         post_build: {
           commands: [
-            'ls -la public/index.pdf',
+            'ls -la $HUGO_PUBLISHDIR/index.pdf',
           ],
         },
       },
