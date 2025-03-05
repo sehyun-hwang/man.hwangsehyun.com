@@ -1,4 +1,4 @@
-{{ $career_url := absLangURL "/career" }}
+{{ $base_url := absLangURL "" }}
 {{ $headers := dict
   "X-MICROCMS-API-KEY" (or site.Params.MICROCMS_KEY site.Params.MICROCMS.KEY)
 }}
@@ -25,7 +25,7 @@
       <tr class="importance-{{ .importance }}">
         <td rowspan="2">
           <span class="importance-{{ .importance }}"></span>
-          <a href="/project/{{ .id }}/">
+          <a href="{{ $base_url }}project/{{ .id }}/">
             {{ .emoji }}
             <h3 class="name">{{ .name }}</h3>
           </a>
@@ -33,7 +33,7 @@
 
         <td>
           {{ range .belonging }}
-            <a href="{{ $career_url }}/#{{ replace . " " "" | lower }}">
+            <a href="{{ $base_url }}career/#{{ replace . " " "" | lower }}">
               <h4>@{{ . }}</h4></a
             >
           {{ end }}
