@@ -13,7 +13,7 @@ import * as cdk from 'aws-cdk-lib/core';
 import type { Construct } from 'constructs';
 
 import type CloudFrontStack from './cloudfront';
-import { CloudFrontTemplateStackParameters } from './cloudfront';
+import type { CloudFrontTemplateStackParameters } from './cloudfront';
 import {
   codeStarConnectionsSourceActionProps, CONTENT_KEY, TEMPLATE_PATH,
 } from './config';
@@ -86,12 +86,12 @@ export default class StackEditCodePipelineStack extends cdk.Stack {
         stackName: this.stackName + '-CloudFormation-' + stage,
         adminPermissions: true,
         templatePath: templateArtifact.atPath(TEMPLATE_PATH),
-        parameterOverrides: ({
+        parameterOverrides: {
           DistributionIdParameter: cloudFrontStacks[stage].distribution.distributionId,
           DistributionDomainNameParameter: cloudFrontStacks[stage].domainName,
           BucketArnParameter: emptyBucket.bucketArn,
-          ...(stage === 'Dev' ? { PipelineExecutionIdParameter: '#{codepipeline.PipelineExecutionId}' } : {}),
-        }),
+          PipelineExecutionIdParameter: '#{codepipeline.PipelineExecutionId}',
+        } as Record<CloudFrontTemplateStackParameters, string>,
       })],
     });
 

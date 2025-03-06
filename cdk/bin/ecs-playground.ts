@@ -78,7 +78,7 @@ const devCloudFrontStack = new CloudFrontStack(app, 'CloudFrontStack-Dev', {
 });
 const prodCloudFrontStack = new CloudFrontStack(app, 'CloudFrontStack-Prod', {
   env,
-  domainName: 'man2.hwangsehyun.com',
+  domainName: 'man.hwangsehyun.com',
   forbiddenResponsePagePath: '/404.html',
 });
 

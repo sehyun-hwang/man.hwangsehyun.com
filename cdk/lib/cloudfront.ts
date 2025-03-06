@@ -14,11 +14,12 @@ import {
   PriceClass, ResponseHeadersPolicy,
 } from 'aws-cdk-lib/aws-cloudfront';
 import { Artifact } from 'aws-cdk-lib/aws-codepipeline';
+import { ManagedPolicy, Role, ServicePrincipal } from 'aws-cdk-lib/aws-iam';
 import { LayerVersion } from 'aws-cdk-lib/aws-lambda';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import { Bucket, EventType } from 'aws-cdk-lib/aws-s3';
 import { Asset } from 'aws-cdk-lib/aws-s3-assets';
-import { BucketDeployment } from 'aws-cdk-lib/aws-s3-deployment';
+import { BucketDeployment, type ISource, Source } from 'aws-cdk-lib/aws-s3-deployment';
 import * as cdk from 'aws-cdk-lib/core';
 import { MonitoringFacade } from 'cdk-monitoring-constructs';
 import type { Construct } from 'constructs';
@@ -35,6 +36,8 @@ export enum CloudFrontTemplateStackParameters {
 }
 
 class CloudFrontTemplateStack extends cdk.Stack {
+  source: ISource;
+
   constructor(id: string, props: cdk.StackProps) {
     super(undefined, id, props);
 
@@ -53,9 +56,6 @@ class CloudFrontTemplateStack extends cdk.Stack {
     const pipelineExecutionIdParameter = new cdk.CfnParameter(
       this,
       CloudFrontTemplateStackParameters.PipelineExecutionIdParameter,
-      {
-        default: '',
-      },
     );
 
     const distribution = Distribution.fromDistributionAttributes(this, 'Distribution', {
@@ -66,21 +66,43 @@ class CloudFrontTemplateStack extends cdk.Stack {
     // eslint-disable-next-line no-new
     const destinationBucket = Bucket.fromBucketArn(this, 'EmptyBucket', bucketArnParameter.valueAsString);
 
+    const source = Source.jsonData(
+      'cache-buster.json',
+      Object.fromEntries([
+        bucketArnParameter,
+        distributionIdParameter,
+        distributionDomainNameParameter,
+        pipelineExecutionIdParameter,
+      ]
+        .map(({ logicalId, valueAsString }) => [logicalId, valueAsString])),
+    );
+    this.source = source;
+
     // eslint-disable-next-line no-new
     new BucketDeployment(this, 'BucketDeployment', {
-      sources: [],
+      sources: [source],
       destinationBucket,
       distribution,
       prune: false,
     });
 
-    const isPipelineExecutionIdParameterEmpty = new cdk.CfnCondition(this, 'IsPipelineExecutionIdParameterEmpty', {
-      expression: cdk.Fn.conditionNot(cdk.Fn.conditionEquals(pipelineExecutionIdParameter.valueAsString, '')),
+    const split = cdk.Fn.split('.', distributionDomainNameParameter.valueAsString, 3) as [string, string, string];
+    const isDomainCloudFront = cdk.Fn.conditionEquals(cdk.Fn.join('.', [split[1], split[2]]), 'cloudfront.net');
+    const isDomainCloudFrontCondition = new cdk.CfnCondition(this, 'IsDomainCloudFrontCondition', {
+      expression: isDomainCloudFront,
+    });
+    const isDomainNotCloudFrontCondition = new cdk.CfnCondition(this, 'IsPipelineExecutionIdParameterNotEmpty', {
+      expression: cdk.Fn.conditionNot(isDomainCloudFront),
     });
     // eslint-disable-next-line no-new
     new cdk.CfnOutput(this, 'UrlOutput', {
       value: `https://${distributionDomainNameParameter.valueAsString}/${pipelineExecutionIdParameter.valueAsString}/`,
-      condition: isPipelineExecutionIdParameterEmpty,
+      condition: isDomainCloudFrontCondition,
+    });
+    // eslint-disable-next-line no-new
+    new cdk.CfnOutput(this, 'OriginOutput', {
+      value: 'https://' + distributionDomainNameParameter.valueAsString,
+      condition: isDomainNotCloudFrontCondition,
     });
   }
 }
@@ -189,6 +211,15 @@ export default class CloudFrontStack extends cdk.Stack {
       join(workdir, TEMPLATE_PATH),
       JSON.stringify(Template.fromStack(stack).toJSON()),
     );
+
+    const handlerRole = new Role(this, 'PlaceholderRole', {
+      assumedBy: new ServicePrincipal('lambda.amazonaws.com'),
+      managedPolicies: [ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole')],
+    });
+    stack.source.bind(this, {
+      handlerRole,
+    });
+
     // eslint-disable-next-line no-new
     this.templateAsset = new Asset(this, 'TemplateAsset', {
       path: workdir,
