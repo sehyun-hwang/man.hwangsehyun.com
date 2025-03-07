@@ -9,15 +9,18 @@ section, article {
 
 @page {
   @top-left {
+    font-size: 1rem;
     content: string(title, first);
   }
 
-  @top-right {
+  @bottom-left {
+    font-size: 1rem;
     content: "Printed from {{ absURL "" }}";
   }
 
-  @bottom-center {
-    content: "- " counter(page) " -";
+  @bottom-right {
+    font-size: 1rem;
+    content: counter(page);
   }
 }
 

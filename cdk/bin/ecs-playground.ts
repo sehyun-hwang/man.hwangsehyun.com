@@ -2,12 +2,12 @@
 import { spawnSync } from 'child_process';
 import { createHash } from 'crypto';
 import { createReadStream, readFileSync } from 'fs';
-import { strict as assert } from 'node:assert';
 import { glob } from 'node:fs/promises';
 
 import * as cdk from 'aws-cdk-lib';
 import { DockerfileParser } from 'dockerfile-ast';
 
+import CloudFrontStack from '../lib/cloudfront';
 import StackEditStack from '../lib/stackedit';
 import StackEditCodePipelineStack from '../lib/stackedit-codepipeline';
 import StackEditStepFunctionsStack from '../lib/stackedit-stepfunctions';
@@ -73,14 +73,29 @@ const stackEditStack = new StackEditStack(app, 'StackEditStack', {
   nodeModulesImage,
 });
 
-const { deploymentBucket } = new StackEditStepFunctionsStack(app, 'StackEditStepFunctionsStack', {
+const devCloudFrontStack = new CloudFrontStack(app, 'CloudFrontStack-Dev', {
   env,
-  ...stackEditStack.exports,
+});
+const prodCloudFrontStack = new CloudFrontStack(app, 'CloudFrontStack-Prod', {
+  env,
+  domainName: 'man.hwangsehyun.com',
+  forbiddenResponsePagePath: '/404.html',
 });
 
+const { artifactsBucket } = stackEditStack;
 // eslint-disable-next-line no-new
 new StackEditCodePipelineStack(app, 'StackEditCodePipelineStack', {
   env,
   hugoImage: nodeModulesImage,
-  deploymentBucket,
+  artifactsBucket,
+  devCloudFrontStack,
+  prodCloudFrontStack,
+});
+
+// eslint-disable-next-line no-new
+new StackEditStepFunctionsStack(app, 'BuildConnectorStepFunctionsStack', {
+  env,
+  ...stackEditStack.exports,
+  srcBucket: artifactsBucket,
+  destBucket: artifactsBucket,
 });

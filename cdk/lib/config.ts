@@ -3,7 +3,7 @@ import type { CodeStarConnectionsSourceActionProps } from 'aws-cdk-lib/aws-codep
 
 const owner = 'sehyun-hwang';
 const repo = 'man.hwangsehyun.com';
-const branch = '33-pdf-refactoring-2';
+const branch = '35-full-ci-cd';
 
 export const gitHubSourceProps: GitHubSourceProps = {
   identifier: 'src',
@@ -22,5 +22,6 @@ export const codeStarConnectionsSourceActionProps: Omit<CodeStarConnectionsSourc
 } as const;
 
 export const CONTENT_KEY = 'content.zip';
+export const TEMPLATE_PATH = 'template.json';
 
 export const SECRET_ARN = 'arn:aws:secretsmanager:ap-northeast-1:248837585826:secret:man.hwangsehyun.com-Wk9Cto';

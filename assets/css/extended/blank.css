@@ -58,6 +58,15 @@ body {
   padding: unset;
 }
 
+.post-content h1,
+.post-content h2,
+.post-content h3,
+.post-content h4,
+.post-content h5,
+.post-content h6 {
+  font-size: revert;
+}
+
 .post-content p {
   text-indent: 1rem;
 }
@@ -120,6 +129,7 @@ a[href$="#download"],
   margin-left: -5px;
   content: " ";
 }
+
 /* pdf download end */
 
 /* home start */
@@ -169,4 +179,5 @@ a[href$="#download"],
 .home-info + hr {
   margin-bottom: var(--gap);
 }
+
 /* home end */

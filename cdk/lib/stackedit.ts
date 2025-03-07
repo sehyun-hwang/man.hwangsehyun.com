@@ -15,7 +15,7 @@ import { Construct } from 'constructs';
 
 import { gitHubSourceProps, SECRET_ARN } from './config';
 
-export const CONTENT_CACHE_IDENTIFIER = 'content_cache';
+const CONTENT_CACHE_IDENTIFIER = 'content_cache';
 
 interface UpdatedEnvStruct extends EnvStruct {
   'secrets-manager'?: Record<string, string>;
@@ -38,7 +38,7 @@ function generateGuardedBuildSpec(
   })
     .merge(delivlibBuildSpec).render();
   buildspecStruct.env ??= {};
-  const { env } = buildspecStruct as { env: UpdatedEnvStruct };
+  const { env } = buildspecStruct as { env: UpdatedEnvStruct; };
   env['secrets-manager'] ??= {};
   const secretsManagerEnv = env['secrets-manager'];
 
@@ -67,13 +67,14 @@ interface StackEditStackProps extends cdk.StackProps {
 }
 
 export interface IStackEditStack {
-  artifactsBucket: Bucket;
   codeBuildProject: Project;
   reportGroup: ReportGroup;
 }
 
 export default class StackEditStack extends cdk.Stack {
   exports: IStackEditStack;
+
+  artifactsBucket: Bucket;
 
   constructor(scope: Construct, id: string, props: StackEditStackProps) {
     super(scope, id, props);
@@ -86,8 +87,11 @@ export default class StackEditStack extends cdk.Stack {
     });
     const buildImage = new EcrLinuxArmLambdaBuildImage(buildImageAsset);
 
-    const bucket = new Bucket(this, 'ArtifactBucket');
-    const bucketDeployment = new BucketDeployment(this, 'EmptyCache', {
+    const bucket = new Bucket(this, 'ArtifactBucket', {
+      versioned: true,
+    });
+    // eslint-disable-next-line no-new
+    new BucketDeployment(this, 'EmptyCache', {
       destinationBucket: bucket,
       destinationKeyPrefix: 'empty/content',
       sources: [S3Source.data('placeholder.txt', '')],
@@ -102,7 +106,7 @@ export default class StackEditStack extends cdk.Stack {
         pre_build: {
           commands: [
             'ln -sv /cofa_lambda_docker_build/stackedit-prod/node_modules src/node_modules',
-            'cp -rv $CODEBUILD_SRC_DIR_content_cache/content ./',
+            `cp -rv $CODEBUILD_SRC_DIR_${CONTENT_CACHE_IDENTIFIER}/content ./`,
           ],
         },
         build: {
@@ -113,7 +117,7 @@ export default class StackEditStack extends cdk.Stack {
         post_build: {
           commands: [
             'cp -v config/_default/module.json content/',
-            'zip -rv -x=content/content.zip -x="*.md.gz" content/content.zip content',
+            'zip -FSrv -x=content/content.zip -x="*.md.gz" content/content.zip content',
           ],
         },
       },
@@ -131,14 +135,14 @@ export default class StackEditStack extends cdk.Stack {
       },
     }));
 
-    const codebuildProject = new Project(this, 'Project', {
+    const codeBuildProject = new Project(this, 'Project', {
       environment: {
         buildImage,
         computeType: ComputeType.LAMBDA_1GB,
       },
       source: Source.gitHub(gitHubSourceProps),
       secondarySources: [Source.s3({
-        identifier: 'content_cache',
+        identifier: CONTENT_CACHE_IDENTIFIER,
         bucket,
         path: 'empty/',
       })],
@@ -146,17 +150,18 @@ export default class StackEditStack extends cdk.Stack {
       artifacts: Artifacts.s3({
         bucket,
         packageZip: false,
+        encryption: false,
       }),
     });
-    buildImageAsset.repository.grantPull(codebuildProject);
-    secret.grantRead(codebuildProject);
-    reportGroup.grantWrite(codebuildProject);
+    buildImageAsset.repository.grantPull(codeBuildProject);
+    secret.grantRead(codeBuildProject);
+    reportGroup.grantWrite(codeBuildProject);
 
-    (codebuildProject.node.defaultChild as CfnProject).addPropertyOverride('Environment.ImagePullCredentialsType', ImagePullPrincipalType.SERVICE_ROLE);
+    (codeBuildProject.node.defaultChild as CfnProject).addPropertyOverride('Environment.ImagePullCredentialsType', ImagePullPrincipalType.SERVICE_ROLE);
 
+    this.artifactsBucket = bucket;
     this.exports = {
-      artifactsBucket: bucket,
-      codeBuildProject: codebuildProject,
+      codeBuildProject,
       reportGroup,
     };
   }
@@ -193,21 +198,34 @@ export class HugoBuildPipeline extends Construct {
             'mkdir -p config/_default && mv -v content/module.json config/_default/',
 
             'git submodule update --init',
-            `docker pull ${assetLocation.imageUri}`,
+            `docker cp $(docker create ${assetLocation.imageUri}):/mnt/browser-prod/node_modules browser/node_modules`,
           ],
         },
         build: {
           commands: [
-            `docker run --rm -v $PWD:/src -e HUGO_PARAMS_MICROCMS_KEY ${assetLocation.imageUri} build -b https://man.hwangsehyun.com`,
-            'ls -la public/index.json',
+            `docker run --rm -v $PWD:/src -e HUGO_PARAMS_MICROCMS_KEY -e HUGO_PUBLISHDIR ${assetLocation.imageUri} build -b $HUGO_BASEURL`,
+            'node browser/print-pdf.js $PDF_HTML_PATH > $HUGO_PUBLISHDIR/index.pdf',
           ],
         },
+        post_build: {
+          commands: [
+            'ls -la $HUGO_PUBLISHDIR/index.pdf',
+          ],
+        },
+      },
+      artifacts: {
+        name: 'public',
+        'base-directory': 'public',
+        files: ['**/*'],
       },
     }));
 
     const pipelineProject = new PipelineProject(this, 'HugoBuildPipelineProject', {
       cache: Cache.local(LocalCacheMode.DOCKER_LAYER),
       buildSpec,
+      environment: {
+        computeType: ComputeType.LARGE,
+      },
     });
     secret.grantRead(pipelineProject);
     cdkAssetRepository.grantPull(pipelineProject);
