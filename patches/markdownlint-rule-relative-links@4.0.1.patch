@@ -1,0 +1,225 @@
+diff --git a/src/index.js b/src/index.js
+index 60f8d6797193346ca38e953b685934fa96e6e494..4b757c2bb117a4c30056f54fb3c76fc97aeaa097 100644
+--- a/src/index.js
++++ b/src/index.js
+@@ -1,7 +1,7 @@
+-import { pathToFileURL } from "node:url"
+-import fs from "node:fs"
++import { pathToFileURL } from "node:url";
++import fs from "node:fs";
+ 
+-import { filterTokens } from "./markdownlint-rule-helpers/helpers.js"
++import { filterTokens } from "./markdownlint-rule-helpers/helpers.js";
+ import {
+   convertHeadingToHTMLFragment,
+   getMarkdownHeadings,
+@@ -10,7 +10,7 @@ import {
+   getNumberOfLines,
+   getLineNumberStringFromFragment,
+   lineFragmentRe,
+-} from "./utils.js"
++} from "./utils.js";
+ 
+ /** @typedef {import('markdownlint').Rule} MarkdownLintRule */
+ 
+@@ -24,18 +24,18 @@ const relativeLinksRule = {
+   parser: "markdownit",
+   function: (params, onError) => {
+     filterTokens(params, "inline", (token) => {
+-      const children = token.children ?? []
++      const children = token.children ?? [];
+       for (const child of children) {
+-        const { type, attrs, lineNumber } = child
++        const { type, attrs, lineNumber } = child;
+ 
+         /** @type {string | undefined} */
+-        let hrefSrc
++        let hrefSrc;
+ 
+         if (type === "link_open") {
+           for (const attr of attrs) {
+             if (attr[0] === "href") {
+-              hrefSrc = attr[1]
+-              break
++              hrefSrc = attr[1];
++              break;
+             }
+           }
+         }
+@@ -43,34 +43,36 @@ const relativeLinksRule = {
+         if (type === "image") {
+           for (const attr of attrs) {
+             if (attr[0] === "src") {
+-              hrefSrc = attr[1]
+-              break
++              hrefSrc = attr[1];
++              break;
+             }
+           }
+         }
+ 
+         if (hrefSrc == null) {
+-          continue
++          continue;
+         }
+ 
+-        const url = new URL(hrefSrc, pathToFileURL(params.name))
++        const absUrl = new URL(hrefSrc.replace('/', ''), pathToFileURL(params.config.base));
++        absUrl.pathname += 'index.html';
++        const url = hrefSrc.startsWith("/") ? absUrl : new URL(hrefSrc, pathToFileURL(params.name));
+         const isRelative =
+           url.protocol === "file:" &&
+-          !hrefSrc.startsWith("/") &&
+-          !hrefSrc.startsWith("#")
++          // !hrefSrc.startsWith("/") &&
++          !hrefSrc.startsWith("#");
+ 
+         if (!isRelative) {
+-          continue
++          continue;
+         }
+ 
+-        const detail = `"${hrefSrc}"`
++        const detail = `"${url.href}"`;
+ 
+         if (!fs.existsSync(url)) {
+           onError({
+             lineNumber,
+             detail: `${detail} should exist in the file system`,
+-          })
+-          continue
++          });
++          continue;
+         }
+ 
+         if (url.hash.length <= 0) {
+@@ -79,95 +81,95 @@ const relativeLinksRule = {
+               onError({
+                 lineNumber,
+                 detail: `${detail} should not have a fragment identifier as it is an image`,
+-              })
+-              continue
++              });
++              continue;
+             }
+ 
+             onError({
+               lineNumber,
+               detail: `${detail} should have a valid fragment identifier`,
+-            })
+-            continue
++            });
++            continue;
+           }
+-          continue
++          continue;
+         }
+ 
+         if (type === "image") {
+           onError({
+             lineNumber,
+             detail: `${detail} should not have a fragment identifier as it is an image`,
+-          })
+-          continue
++          });
++          continue;
+         }
+ 
+         if (!url.pathname.endsWith(".md")) {
+-          continue
++          continue;
+         }
+ 
+-        const fileContent = fs.readFileSync(url, { encoding: "utf8" })
+-        const headings = getMarkdownHeadings(fileContent)
++        const fileContent = fs.readFileSync(url, { encoding: "utf8" });
++        const headings = getMarkdownHeadings(fileContent);
+         const idOrAnchorNameHTMLFragments =
+-          getMarkdownIdOrAnchorNameFragments(fileContent)
++          getMarkdownIdOrAnchorNameFragments(fileContent);
+ 
+         /** @type {Map<string, number>} */
+-        const fragments = new Map()
++        const fragments = new Map();
+ 
+         const fragmentsHTML = headings.map((heading) => {
+-          const fragment = convertHeadingToHTMLFragment(heading)
+-          const count = fragments.get(fragment) ?? 0
+-          fragments.set(fragment, count + 1)
++          const fragment = convertHeadingToHTMLFragment(heading);
++          const count = fragments.get(fragment) ?? 0;
++          fragments.set(fragment, count + 1);
+           if (count !== 0) {
+-            return `${fragment}-${count}`
++            return `${fragment}-${count}`;
+           }
+-          return fragment
+-        })
++          return fragment;
++        });
+ 
+-        fragmentsHTML.push(...idOrAnchorNameHTMLFragments)
++        fragmentsHTML.push(...idOrAnchorNameHTMLFragments);
+ 
+         if (!fragmentsHTML.includes(url.hash)) {
+           if (url.hash.startsWith("#L")) {
+             const lineNumberFragmentString = getLineNumberStringFromFragment(
+               url.hash,
+-            )
++            );
+ 
+-            const hasOnlyDigits = isValidIntegerString(lineNumberFragmentString)
++            const hasOnlyDigits = isValidIntegerString(lineNumberFragmentString);
+             if (!hasOnlyDigits) {
+               if (lineFragmentRe.test(url.hash)) {
+-                continue
++                continue;
+               }
+ 
+               onError({
+                 lineNumber,
+                 detail: `${detail} should have a valid fragment identifier`,
+-              })
+-              continue
++              });
++              continue;
+             }
+ 
+             const lineNumberFragment = Number.parseInt(
+               lineNumberFragmentString,
+               10,
+-            )
+-            const numberOfLines = getNumberOfLines(fileContent)
++            );
++            const numberOfLines = getNumberOfLines(fileContent);
+             if (lineNumberFragment > numberOfLines) {
+               onError({
+                 lineNumber,
+                 detail: `${detail} should have a valid fragment identifier, ${detail} should have at least ${lineNumberFragment} lines to be valid`,
+-              })
+-              continue
++              });
++              continue;
+             }
+ 
+-            continue
++            continue;
+           }
+ 
+           onError({
+             lineNumber,
+             detail: `${detail} should have a valid fragment identifier`,
+-          })
+-          continue
++          });
++          continue;
+         }
+       }
+-    })
++    });
+   },
+-}
++};
+ 
+-export default relativeLinksRule
++export default relativeLinksRule;

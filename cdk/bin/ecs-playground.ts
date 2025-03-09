@@ -22,14 +22,16 @@ async function buildNodeModulesImage() {
       ? [] : x.getArguments()))
     .map(x => x.getValue())
     .slice(0, -1);
-  assetPaths.push('../Dockerfile');
+  assetPaths.push('Dockerfile');
 
   const hash = createHash('md5');
-
   // eslint-disable-next-line no-restricted-syntax
-  for await (const assetPath of glob(assetPaths)) {
+  for await (const assetPath of glob(assetPaths, {
+    cwd: '../',
+  })) {
+    console.log(assetPath);
     hash.update(assetPath);
-    const stream = createReadStream(assetPath);
+    const stream = createReadStream('../' + assetPath);
     stream.on('data', chunk => hash.update(chunk));
 
     await new Promise<void>((resolve, reject) => {

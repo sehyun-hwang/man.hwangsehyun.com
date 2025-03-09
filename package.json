@@ -2,11 +2,13 @@
   "devDependencies": {
     "globals": "^15.7.0",
     "markdownlint-cli2": "^0.13.0",
+    "markdownlint-cli2-formatter-junit": "^0.0.12",
+    "markdownlint-rule-relative-links": "^4.0.1",
     "prettier-plugin-go-template": "^0.0.15"
   },
   "pnpm": {
-    "overrides": {
-      "puppeteer": "npm:empty-module@^0.0.2"
+    "patchedDependencies": {
+      "markdownlint-rule-relative-links@4.0.1": "patches/markdownlint-rule-relative-links@4.0.1.patch"
     }
   },
   "scripts": {

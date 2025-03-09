@@ -2,7 +2,7 @@
 FROM --platform=${BUILDPLATFORM} node:22-alpine AS pnpm
 
 WORKDIR /mnt
-COPY --parents package.json .npmrc pnpm-*.yaml assets/package.json browser/package.json browser/patches/*.patch src/package.json /mnt/
+COPY --parents package.json .npmrc pnpm-*.yaml patches/*.patch assets/package.json browser/package.json src/package.json /mnt/
 
 RUN corepack enable \
   && pnpm config set store-dir "$PWD/pnpm-store" \

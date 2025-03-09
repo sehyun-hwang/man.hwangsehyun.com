@@ -100,7 +100,7 @@ export function parseFrontMatters(strings) {
       })));
 }
 
-const STATIC_FRONTEND_PARSER_RULE = new FrontMatterParserRule();
+export const STATIC_FRONTEND_PARSER_RULE = new FrontMatterParserRule();
 
 /**
  * @param {string | {[key: string]: string}} markdown
