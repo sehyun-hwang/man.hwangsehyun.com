@@ -192,5 +192,12 @@ services:
   twitter:
     disableInlineCSS: true
 
+security:
+  node:
+    permissions:
+      allowRead:
+        - .
+        - /mnt/node_modules
+
 ignoreFiles:
   - \.generated.md.gz$
