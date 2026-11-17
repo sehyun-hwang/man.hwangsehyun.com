@@ -1,4 +1,5 @@
 node_modules/
+.venv/
 
 content/**/*.generated.md
 content/**/*.generated.md.gz

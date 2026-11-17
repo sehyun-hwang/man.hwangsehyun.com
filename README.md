@@ -17,7 +17,7 @@
 
 - [Hugo](https://gohugo.io/) 0.170.0 or later, with image-processing support
 - Node.js 26.13.1 LTS and pnpm 12.21.0, pinned in `package.json`
-- Python 3.11 or later and Poetry 2 for the deployment helper
+- Python 3.11 or later and uv 0.11.21 for the deployment helper
 - Docker for the pinned Hugo toolchain image, Chrome/Chromium for screenshots and PDFs
 - Existing globally managed `nextlab-eslint` and a CDK CLI compatible with the installed CDK library. CDK synthesis was validated with CLI 2.1148.1.
 
@@ -25,7 +25,7 @@
 
   ```sh
   pnpm install --frozen-lockfile
-  poetry install
+  uv sync --locked
   ```
 
 The workspace retains a 24-hour minimum package release age. Lifecycle scripts are explicitly allowed for esbuild; legacy core-js and es5-ext install scripts are disabled. Older transitive dependencies from Paged.js remain until upstream releases replace them.
