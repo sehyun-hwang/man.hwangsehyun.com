@@ -9,6 +9,7 @@ import StackEditDomData from './dom-data.js';
 import StackEditDomModel from './dom-model.js';
 import FileSynchronizer from './file-sync.js';
 import { insertFrontMatterDocs, processFrontMatters } from './frontmatter.js';
+import { prepareHugoContent } from './hugo-content.js';
 import StackEditPath from './path.js';
 import buildTestSuite from './report.js';
 
@@ -19,10 +20,7 @@ const staticCloudant = new Cloudant4Hugo({
 /**
  * @param {Cloudant4Hugo} cloudant
  * @param {DatabaseWritable} database
- * @param {{
- *   id: string,
- *   doc: { contentId: string },
- * }[] | null} frontMatterDocsArg
+ * @param {import('./markdownlint.js').FrontMatterDoc[] | null} frontMatterDocsArg
  * @returns {Promise<import('./changes.js').StackEditDomModelParams>}
  */
 async function run(cloudant, database, frontMatterDocsArg = null) {
@@ -70,6 +68,7 @@ async function run(cloudant, database, frontMatterDocsArg = null) {
   const downloadCandidatePaths = Array.from(synchronizer.generateDownloadCandidates());
   downloadCandidatePaths.length
     && await cloudant.downloadMarkdownsBatch(downloadCandidatePaths);
+  await prepareHugoContent();
 
   reportBuilder.writeTo('public/junit.xml');
 
@@ -80,6 +79,7 @@ async function run(cloudant, database, frontMatterDocsArg = null) {
     database,
     domModel,
     frontmatterDocs,
+    run: run.bind(undefined, cloudant),
   };
 }
 
@@ -89,7 +89,6 @@ async function run(cloudant, database, frontMatterDocsArg = null) {
   const database = await cloudant.buildDatabase(new DatabaseWritable());
 
   const changesWritableParams = await run(cloudant, database);
-  changesWritableParams.run = run.bind(undefined, cloudant);
   process.env.CI
     || process.env.CODEBUILD_BUILD_ARN
     || await cloudant.followChanges(new ChangesWritable(changesWritableParams));

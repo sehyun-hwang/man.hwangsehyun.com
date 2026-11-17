@@ -1,5 +1,5 @@
 {
-  "app": "node --import @swc-node/register/esm-register bin/ecs-playground.ts",
+  "app": "node --import tsx bin/ecs-playground.ts",
   "watch": {
     "include": [
       "**"

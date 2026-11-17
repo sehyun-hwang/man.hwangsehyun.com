@@ -9,21 +9,8 @@ import { glob } from 'glob';
 export const HUGO_CONTENT_DIR = 'content';
 
 export default class StackEditPath {
-  /**
-   * @type string[]
-   */
-  names;
-
-  /**
-   * @type string
-   */
-  _etag;
-
-  /**
-   * @type string
-   */
-  contentId;
-
+  /** @type {string} */
+  _etag = '';
   set etag(etag) {
     this._etag = etag;
     this.digest = Buffer.from(etag, 'base64').toString('hex');
@@ -41,7 +28,9 @@ export default class StackEditPath {
    * }} arg
    */
   constructor(arg) {
-    Object.assign(this, arg);
+    this.names = arg.names;
+    this.etag = arg.etag;
+    this.contentId = arg.contentId;
   }
 
   get markdownPath() {

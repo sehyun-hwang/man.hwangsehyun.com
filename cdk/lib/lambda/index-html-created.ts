@@ -1,6 +1,4 @@
 /* eslint-disable import/prefer-default-export */
-import { glob } from 'fs/promises';
-
 import { S3Schema } from '@aws-lambda-powertools/parser/schemas';
 import type { EventBridgeEvent } from '@aws-lambda-powertools/parser/types';
 import { CopyObjectCommand, S3Client } from '@aws-sdk/client-s3';

@@ -5,4 +5,14 @@ packages:
   - src
 
 catalog:
-  typescript: ~5.7.3
+  typescript: ~7.0.2
+
+overrides:
+  puppeteer: npm:empty-module@^0.0.2
+
+minimumReleaseAge: 1440
+
+allowBuilds:
+  esbuild: true
+  core-js: false
+  es5-ext: false

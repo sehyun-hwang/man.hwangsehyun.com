@@ -5,12 +5,13 @@ import puppeteer from 'puppeteer-core';
 
 async function findExecutable() {
   const paths = [
+    process.env.PUPPETEER_EXECUTABLE_PATH,
     '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', // Mac
     '/opt/chromium/chrome-linux/chrome', // CodeBuild
     '/usr/bin/chromium', // Idx
   ];
   // eslint-disable-next-line no-restricted-syntax
-  for (const path of paths) {
+  for (const path of paths.filter(Boolean)) {
     try {
       // eslint-disable-next-line no-await-in-loop
       await access(path);
@@ -34,8 +35,7 @@ async function findExecutable() {
 export default (defaultViewport = undefined) => findExecutable()
   .then(executablePath => puppeteer.launch({
     executablePath,
-    headless: process.platform !== 'darwin',
+    headless: true,
     args: ['--no-sandbox', '--export-tagged-pdf'],
     defaultViewport,
-    slowMo: 10, // @TODO Demolish
   }));

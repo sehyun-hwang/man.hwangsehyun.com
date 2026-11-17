@@ -15,7 +15,7 @@ import {
 } from 'aws-cdk-lib/aws-cloudfront';
 import { Artifact } from 'aws-cdk-lib/aws-codepipeline';
 import { ManagedPolicy, Role, ServicePrincipal } from 'aws-cdk-lib/aws-iam';
-import { LayerVersion } from 'aws-cdk-lib/aws-lambda';
+import { Runtime } from 'aws-cdk-lib/aws-lambda';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import { Bucket, EventType } from 'aws-cdk-lib/aws-s3';
 import { Asset } from 'aws-cdk-lib/aws-s3-assets';
@@ -131,19 +131,14 @@ export default class CloudFrontStack extends cdk.Stack {
 
     const lambdaFunction = new NodejsFunction(this, 'NodejsFunction', {
       entry,
+      runtime: Runtime.NODEJS_24_X,
       bundling: {
         minify: true,
         sourceMap: true,
         externalModules: [
           '@aws-sdk/*',
-          '@aws-lambda-powertools/*',
         ],
       },
-      layers: [LayerVersion.fromLayerVersionArn(
-        this,
-        'PowerToolsLayer',
-        `arn:aws:lambda:${this.region}:094274105915:layer:AWSLambdaPowertoolsTypeScriptV2:21`,
-      )],
       // @TODO Temp
       reservedConcurrentExecutions: 10,
     });

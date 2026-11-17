@@ -3,8 +3,6 @@
 import { Transform } from 'stream';
 import { text } from 'stream/consumers';
 
-import groupBy from 'object.groupby';
-
 import { FRONTMATTER_PREFIX } from './cloudant.js';
 import { parseFrontMatters } from './markdownlint.js';
 
@@ -26,8 +24,8 @@ export async function appendFrontMatterAttachments(client, db, frontMatterDocs) 
     .putAttachment({
       db,
       docId,
-      rev: rows[i].value.rev,
-      attachmentName: Object.keys(_attachments)[0],
+      rev: rows[i].value?.rev,
+      attachmentName: Object.keys(_attachments || {})[0],
       attachment: Buffer.alloc(0),
       contentType: 'application/octet-stream',
     }))));
@@ -54,20 +52,15 @@ export const insertFrontMatterDocs = (client, db, contentDocs) => Promise.all(
       attachmentName: 'data',
     }))
     .then(async ({ result }) => {
-      const entry = [hash, await text(result)];
-      entry.docId = docId;
-      return entry;
+      return { hash, markdown: await text(result), docId };
     })),
 )
   .then(async attachmentsEntries => {
-    const frontMatterBulkDocs = await parseFrontMatters(Object.fromEntries(attachmentsEntries));
-    const frontmatterAttachmentsByHash = groupBy(attachmentsEntries, ([hash]) => hash);
+    const frontMatterBulkDocs = await parseFrontMatters(Object.fromEntries(attachmentsEntries.map(({ hash, markdown }) => [hash, markdown])));
     frontMatterBulkDocs.forEach(doc => {
-      doc._attachments = Object.assign(...frontmatterAttachmentsByHash[doc.hash].map(({ docId }) => ({
-        [docId]: {
-          data: '',
-        },
-      })));
+      doc._attachments = Object.fromEntries(attachmentsEntries
+        .filter(({ hash }) => hash === doc.hash)
+        .map(({ docId }) => [docId, { data: Buffer.alloc(0) }]));
     });
 
     console.log('Inserting bulk docs of frontmatter', frontMatterBulkDocs);
@@ -83,14 +76,17 @@ export const insertFrontMatterDocs = (client, db, contentDocs) => Promise.all(
       throw new Error('One or more frontmatter docs insertion failed: ' + Array.from(errorSummary).join(', '));
     }
 
-    const conflictedIds = new Set(result.map(({ id }) => id));
+    const failures = result.filter(({ ok }) => !ok);
+    if (failures.some(({ error }) => error !== 'conflict'))
+      throw new Error('One or more frontmatter docs insertion failed: ' + failures.map(({ error, reason }) => error + ' - ' + reason).join(', '));
+    const conflictedIds = new Set(failures.map(({ id }) => id));
     const conflictedFrontMatterDocs = frontMatterBulkDocs
       .filter(({ _id }) => conflictedIds.has(_id));
     return appendFrontMatterAttachments(client, db, conflictedFrontMatterDocs);
   });
 
 class FrontMatterTransformStream extends Transform {
-  /** @type Map<number, string>} */
+  /** @type {Map<number | string, string | number>} */
   idByNumberHash;
 
   /**
@@ -103,7 +99,7 @@ class FrontMatterTransformStream extends Transform {
   deleteStaleFrontmatterDocsParam = [];
 
   /**
-   * @param {Map<number, string>} idByNumberHash
+   * @param {Map<number | string, string | number>} idByNumberHash
    */
   constructor(idByNumberHash) {
     super({ objectMode: true });
@@ -136,15 +132,11 @@ class FrontMatterTransformStream extends Transform {
     }
   }
 
-  async getDeleteStaleFrontmatterDocsParam() {
-    await new Promise(resolve => this.on('end', resolve));
-    return this.deleteStaleFrontmatterDocsParam;
-  }
 }
 
 /**
  * @param {import('./cloudant.js').default} cloudant
- * @param {Map<number, string>} idByHash
+ * @param {Map<number | string, string | number>} idByHash
  */
 export async function processFrontMatters(cloudant, idByHash) {
   console.log('processFrontMatters');
@@ -152,7 +144,8 @@ export async function processFrontMatters(cloudant, idByHash) {
   const frontmatterDocsPromise = transform.toArray();
   await cloudant.streamFrontMatters(transform);
 
-  const deleteStaleFrontmatterDocsParam = await transform.getDeleteStaleFrontmatterDocsParam();
+  const frontmatterDocs = await frontmatterDocsPromise;
+  const { deleteStaleFrontmatterDocsParam } = transform;
   if (deleteStaleFrontmatterDocsParam.length) {
     console.log('Deleting stale frontmatters', deleteStaleFrontmatterDocsParam.length);
     const { db } = cloudant.constants;
@@ -163,5 +156,5 @@ export async function processFrontMatters(cloudant, idByHash) {
       },
     });
   }
-  return frontmatterDocsPromise;
+  return frontmatterDocs;
 }

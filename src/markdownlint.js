@@ -1,12 +1,15 @@
 // @ts-check
 
 import matter from 'gray-matter';
-import markdownlint from 'markdownlint';
+import { lint as markdownlint } from 'markdownlint/async';
 import { parse as parseToml } from 'toml';
 
 import { FRONTMATTER_PREFIX } from './cloudant.js';
 
 class FrontMatterParserRule {
+  /** @type {'none'} */
+  parser = 'none';
+
   names = ['frontmatter-parser'];
 
   tags = ['tag'];
@@ -16,7 +19,7 @@ class FrontMatterParserRule {
   /** @type {import('markdownlint').RuleFunction} */
   function;
 
-  /** @type {{[key: string]: any}} */
+  /** @type {Record<string, Record<string, unknown> | null>} */
   frontMatters = {};
 
   constructor() {
@@ -42,15 +45,15 @@ class FrontMatterParserRule {
         /**
          * @link https://github.com/BinaryMuse/toml-node/blob/4bad34e1dc81586e799e269e5d2c78662b6657b2/lib/parser.js#L14
          */
-        const { name: errorName, expected, found } = error;
+        if (!(error instanceof Error)) throw error;
+        const { name: errorName } = error;
         if (errorName !== 'SyntaxError')
           throw error;
 
         onError({
-          lineNumber: error.line,
+          lineNumber: 1,
           detail: error.message,
-          context: JSON.stringify({ expected, found }),
-          range: [error.offset, error.column], // @TODO
+          context: error.message,
         });
       }
 
@@ -64,12 +67,12 @@ class FrontMatterParserRule {
  *  _id: string,
  *  hash: number,
  *  has: boolean,
- *  _attachments: {
+ *  _attachments?: {
  *    [key: string]: {
- *      data: '',
+ *      data: Buffer,
  *    },
  *  },
- *  [key: string]: any,
+ *  [key: string]: unknown,
  * }} FrontMatterDoc
  */
 
@@ -85,6 +88,7 @@ export function parseFrontMatters(strings) {
     customRules: [frontMatterParserRule],
     config: {
       default: false,
+      'frontmatter-parser': true,
     },
   }, (error, result) => {
     console.log(error || result);
@@ -110,11 +114,12 @@ export function runMarkdownLint(markdown) {
   return new Promise((resolve, reject) => markdownlint({
     strings,
     customRules: [STATIC_FRONTEND_PARSER_RULE],
+    config: { 'frontmatter-parser': true },
   }, (error, result) => {
     if (error)
       return reject(error);
     console.log(result?.toString());
-    Promise.resolve(result);
+    resolve(result);
     return undefined;
   }));
 }

@@ -2,17 +2,17 @@
   "compilerOptions": {
     "exactOptionalPropertyTypes": false,
     "lib": [
-      "es2020",
+      "es2024",
     ],
     "module": "Preserve",
     "moduleResolution": "bundler",
-    "target": "ES2020"
+    "target": "ES2024"
   },
   "exclude": [
     "cdk.out"
   ],
   "extends": [
-    "@tsconfig/node-lts/tsconfig.json",
+    "@tsconfig/node26/tsconfig.json",
     "@tsconfig/strictest/tsconfig.json",
   ],
   "include": [

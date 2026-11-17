@@ -1,20 +1,16 @@
 import { spawn } from 'child_process';
 import {
-  mkdir, readFile, unlink, writeFile,
+  readFile, unlink, writeFile,
 } from 'fs/promises';
-import { dirname } from 'path';
 import { createInterface } from 'readline';
 import { promisify } from 'util';
 import { gzip } from 'zlib';
 
 import { glob } from 'glob';
 import setDifference from 'set.prototype.difference';
-import YAML from 'yaml';
 
+import { prepareHugoContent, writeHugoMounts } from './hugo-content.js';
 import { HUGO_CONTENT_DIR } from './path.js';
-
-const HUGO_CONFIG_PATH = 'hugo.yml';
-const HUGO_CONFIG_GENERATED_PATH = 'config/_default/module.json';
 
 const gzipAsync = promisify(gzip);
 
@@ -77,29 +73,7 @@ async function calculateInvalidChecksums(gzips) {
   return invalidPaths;
 }
 
-const addHugoMount = sources => readFile(HUGO_CONFIG_PATH, 'utf-8')
-  .then(YAML.parse)
-  .then(({ module }) => {
-    const hugoConfigFolder = dirname(HUGO_CONFIG_GENERATED_PATH);
-    const hugoConfig = {
-      mounts: sources.map(source => ({
-        source,
-        target: source.replace('/index', '').replace(/\w{32}.generated.md/, 'md'),
-      }))
-        .concat(module.mounts),
-    };
-    console.log(HUGO_CONFIG_GENERATED_PATH, hugoConfig);
-    return mkdir(hugoConfigFolder, { recursive: true })
-      .then(() => writeFile(HUGO_CONFIG_GENERATED_PATH, JSON.stringify(hugoConfig)));
-  });
-
-export const replaceHugoMount = (pattern, replacement) => readFile(HUGO_CONFIG_GENERATED_PATH, 'utf-8')
-  .then(original => {
-    const replaced = original.replace(pattern, replacement);
-    if (replaced === original)
-      return Promise.resolve();
-    return writeFile(HUGO_CONFIG_GENERATED_PATH, replaced);
-  });
+export const replaceHugoMount = () => prepareHugoContent();
 
 export default class FileSynchronizer {
   /** @type {StackEditPath[]} */
@@ -162,16 +136,6 @@ export default class FileSynchronizer {
   }
 
   writeHugoConfig() {
-    const sources = this.requiredPaths.filter(({ names }) => {
-      const fileName = names.at(-1);
-      if (fileName === '_index')
-        return true;
-      if (names.at(-2) !== '_index')
-        return false;
-      return fileName.startsWith('index.');
-    })
-      .map(({ markdownPath }) => markdownPath);
-    console.log(HUGO_CONFIG_GENERATED_PATH, 'module.mounts.source list', sources);
-    return addHugoMount(sources);
+    return writeHugoMounts();
   }
 }

@@ -51,13 +51,13 @@ export default class DatabaseWritable extends Writable {
 
     const { doc, value } = data.value;
     if (value?.type !== 'content') {
-      ((prev?.value?.id || '') in (doc?._attachments || {}))
-        || this.missingFrontmatterDocs.push(prev.value.doc);
+      if (prev?.value.doc && !(prev.value.id in (doc?._attachments || {})))
+        this.missingFrontmatterDocs.push(prev.value.doc);
       return callback();
     }
 
     // type === 'content'
-    const etag = doc._attachments.data?.digest?.replace('md5-', '');
+    const etag = doc?._attachments.data?.digest?.replace('md5-', '');
     if (!etag)
       throw TypeError('No etag value');
     this.updateContent(value, etag);

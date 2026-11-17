@@ -1,6 +1,8 @@
 BUCKET := man.hwangsehyun.com
 SUBMODULES := $(wildcard themes/*)
-DOCKER_CLI=nerdctl
+DOCKER_CLI ?= docker
+HUGO ?= hugo
+HUGO_IMAGE ?= man-hwangsehyun-com-toolchain
 
 .PHONY: secret
 secret: cloudant.env config/_default/params.json
@@ -14,55 +16,52 @@ stackedit: cloudant.env | src
 $(SUBMODULES):
 	git submodule update --init
 
+.PHONY: prepare-hugo toolchain
+prepare-hugo:
+	node src/hugo-content.js
+toolchain:
+	${DOCKER_CLI} build -t ${HUGO_IMAGE} .
+
 .PHONY: server server/ec2 server/docker
-server: config/_default/params.json | $(SUBMODULES)
-	hugo server -M
-server/docker: config/_default/params.json | $(SUBMODULES)
+server: config/_default/params.json prepare-hugo | $(SUBMODULES)
+	${HUGO} server -M
+server/docker: config/_default/params.json prepare-hugo | $(SUBMODULES)
 	${DOCKER_CLI} run -it --rm \
 		--net host \
 		-v $$PWD:/src \
-		hugomods/hugo:base \
-		hugo server -M
-server/ec2: | $(SUBMODULES)
+		${HUGO_IMAGE} \
+		${HUGO} server -M
+server/ec2: prepare-hugo | $(SUBMODULES)
 	${DOCKER_CLI} run -it --rm --pod nginx-pod \
 		-v $$PWD:/src -v man.hwangsehyun.com-public:/src/public \
 		--security-opt label=disable \
-		hugomods/hugo:base \
-		hugo server -b https://dev.hwangsehyun.com --liveReloadPort 443 --appendPort=false
+		${HUGO_IMAGE} \
+		${HUGO} server -b https://dev.hwangsehyun.com --liveReloadPort 443 --appendPort=false
 
 .PHONY: browser
 browser: assets/image/index.webp public/index.pdf
 assets/image/index.webp: browser/screenshot-index.js
-	cat $< \
-		| ${DOCKER_CLI} run -i --rm \
-			-v $$PWD/browser/lib:/usr/src/app/lib:ro \
-			ghcr.io/browserless/chromium \
-			node --input-type module > $@
+	node $< > $@
 public:
 	mkdir -p $@
 public/index.pdf: browser/print-pdf.js public/index.json | public
 
-	${DOCKER_CLI} run --rm \
-		-e DEBUG="puppeteer:*" \
-		-v $$PWD/public:/usr/src/app/public -v $$PWD/browser:/usr/src/app/browser:ro \
-		ghcr.io/browserless/chromium \
-		node $< ${PDF_HTML_PATHS} > $@
+	node $< ${PDF_HTML_PATHS} > $@.tmp && mv $@.tmp $@
 
-	which open && open $@ || true
 
 .PHONY: build build/ec2
 build: public/index.json
-public/index.json: | $(SUBMODULES)
-	hugo -b https://man.hwangsehyun.com
-build/ec2: | $(SUBMODULES)
-	hugo -b https://www.hwangsehyun.com/man.hwangsehyun.com/public
+public/index.json: prepare-hugo | $(SUBMODULES)
+	${HUGO} -b https://man.hwangsehyun.com
+build/ec2: prepare-hugo | $(SUBMODULES)
+	${HUGO} -b https://www.hwangsehyun.com/man.hwangsehyun.com/public
 
 .PHONY: gitleaks eslint scan
 gitleaks:
 	gitleaks detect -v
 	gitleaks detect --no-git -v
 eslint:
-	cd src && yarn lint
+	pnpm --filter @man-hwangsehyun-com/stackedit lint
 scan: gitleaks eslint
 
 .PHONY: deploy

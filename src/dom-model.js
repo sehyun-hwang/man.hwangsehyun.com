@@ -18,24 +18,25 @@ export class DomIdError extends Error {}
  * @param element {HTMLElement}
  */
 function* generateParentNode(element) {
-  let current = (element);
+  /** @type {HTMLElement | null} */
+  let current = element;
   do {
     yield current;
     // eslint-disable-next-line no-cond-assign
-  } while (current = current.parentNode);
+  } while (current = current.parentElement);
 }
 
 export default class StackEditDomModel {
-  /** @type {JSDOM} */
-  dom;
-
-  /**  @type {Document} */
+  /** @type {Document} */
   document;
 
+  /** @param {Map<string, import('./types.js').StackEditItem>} sortedDocs */
   constructor(sortedDocs) {
     const dom = new JSDOM();
     const { document } = dom.window;
-    Object.assign(this, { dom, document, docs: sortedDocs });
+    this.dom = dom;
+    this.document = document;
+    this.docs = sortedDocs;
 
     const style = document.createElement('link');
     style.rel = 'stylesheet';
@@ -90,17 +91,19 @@ export default class StackEditDomModel {
     return element;
   }
 
+  /** @param {string} docId @param {string} itemId */
   assignDocId(docId, itemId) {
     this.selectId(itemId).dataset.docid = docId;
   }
 
+  /** @param {Map<string | number, string | number>} bidirectionalMap @param {Map<string, string>} etagFromId */
   assignData(bidirectionalMap, etagFromId) {
     bidirectionalMap.forEach((value, key) => {
       if (typeof key !== 'string')
         return;
       try {
         const element = this.selectId(key);
-        element.dataset.hash = value;
+        element.dataset.hash = String(value);
       } catch (error) {
         if (!(error instanceof DomIdError))
           throw error;
@@ -122,18 +125,20 @@ export default class StackEditDomModel {
    * @param {number} hash
    */
   selectByHash(hash) {
-    return this.document.querySelectorAll(`[data-hash="${hash}"]`);
+    return this.document.querySelectorAll(/** @type {string} */ (`[data-hash="${hash}"]`));
   }
 
+  /** @param {import('./markdownlint.js').FrontMatterDoc} doc */
   appendFrontmatter(doc) {
-    const contentIds = Object.keys(doc._attachments);
+    const contentIds = Object.keys(doc._attachments || {});
     const { length } = contentIds.filter(contentId => {
       const elements = this.selectByHash(doc.hash);
-      if (!elements) {
+      if (!elements.length) {
         return false;
       }
 
-      elements.forEach(element => {
+      elements.forEach(node => {
+        const element = /** @type {HTMLElement} */ (node);
         if (element.dataset.contentid)
           return;
         element.dataset.contentid = contentId;
@@ -148,6 +153,7 @@ export default class StackEditDomModel {
       throw new Error(`Stale frontmatter ${contentIds}`);
   }
 
+  /** @param {string} itemId */
   getNamesFromId(itemId) {
     console.log('Querying', itemId);
     const element = this.selectId(itemId);
@@ -156,10 +162,11 @@ export default class StackEditDomModel {
     return names;
   }
 
+  /** @param {string} itemId */
   getDatasetFromId(itemId) {
     const { dataset } = this.selectId(itemId);
-    if ('etag' in dataset && 'contentid' in dataset)
-      return dataset;
+    if (dataset.etag && dataset.contentid)
+      return { etag: dataset.etag, contentid: dataset.contentid };
     throw new DomIdError(`Missing dataset on DOM: ${itemId}`);
   }
 }
