@@ -77,9 +77,10 @@ export async function prepareHugoContent() {
       await cp(source, target);
     }
   }));
-  const all = join(STAGED_CONTENT_DIR, 'all', '_index.md');
-  await mkdir(dirname(all), { recursive: true });
-  await writeFile(all, '---\ntitle: Portfolio\nparams:\n  head_extensions:\n    - pagedjs_head.html\nbuild:\n  list: never\n---\n');
+  const portfolioDir = join(STAGED_CONTENT_DIR, 'all');
+  await mkdir(portfolioDir, { recursive: true });
+  await Promise.all(Object.entries({ kr: '개발 포트폴리오', kp: '개발과제 자료집' }).map(([language, title]) =>
+    writeFile(join(portfolioDir, `_index.${language}.md`), `---\ntitle: ${title}\nparams:\n  head_extensions:\n    - pagedjs_head.html\nbuild:\n  list: never\n---\n`)));
   await writeHugoMounts();
 }
 
