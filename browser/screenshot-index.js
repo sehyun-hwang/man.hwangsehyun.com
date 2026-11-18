@@ -6,9 +6,13 @@ async function pipeScreenshotOfIndex() {
     height: 1072,
   });
   const page = await browser.newPage();
-  await page.goto('https://man.hwangsehyun.com', {
+  const response = await page.goto(process.argv[2] || 'https://man.hwangsehyun.com', {
     waitUntil: 'networkidle0',
   });
+  if (!response?.ok()) {
+    await browser.close();
+    throw new Error(`Screenshot source returned HTTP ${response?.status()}`);
+  }
 
   const screenshot = await page.screenshot({
     type: 'webp',

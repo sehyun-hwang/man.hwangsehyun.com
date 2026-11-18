@@ -1,30 +1,31 @@
 {
   "dependencies": {
-    "@aws-sdk/client-secrets-manager": "^3.598.0",
-    "@aws-sdk/client-sso": "^3.598.0",
-    "@ibm-cloud/cloudant": "^0.9.0",
-    "glob": "^10.3.10",
+    "@aws-sdk/client-secrets-manager": "^3.1169.0",
+    "@aws-sdk/client-sso": "^3.1169.0",
+    "@ibm-cloud/cloudant": "^0.12.27",
+    "glob": "^14.0.6",
     "gray-matter": "^4.0.3",
-    "jsdom": "^24.0.0",
-    "junit-report-builder": "^5.1.1",
-    "markdownlint": "^0.33.0",
+    "jsdom": "^31.0.1",
+    "junit-report-builder": "^5.1.2",
+    "markdownlint": "^0.42.1",
     "object.groupby": "^1.0.3",
-    "set.prototype.difference": "^1.1.4",
-    "stream-json": "^1.8.0",
-    "toml": "^3.0.0",
-    "yaml": "^2.4.1"
+    "set.prototype.difference": "^1.1.7",
+    "stream-json": "^3.9.0",
+    "toml": "^5.0.1",
+    "yaml": "^2.9.1"
   },
   "devDependencies": {
-    "@types/jsdom": "^21.1.6",
+    "@types/jsdom": "^30.0.0",
     "@types/junit-report-builder": "^3.0.2",
-    "@types/stream-json": "^1.7.7",
-    "ibm-cloud-sdk-core": "^4.3.0",
+    "@types/stream-json": "^1.7.8",
+    "ibm-cloud-sdk-core": "^5.9.4",
     "typescript": "catalog:"
   },
   "name": "@man-hwangsehyun-com/stackedit",
   "scripts": {
     "lint": "nextlab-eslint .",
-    "tsc": "tsc --noEmit --allowJs -p jsconfig.json"
+    "tsc": "tsc --noEmit --allowJs -p jsconfig.json",
+    "test": "node --test source.test.js hugo-content.test.js"
   },
   "type": "module"
 }

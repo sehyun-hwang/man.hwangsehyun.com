@@ -1,6 +1,6 @@
 /* eslint-disable max-classes-per-file */
 import assert from 'assert/strict';
-import { writeFileSync } from 'fs';
+import { mkdtempSync, rmSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -14,12 +14,11 @@ import {
   PriceClass, ResponseHeadersPolicy,
 } from 'aws-cdk-lib/aws-cloudfront';
 import { Artifact } from 'aws-cdk-lib/aws-codepipeline';
-import { ManagedPolicy, Role, ServicePrincipal } from 'aws-cdk-lib/aws-iam';
-import { LayerVersion } from 'aws-cdk-lib/aws-lambda';
+import { PolicyStatement } from 'aws-cdk-lib/aws-iam';
+import { Code, Function as LambdaFunction, Runtime } from 'aws-cdk-lib/aws-lambda';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import { Bucket, EventType } from 'aws-cdk-lib/aws-s3';
 import { Asset } from 'aws-cdk-lib/aws-s3-assets';
-import { BucketDeployment, type ISource, Source } from 'aws-cdk-lib/aws-s3-deployment';
 import * as cdk from 'aws-cdk-lib/core';
 import { MonitoringFacade } from 'cdk-monitoring-constructs';
 import type { Construct } from 'constructs';
@@ -36,8 +35,6 @@ export enum CloudFrontTemplateStackParameters {
 }
 
 class CloudFrontTemplateStack extends cdk.Stack {
-  source: ISource;
-
   constructor(id: string, props: cdk.StackProps) {
     super(undefined, id, props);
 
@@ -58,32 +55,66 @@ class CloudFrontTemplateStack extends cdk.Stack {
       CloudFrontTemplateStackParameters.PipelineExecutionIdParameter,
     );
 
-    const distribution = Distribution.fromDistributionAttributes(this, 'Distribution', {
-      distributionId: distributionIdParameter.valueAsString,
-      domainName: distributionDomainNameParameter.valueAsString,
+    // Inline code keeps the standalone template independent of unpublished Lambda/layer assets.
+    const invalidationHandler = new LambdaFunction(this, 'InvalidationHandler', {
+      runtime: Runtime.NODEJS_24_X,
+      handler: 'index.handler',
+      timeout: cdk.Duration.minutes(15),
+      code: Code.fromInline(`
+const { CloudFrontClient, CreateInvalidationCommand, waitUntilInvalidationCompleted } = require('@aws-sdk/client-cloudfront');
+exports.handler = async event => {
+  let status = 'SUCCESS';
+  let reason = 'Invalidation completed';
+  const physicalId = event.PhysicalResourceId || event.LogicalResourceId;
+  try {
+    if (event.RequestType !== 'Delete') {
+      const client = new CloudFrontClient({});
+      const { DistributionId, PipelineExecutionId } = event.ResourceProperties;
+      const result = await client.send(new CreateInvalidationCommand({
+        DistributionId,
+        InvalidationBatch: {
+          CallerReference: PipelineExecutionId + '-' + event.RequestId,
+          Paths: { Quantity: 1, Items: ['/*'] },
+        },
+      }));
+      await waitUntilInvalidationCompleted({ client, maxWaitTime: 720 }, {
+        DistributionId, Id: result.Invalidation.Id,
+      });
+    }
+  } catch (error) {
+    status = 'FAILED';
+    reason = error.message;
+  }
+  const response = await fetch(event.ResponseURL, {
+    method: 'PUT',
+    headers: { 'content-type': '' },
+    body: JSON.stringify({
+      Status: status, Reason: reason, PhysicalResourceId: physicalId,
+      StackId: event.StackId, RequestId: event.RequestId, LogicalResourceId: event.LogicalResourceId,
+    }),
+  });
+  if (!response.ok) throw new Error('CloudFormation response failed: ' + response.status);
+};
+`),
     });
-
+    invalidationHandler.addToRolePolicy(new PolicyStatement({
+      actions: ['cloudfront:CreateInvalidation', 'cloudfront:GetInvalidation'],
+      resources: [cdk.Stack.of(this).formatArn({
+        service: 'cloudfront',
+        region: '',
+        resource: 'distribution',
+        resourceName: distributionIdParameter.valueAsString,
+      })],
+    }));
     // eslint-disable-next-line no-new
-    const destinationBucket = Bucket.fromBucketArn(this, 'EmptyBucket', bucketArnParameter.valueAsString);
-
-    const source = Source.jsonData(
-      'cache-buster.json',
-      Object.fromEntries([
-        bucketArnParameter,
-        distributionIdParameter,
-        distributionDomainNameParameter,
-        pipelineExecutionIdParameter,
-      ]
-        .map(({ logicalId, valueAsString }) => [logicalId, valueAsString])),
-    );
-    this.source = source;
-
-    // eslint-disable-next-line no-new
-    new BucketDeployment(this, 'BucketDeployment', {
-      sources: [source],
-      destinationBucket,
-      distribution,
-      prune: false,
+    new cdk.CustomResource(this, 'Invalidation', {
+      serviceToken: invalidationHandler.functionArn,
+      properties: {
+        // Retain compatibility with existing pipeline parameter overrides.
+        BucketArn: bucketArnParameter.valueAsString,
+        DistributionId: distributionIdParameter.valueAsString,
+        PipelineExecutionId: pipelineExecutionIdParameter.valueAsString,
+      },
     });
 
     const split = cdk.Fn.split('.', distributionDomainNameParameter.valueAsString, 3) as [string, string, string];
@@ -131,19 +162,14 @@ export default class CloudFrontStack extends cdk.Stack {
 
     const lambdaFunction = new NodejsFunction(this, 'NodejsFunction', {
       entry,
+      runtime: Runtime.NODEJS_24_X,
       bundling: {
         minify: true,
         sourceMap: true,
         externalModules: [
           '@aws-sdk/*',
-          '@aws-lambda-powertools/*',
         ],
       },
-      layers: [LayerVersion.fromLayerVersionArn(
-        this,
-        'PowerToolsLayer',
-        `arn:aws:lambda:${this.region}:094274105915:layer:AWSLambdaPowertoolsTypeScriptV2:21`,
-      )],
       // @TODO Temp
       reservedConcurrentExecutions: 10,
     });
@@ -206,23 +232,16 @@ export default class CloudFrontStack extends cdk.Stack {
       distribution,
     });
 
-    const workdir = cdk.FileSystem.mkdtemp('s3-deployment-custom-');
+    const workdir = mkdtempSync('.cloudfront-template-');
     writeFileSync(
       join(workdir, TEMPLATE_PATH),
       JSON.stringify(Template.fromStack(stack).toJSON()),
     );
 
-    const handlerRole = new Role(this, 'PlaceholderRole', {
-      assumedBy: new ServicePrincipal('lambda.amazonaws.com'),
-      managedPolicies: [ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole')],
-    });
-    stack.source.bind(this, {
-      handlerRole,
-    });
-
     // eslint-disable-next-line no-new
     this.templateAsset = new Asset(this, 'TemplateAsset', {
       path: workdir,
     });
+    rmSync(workdir, { recursive: true });
   }
 }

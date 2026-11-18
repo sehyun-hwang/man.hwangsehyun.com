@@ -7,44 +7,35 @@ import {
   Choice, Condition, DefinitionBody, FieldUtils, IntegrationPattern, JsonPath, LogLevel,
   StateMachine, Succeed, type TaskStateBase,
 } from 'aws-cdk-lib/aws-stepfunctions';
-import { CallAwsService, CodeBuildStartBuild } from 'aws-cdk-lib/aws-stepfunctions-tasks';
+import { CallAwsService, CodeBuildStartBuild, type CodeBuildStartBuildProps } from 'aws-cdk-lib/aws-stepfunctions-tasks';
 import * as cdk from 'aws-cdk-lib/core';
 import { Construct } from 'constructs';
 
 import { CONTENT_KEY } from './config';
 import { type IStackEditStack } from './stackedit';
 
-/** @link https://github.com/aws/aws-cdk/blob/v2.177.0/packages/aws-cdk-lib/aws-stepfunctions-tasks/lib/private/task-utils.ts */
-const resourceArnSuffix: Record<IntegrationPattern, string> = {
-  [IntegrationPattern.REQUEST_RESPONSE]: '',
-  [IntegrationPattern.RUN_JOB]: '.sync',
-  [IntegrationPattern.WAIT_FOR_TASK_TOKEN]: '.waitForTaskToken',
-};
-
-function integrationResourceArn(
-  service: string,
-  api: string,
-  integrationPattern?: IntegrationPattern,
-) {
-  if (!service || !api) {
-    throw new Error('Both \'service\' and \'api\' must be provided to build the resource ARN.');
-  }
-  return `arn:${cdk.Aws.PARTITION}:states:::${service}:${api}`
-    + (integrationPattern ? resourceArnSuffix[integrationPattern] : '');
+interface OverridableCodeBuildStartBuildProps extends CodeBuildStartBuildProps {
+  overrides: Record<string, unknown>;
 }
 
 /** @link https://github.com/aws/aws-cdk/issues/10302 */
 class OverridableCodeBuildStartBuild extends CodeBuildStartBuild {
+  private readonly startBuildOverrides: Record<string, unknown>;
+
+  constructor(scope: Construct, id: string, props: OverridableCodeBuildStartBuildProps) {
+    const { overrides, ...startBuildProps } = props;
+    super(scope, id, startBuildProps);
+    this.startBuildOverrides = overrides;
+  }
+
   protected override _renderTask(): object {
+    const task = super._renderTask() as { Parameters: Record<string, unknown>; };
     return {
-      Resource: integrationResourceArn('codebuild', 'startBuild', this.integrationPattern),
-      Parameters: FieldUtils.renderObject({
-        ProjectName: this.props.project.projectName,
-        EnvironmentVariablesOverride: this.props.environmentVariablesOverride
-          ? this.serializeEnvVariables(this.props.environmentVariablesOverride)
-          : undefined,
-        ...(this.props.overrides || {}),
-      }),
+      ...task,
+      Parameters: {
+        ...task.Parameters,
+        ...FieldUtils.renderObject(this.startBuildOverrides),
+      },
     };
   }
 }
@@ -97,7 +88,6 @@ class CommonTasks extends Construct {
     this.startBuildTaskWithOverride = new OverridableCodeBuildStartBuild(this, 'StartBuildTaskWithOverride', {
       project: props.codeBuildProject,
       integrationPattern: IntegrationPattern.RUN_JOB,
-      // @ts-expect-error Deliberate
       overrides: {
         SecondarySourcesOverride: [{
           Type: 'S3',

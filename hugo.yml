@@ -21,7 +21,7 @@ defaultContentLanguage: kr
 
 languages:
   kr:
-    languageName: 한국어
+    label: 한국어
     weight: 1
     taxonomies:
       category: categories
@@ -58,7 +58,7 @@ languages:
     #     hidden: true
 
   kp:
-    languageName: 문화어
+    label: 문화어
     weight: 10
     taxonomies:
       category: categories
@@ -91,13 +91,14 @@ languages:
           weight: 10
 
 module:
+  hugoVersion:
+    min: "0.170.0"
   mounts:
-    - source: content
+    - source: resources/_gen/hugo-content
       target: content
-      lang: kr
-    - source: content
-      target: content
-      lang: kp
+      sites:
+        matrix:
+          languages: [kr, kp]
 
 outputs:
   home:
@@ -190,6 +191,13 @@ services:
     disableInlineCSS: true
   twitter:
     disableInlineCSS: true
+
+security:
+  node:
+    permissions:
+      allowRead:
+        - .
+        - /mnt/node_modules
 
 ignoreFiles:
   - \.generated.md.gz$

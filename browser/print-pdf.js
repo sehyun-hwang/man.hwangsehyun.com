@@ -12,8 +12,8 @@ const BASE_PATH = process.argv[2] || '/all/';
 console.error({ BASE_PATH });
 
 const server = createServer((request, response) => {
-  handler(request, response, {
-    public: 'public',
+  return handler(request, response, {
+    public: process.env.PUBLIC_DIR || 'public',
     headers: [{
       source: '**/*.html',
       headers: [{
@@ -95,15 +95,27 @@ new Promise(resolve => server.listen(0, resolve))
     console.error(`Server to replace listening http://localhost:${server.address().port}`);
     spinner.start('Loading: ');
 
-    const printer = new BrowserlessPrinter(browser);
-    const pdfBuffer = await printer.renderPdf({ url });
-    spinner.succeed('Processed');
+    try {
+      const response = await fetch(url);
+      await response.body?.cancel();
+      if (!response.ok)
+        throw new Error(`PDF source returned HTTP ${response.status}: ${url}`);
 
-    return Promise.all([
-      process.stdout.write(pdfBuffer),
-      new Promise((resolve, reject) => server.close(error => {
-        error ? reject(error) : resolve();
-      })),
-      browser.close(),
-    ]);
+      const printer = new BrowserlessPrinter(browser);
+      const pdfBuffer = await printer.renderPdf({ url });
+      spinner.succeed('Processed');
+      process.stdout.write(pdfBuffer);
+    } finally {
+      await Promise.all([
+        new Promise((resolve, reject) => server.close(error => {
+          error ? reject(error) : resolve();
+        })),
+        browser.close(),
+      ]);
+    }
+  })
+  .catch(error => {
+    spinner.fail(error.message);
+    server.close();
+    process.exitCode = 1;
   });

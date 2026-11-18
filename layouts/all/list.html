@@ -15,7 +15,7 @@
     {{ $layout := cond (in $originalSectionIndexPage.Site.MainSections $originalSectionIndexPage.Section) "content-single" "content-list" }}
 
 
-    <section>
+    <section class="portfolio-section">
       {{ if .Key }}
         <article>
           {{ with where $childPages "Slug" .Key }}
@@ -41,7 +41,7 @@
       {{ end }}
 
       {{ if not .Key }}
-        {{ "</section><section>" | safeHTML }}
+        {{ `</section><section class="portfolio-section">` | safeHTML }}
       {{ end }}
 
       {{ range .Pages }}

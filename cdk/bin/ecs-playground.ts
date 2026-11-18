@@ -42,9 +42,9 @@ async function buildNodeModulesImage() {
   dockerBuildArgs.forEach(arg => hash.update(arg));
   const digest = hash.digest('hex');
   const tag = CONTAINER_NAME + ':' + digest;
-  const { stdout } = spawnSync(DOCKER_EXECUTABLE, ['image', 'inspect', tag]);
+  const inspection = spawnSync(DOCKER_EXECUTABLE, ['image', 'inspect', tag]);
   const image = new cdk.DockerImage(tag, digest);
-  if (stdout.length)
+  if (inspection.status === 0)
     return image;
 
   const { status } = spawnSync(DOCKER_EXECUTABLE, [...dockerBuildArgs, tag], {
@@ -62,8 +62,8 @@ async function buildNodeModulesImage() {
 const app = new cdk.App();
 
 const env = {
-  account: process.env.CDK_DEFAULT_ACCOUNT || '',
-  region: process.env.CDK_DEFAULT_REGION || '',
+  account: process.env['CDK_DEFAULT_ACCOUNT'] || '',
+  region: process.env['CDK_DEFAULT_REGION'] || '',
 };
 
 const nodeModulesImage = await buildNodeModulesImage();

@@ -181,3 +181,12 @@ a[href$="#download"],
 }
 
 /* home end */
+
+@media screen {
+  .portfolio-project-table,
+  .portfolio-section pre,
+  .portfolio-section .highlight {
+    max-width: 100%;
+    overflow-x: auto;
+  }
+}

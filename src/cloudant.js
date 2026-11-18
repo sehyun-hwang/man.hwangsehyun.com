@@ -5,8 +5,8 @@ import { pipeline } from 'stream/promises';
 
 import { ChangesFollower, CloudantV1 } from '@ibm-cloud/cloudant';
 import parser from 'stream-json';
-import Pick from 'stream-json/filters/Pick.js';
-import StreamArray from 'stream-json/streamers/StreamArray.js';
+import Pick from 'stream-json/filters/pick.js';
+import StreamArray from 'stream-json/streamers/stream-array.js';
 
 import { frontmatterMap } from './view-function.js';
 
@@ -67,8 +67,8 @@ export default class Cloudant4Hugo {
       .then(response => pipeline(
         response.result,
         parser(),
-        new Pick({ filter: 'rows' }),
-        new StreamArray(),
+        Pick.asStream({ filter: 'rows' }),
+        StreamArray.asStream(),
         databaseWritable,
       ));
 
@@ -93,7 +93,7 @@ export default class Cloudant4Hugo {
     })
       .then(({ result: { warning, docs } }) => {
         console.log('Cloudant index warning:', warning);
-        return docs;
+        return /** @type {import('./types.js').StackEditDocument[]} */ (docs);
       });
   }
 
@@ -110,8 +110,8 @@ export default class Cloudant4Hugo {
       .then(({ result }) => pipeline(
         result,
         parser(),
-        new Pick({ filter: 'rows' }),
-        new StreamArray(),
+        Pick.asStream({ filter: 'rows' }),
+        StreamArray.asStream(),
         writable,
       ));
   }
@@ -120,19 +120,15 @@ export default class Cloudant4Hugo {
   * @param {import('./path.js').default[]} stackEditPaths
   */
   async downloadMarkdownsBatch(stackEditPaths) {
-    const gathered = await Promise.all(stackEditPaths.flatMap((path, i) => [
-      new Promise(resolve => setTimeout(resolve, 50 * i)).then(() => this.client.getAttachment({
-        db,
-        docId: path.contentId,
-        attachmentName: 'data',
-      })),
-      path.createMarkdownWritable(),
-    ]));
-
-    await Promise.all((function* pipe() {
-      for (let i = 0; i < gathered.length; i += 2)
-        yield pipeline(gathered[i].result, gathered[i + 1]);
-    })());
+    await Promise.all(stackEditPaths.map(async (path, i) => {
+      await new Promise(resolve => setTimeout(resolve, 50 * i));
+      if (!path.contentId) throw new Error('Missing content ID');
+      const [{ result }, writable] = await Promise.all([
+        this.client.getAttachment({ db, docId: path.contentId, attachmentName: 'data' }),
+        path.createMarkdownWritable(),
+      ]);
+      await pipeline(result, writable);
+    }));
   }
 
   /**
